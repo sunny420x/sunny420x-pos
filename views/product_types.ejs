@@ -1,0 +1,129 @@
+<html>
+    <head>
+        <title>จัดการประเภทสินค้า | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/settings">
+                        <i class="fa-solid fa-chevron-left me-4"></i> จัดการประเภทสินค้า</a></div>
+                </nav>
+                <%-include('include/navigator')%>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-cog me-1"></i> จัดการประเภทสินค้า <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProductType_modal"><i class="fa-solid fa-plus me-1"></i> เพิ่มประเภทสินค้า</button></h2>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th>รายการ</th>
+                                        <th>จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <% product_types.forEach((row) => { %>
+                                    <tbody class="text-center">
+                                        <tr>
+                                            <td><%=row.name%></td>
+                                            <td>
+                                                <button class="btn btn-warning" onclick="openLink('/editProductType/<%=row.id%>')"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button class="btn btn-danger" onclick="
+                                                Swal.fire({
+                                                title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
+                                                text: 'การลบจะไม่สามารถย้อนกลับได้',
+                                                icon: 'warning',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#3085d6',
+                                                cancelButtonColor: '#d33',
+                                                confirmButtonText: 'ยืนยัน',
+                                                cancelButtonText: 'ย้อนกลับ',
+                                                }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    openLink('/deleteProductType/<%=row.id%>')
+                                                }
+                                                });
+                                                "><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                <%})%>
+                            </table>
+                        </div> 
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="addProductType_modal" tabindex="-1" aria-labelledby="addProductType_modal" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="modal_title">เพิ่มประเภทสินค้า</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="กรอกชื่อประเภทสินค้า" id="name" name="name" required>
+                            <label for="vaccine_name">ชื่อ *</label>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function addProductType() {
+                        let name = document.getElementById('name').value
+
+                        const options = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: name
+                        })
+                        };
+
+                        if(!name) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'โปรดกรอกข้อมูลการการฉีดวัคซีนให้ครบถ้วน'
+                            });
+                            return;
+                        }
+
+                        fetch('/addProductType', options)
+                        .then(res => {
+                            if (!res.ok) {
+                                return res.json().then(errorData => { throw new Error(errorData.error); });
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'เพิ่มประเภทสินค้าแล้ว!',
+                            }).then(() => {
+                                location.reload()
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                            });
+                        });  
+                    }
+                </script>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-cancel me-1"></i> ยกเลิก</button>
+                  <button type="button" class="btn btn-primary" onclick="addProductType()"><i class="fa-solid fa-plus me-1"></i> เพิ่มประเภทสินค้า</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

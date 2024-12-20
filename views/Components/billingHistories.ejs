@@ -1,0 +1,46 @@
+<div class="table-responsive">
+    <table class="table">
+        <thead class="table-light text-center">
+            <tr>
+                <th>วันที่</th>
+                <th>เลขบิล</th>
+                <th>จำนวนสินค้า</th>
+                <th>ชื่อลูกค้า</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <% 
+        bills.forEach((row) => {     
+        %>
+            <tr class="text-center">
+                <td>
+                    <%=moment(row.created_at).add(543, 'years').format("DD/MM/YYYY")%>
+                </td>
+                <td><%=row.billing_id%></td>
+                <td><%=row.amount%></td>
+                <td><%if(row.first_name != undefined && row.last_name != undefined) {%><%=row.first_name%> <%=row.last_name%><%} else {%>-<%}%></td>
+                <td>
+                    <button class="btn btn-primary" onclick="openLink('/billing/<%=row.billing_id%>')"><i class="fa-solid fa-eye"></i></button>
+                    <button class="btn btn-danger" onclick="
+                    Swal.fire({
+                    title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
+                    text: 'การลบจะไม่สามารถย้อนกลับได้',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'ยืนยัน',
+                    cancelButtonText: 'ย้อนกลับ',
+                    }).then((result) => {
+                    if (result.isConfirmed) {
+                        openLink('/deleteBill/<%=row.billing_id%>')
+                    }
+                    });
+                    "><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>
+        <%
+        })
+        %>
+    </table>
+</div>

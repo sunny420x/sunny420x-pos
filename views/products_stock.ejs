@@ -1,0 +1,400 @@
+<html>
+    <head>
+        <title>รายการสินค้าในระบบ | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <script>
+            let cart = []
+            let totals = 0
+
+            searchByType('all')
+
+            function searchByType(type) {
+                let req_url = '/getProductStock?type='+encodeURIComponent(type)
+                fetch(req_url)
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errorData => { throw new Error(errorData.error); });
+                    }
+                    return res.text();
+                })
+                .then(data => {
+                    document.getElementById('productStock').innerHTML = data;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                    });
+                });  
+            }
+        </script>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <%-include('include/navigator')%>
+                <div class="container my-4">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-boxes me-1"></i> รายการสินค้าในระบบ 
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sell_modal"><i class="fa-solid fa-coins me-1"></i> ขายสินค้า</button>
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addStock_modal"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลการนำเข้าสินค้า</button>
+                        </h2>
+                        <div class="row mb-4">
+                            <div class="col">
+                                <select class="form-select" id="search_by_type" onchange="searchByType(this.value)">
+                                    <option value="all">เลือกทุกประเภท</option>
+                                    <% product_types.forEach(row => {
+                                    %>
+                                    <option value="<%=row.id%>"><%=row.name%></option>
+                                    <%
+                                    }) 
+                                    %>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="productStock"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="addStock_modal" tabindex="-1" aria-labelledby="addStock_modal" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="modal_title">เพิ่มข้อมูลการนำเข้าสินค้า</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="type">
+                                <option value="">เลือกประเภทสินค้า</option>
+                                <% product_types.forEach(row => {
+                                %>
+                                <option value="<%=row.id%>"><%=row.name%></option>
+                                <%
+                                }) 
+                                %>
+                            </select>
+                            <label for="type">เลือกประเภทสินค้า: </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <button onclick="getProductsHistoriesByType()" class="btn btn-secondary btn-sm"><i class="fa-solid fa-box-open me-1"></i> เลือกจากในระบบ</button>
+                        <button onclick="resetProductName()" class="btn btn-secondary btn-sm"><i class="fa-solid fa-plus me-1"></i> เพิ่มสินค้าใหม่</button>
+                    </div>
+                    <div id="productNameSelectBox"></div>
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" placeholder="กรอกจำนวน" id="amount" name="amount" min="1" value="1" required>
+                            <label for="amount">จำนวน *</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" placeholder="กรอกราคา" id="price" name="price" min="1" value="0" required>
+                            <label for="price">ราคา *</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="date" class="form-control" placeholder="กรอกวันหมดอายุ" id="expired_date" name="expired_date">
+                            <label for="expired_date">วันหมดอายุ (ถ้ามี)</label>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    resetProductName()
+
+                    function resetProductName() {
+                        document.getElementById('productNameSelectBox').innerHTML = `
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" placeholder="กรอกชื่อสินค้า" id="name" name="name" required>
+                                <label for="vaccine_name">ชื่อสินค้า *</label>
+                            </div>
+                        </div>`
+                    }
+                    function getProductsHistoriesByType() {
+                        let type = document.getElementById('type').value
+
+                        fetch('/getProductsHistoriesByType?type='+type)
+                        .then(res => {
+                            if (!res.ok) {
+                                return res.json().then(errorData => { throw new Error(errorData.error); });
+                            }
+                            return res.text();
+                        })
+                        .then(data => {
+                            document.getElementById('productNameSelectBox').innerHTML = data;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                            });
+                        });  
+                    }
+                    function addProductStock() {
+                        let name = document.getElementById('name').value
+                        let type = document.getElementById('type').value
+                        let amount = document.getElementById('amount').value
+                        let price = document.getElementById('price').value
+                        let expired_date = document.getElementById('expired_date').value
+
+                        const options = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            type:type,
+                            amount: amount,
+                            price:price,
+                            expired_date:expired_date
+                        })
+                        };
+
+                        if(!name || !type || !amount) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'โปรดกรอกข้อมูลการการนำเข้าสินค้าให้ครบถ้วน'
+                            });
+                            return;
+                        }
+
+                        fetch('/addProductStock', options)
+                        .then(res => {
+                            if (!res.ok) {
+                                return res.json().then(errorData => { throw new Error(errorData.error); });
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'เพิ่มข้อมูลสินค้าแล้ว!',
+                            }).then(() => {
+                                location.reload()
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                            });
+                        });  
+                    }
+                </script>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa-solid fa-cancel me-1"></i> ยกเลิก</button>
+                  <button type="button" class="btn btn-primary" onclick="addProductStock()"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลการนำเข้าสินค้า</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div class="modal fade" id="sell_modal" tabindex="-1" aria-labelledby="sell_modal" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="modal_title">ขายสินค้า</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>รายการ</th>
+                                <th>จำนวน</th>
+                                <th>ราคา</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart">
+
+                        </tbody>
+                    </table>
+                    <p>
+                        ยอดที่ต้องชำระ <span id="totals_text"></span> บาท
+                    </p>
+                    <hr>
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="sell_product_type" onchange="initProductType(this.value)">
+                                <option value="">โปรดเลือกประเภทสินค้า</option>
+                                <% product_types.forEach(row => {
+                                %>
+                                <option value="<%=row.id%>"><%=row.name%></option>
+                                <%
+                                }) 
+                                %>
+                            </select>
+                            <label for="type">เลือกประเภทสินค้า *</label>
+                        </div>
+                    </div>
+                    <div id="productSelectBox"></div>
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" name="buy_amount" id="buy_amount" value="1">
+                            <label for="amount">จำนวน *</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <select name="customer" id="customer" class="form-select" required>
+                                <option value="-">เลือกลูกค้า (หากเป็นสมัครชิก)</option>
+                                <% customers.forEach((row) => {%>
+                                    <option value="<%=row.id%>"><%=row.first_name%> <%=row.last_name%></option>
+                                <%})%>
+                            </select>
+                            <label for="customer">ลูกค้า *</label>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addProductToCart()">เพิ่มสินค้าชิ้นนี้</button>
+                    <button class="btn btn-secondary" onclick="resetCart()">ล้างข้อมูล</button>
+                </div>
+                <script>
+                    initTotal()
+
+                    function initProductType(type) {
+                        fetch("/getSellProducts?type="+type)
+                        .then(res => {
+                            if (!res.ok) {
+                                return res.json().then(errorData => { throw new Error(errorData.error); });
+                            }
+                            return res.text();
+                        })
+                        .then(data => {
+                            document.getElementById('productSelectBox').innerHTML = data;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                            });
+                        });   
+                    }
+                    function addProductToCart() {
+                        if(!document.getElementById('customer').value) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'โปรดเลือกลูกค้า'
+                            });
+                            return;
+                        }
+                        let amount = document.getElementById('buy_amount').value
+                        let product_type = document.getElementById('sell_product_type').value
+                        let product_name = document.getElementById('sell_product_id').value.split(",")[0]
+                        let product_price = document.getElementById('sell_product_id').value.split(",")[1]
+
+                        cart.push({
+                            product_type: product_type,
+                            product_name: product_name,
+                            product_price: product_price,
+                            amount: amount
+                        })
+
+                        var table = document.getElementById("cart");
+
+                        var row = table.insertRow(-1);
+
+                        var product_name_cell = row.insertCell(0);
+                        var product_amount_cell = row.insertCell(1);
+                        var product_price_cell = row.insertCell(2);
+
+                        product_name_cell.innerHTML = product_name;
+                        product_amount_cell.innerHTML = amount;
+                        product_price_cell.innerHTML = numberWithCommas(parseInt(product_price) * parseInt(amount));
+
+                        document.getElementById('sell_product_type').value = ""
+                        document.getElementById('sell_product_id').value = ""
+                        document.getElementById('customer').disabled = true
+                        document.getElementById('buy_amount').value = 1
+
+                        initTotal(parseInt(product_price) * parseInt(amount))
+                        initProductType('')
+                    }
+                    function initTotal(product_price) {
+                        if(product_price) {
+                            totals = numberWithCommas(parseInt(totals) + parseInt(product_price))
+                        }
+
+                        totals_text.innerHTML = totals
+                    }
+                    function resetCart() {
+                        cart = []
+                        totals = 0
+                        initTotal()
+                        document.getElementById("cart").innerHTML = ""
+                        document.getElementById('sell_product_type').value = ""
+                        document.getElementById('sell_product_id').value = ""
+                        document.getElementById('customer').value = ""
+                        document.getElementById('buy_amount').value = 1
+                        document.getElementById('customer').disabled = false
+                    }
+                    function sellProducts() {
+                        let customer = document.getElementById('customer').value
+
+                        const options = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            cart: cart,
+                            customer:customer
+                        })
+                        };
+
+                        if(!customer || cart.length == 0) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'โปรดกรอกข้อมูลการขายสินค้าให้ครบถ้วน'
+                            });
+                            return;
+                        }
+
+                        fetch('/sellProduct', options)
+                        .then(res => {
+                            if (!res.ok) {
+                                return res.json().then(errorData => { throw new Error(errorData.error); });
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'เพิ่มข้อมูลการขายแล้ว!',
+                            }).then(() => {
+                                openLink(data.bill)
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                            });
+                        });  
+                    }
+                </script>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetCart()"><i class="fa-solid fa-cancel me-1"></i> ยกเลิก</button>
+                  <button type="button" class="btn btn-primary" onclick="sellProducts()"><i class="fa-solid fa-shopping-cart me-1"></i> เพิ่มข้อมูลการขายสินค้า</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

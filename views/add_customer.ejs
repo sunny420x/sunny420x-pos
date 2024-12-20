@@ -1,0 +1,64 @@
+<html>
+    <head>
+        <title>เพิ่มข้อมูลลูกค้า | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/customers">
+                        <i class="fa-solid fa-chevron-left me-4"></i> เพิ่มข้อมูลลูกค้า</a></div>
+                </nav>
+                <%-include('include/navigator')%>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-user-plus me-1"></i> เพิ่มข้อมูลลูกค้า</h2>
+                        <form action="/addOwner" method="post">
+                            <div class="">
+                                <div class="row">
+                                    <div class="mb-2 col">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" placeholder="กรอกชื่อ" id="first_name" name="first_name" required>
+                                            <label for="address">ชื่อ</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 col">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" placeholder="กรอกนามสกุล" id="last_name" name="last_name" required>
+                                            <label for="address">นามสกุล</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" placeholder="กรอกเลขบัตรประจำตัวประชาชน" id="card_id" name="card_id" required>
+                                        <label for="address">เลขบัตรประจำตัวประชาชน</label>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" placeholder="กรอกเบอร์โทรศัพท์" id="phone_number" name="phone_number" min="9" required>
+                                        <label for="address">เบอร์โทรศัพท์</label>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" placeholder="กรอกที่อยู่ตามบัตรประชาชน" id="address" name="address" style="height: 100px;" required></textarea>
+                                        <label for="address">ที่อยู่</label>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลเจ้าของสัตว์เลี้ยง</button>
+                                    <button class="btn btn-secondary" type="reset"><i class="fa-solid fa-history me-1"></i> ล้างข้อมูล</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

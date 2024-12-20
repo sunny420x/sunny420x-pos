@@ -1,0 +1,75 @@
+<html>
+    <head>
+        <title>แก้ไขข้อมูลสินค้า | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/products_stock/<%=stock.type%>/<%=stock.name%>">
+                        <i class="fa-solid fa-chevron-left me-4"></i> แก้ไขข้อมูลสินค้า</a></div>
+                </nav>
+                <%-include('include/navigator')%>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-box-open me-1"></i> แก้ไขข้อมูลสินค้า</h2>
+                        <div class="row">
+                            <div class="mb-3 col">
+                                <div class="form-floating">
+                                    <input type="date" class="form-control" value="<%=moment(stock.created_at).format('YYYY-MM-DD')%>" readonly>
+                                    <label for="name">เพิ่มเมื่อ</label>
+                                </div>
+                            </div>
+                            <div class="mb-3 col">
+                                <div class="form-floating">
+                                    <input type="date" class="form-control" value="<%=moment(stock.updated_at).format('YYYY-MM-DD')%>" readonly>
+                                    <label for="name">แก้ไขล่าสุดเมื่อ</label>
+                                </div>
+                            </div>
+                        </div>
+                        <form action="/editProduct" method="post">
+                            <input type="hidden" name="transaction_id" value="<%=stock.transaction_id%>">
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" placeholder="กรอกชื่อสินค้า" id="name" name="name" value="<%=stock.name%>" required>
+                                    <label for="name">ชื่อสินค้า *</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <select class="form-select" name="type">
+                                        <option value="">เลือกประเภทสินค้า</option>
+                                        <% product_types.forEach(row => {
+                                        %>
+                                        <option value="<%=row.id%>" <%if(row.id == stock.type){%>selected<%}%>><%=row.name%></option>
+                                        <%
+                                        }) 
+                                        %>
+                                    </select>
+                                    <label for="type">เลือกประเภทสินค้า: </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" placeholder="กรอกราคา" id="price" name="price" value="<%=stock.price%>" required>
+                                    <label for="price">ราคา *</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="date" class="form-control" placeholder="กรอกวันหมดอายุ" id="expired_date" name="expired_date" value="<%=moment(stock.expired_date).format('YYYY-MM-DD')%>">
+                                    <label for="expired_date">วันหมดอายุ (ถ้ามี)</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกการเปลี่ยนแปลง</button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <%-include('include/footer')%>
+    </body>
+</html>

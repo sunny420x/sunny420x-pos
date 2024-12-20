@@ -1,0 +1,70 @@
+<html>
+    <head>
+        <title>รายการนำเข้าสินค้า | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/products_stock">
+                        <i class="fa-solid fa-chevron-left me-4"></i> รายการนำเข้าสินค้า</a></div>
+                </nav>
+                <%-include('include/navigator')%>
+                <div class="container mb-3 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-boxes me-1"></i> รายการนำเข้าสินค้า</h2>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th>หมายเลขนำเข้า</th>
+                                        <th>รายการ</th>
+                                        <th>นำเข้าเมื่อ</th>
+                                        <th>วันหมดอายุ</th>
+                                        <th>ราคา</th>
+                                        <th>นำเข้าจำนวน</th>
+                                        <th>จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <% products_stock.forEach((row) => { %>
+                                    <tbody class="text-center">
+                                        <tr>
+                                            <td><%=row.id%></td>
+                                            <td><%=row.name%> (<%=row.type%>)</td>
+                                            <td><%=moment(row.created_at).add(543, 'years').format("DD/MM/YYYY")%></td>
+                                            <td><%if(row.expired_date != null) {%><%if(moment(row.expired_date).diff(moment(), 'days') > 0) {%><span class="badge text-bg-secondary">หมดอายุในอีก <%=moment(row.expired_date).diff(moment(), 'days')%> วัน<%} else {%><span class="badge text-bg-danger">หมดอายุแล้ว</span><%}%><%} else {%>-<%}%></span></td>
+                                            <td><%=row.price%></td>
+                                            <td><%=row.value%></td>
+                                            <td>
+                                                <button class="btn btn-warning" onclick="openLink('/editProduct/<%=row.id%>')"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button class="btn btn-danger" onclick="
+                                                Swal.fire({
+                                                title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
+                                                text: 'การลบจะไม่สามารถย้อนกลับได้',
+                                                icon: 'warning',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#3085d6',
+                                                cancelButtonColor: '#d33',
+                                                confirmButtonText: 'ยืนยัน',
+                                                cancelButtonText: 'ย้อนกลับ',
+                                                }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    openLink('/deleteProductByTransction/<%=row.id%>')
+                                                }
+                                                });
+                                                "><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                <%})%>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

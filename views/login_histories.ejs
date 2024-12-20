@@ -1,0 +1,46 @@
+<html>
+    <head>
+        <title>ประวัติการเข้าสู่ระบบของผู้ใช้ | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <%-include('include/navigator')%>
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/settings">
+                        <i class="fa-solid fa-chevron-left me-4"></i> ประวัติการเข้าสู่ระบบของผู้ใช้</a></div>
+                </nav>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-user-clock mx-1"></i> ประวัติการเข้าสู่ระบบของผู้ใช้</h2>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th>เข้าสู่ระบบเมื่อ</th>
+                                        <th>หมายเลข IP Address</th>
+                                    </tr>
+                                </thead>
+                                <%history.forEach((row) => { %>
+                                    <tbody class="text-center">
+                                        <tr>
+                                            <td><%=row.username%></td>
+                                            <td><%=row.full_name%></td>
+                                            <td><%=moment(row.time).add(543, 'years').format("DD/MM/YY HH:mm:ss")%></td>
+                                            <td><%=row.ip_address%></td>
+                                        </tr>
+                                    </tbody>
+                                <%})%>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

@@ -1,0 +1,44 @@
+<html>
+    <head>
+        <title>รายชื่อผู้ใช้งานระบบ | SoftwareLab Electronics Stock Manager | SunnyPOS</title>
+        <%-include('../include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('../include/sidebar')%>
+            <div class="container overflow-hidden">
+                <%-include('../include/navigator')%>
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/settings">
+                        <i class="fa-solid fa-chevron-left me-4"></i> ตั้งค่า</a></div>
+                </nav>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-users mx-1"></i> รายชื่อผู้ใช้งานระบบ</h2>
+                        <div class="table-responsive">
+                            <table class="table text-center table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ชื่อผู้ใช้</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th>ประเภท</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <%users.forEach((user) => {%>
+                                        <tr onclick="openLink('/editUser/<%=user.id%>')" style="cursor: pointer;">
+                                            <td><%=user.username%></td>
+                                            <td><%=user.full_name%></td>
+                                            <td><%if(user.type == '0') {%><span class="badge bg-danger">ผู้ดูแล</span><%} else {%><span class="badge bg-primary">พนักงาน</span><%}%></td>
+                                        </tr>
+                                    <%})%>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('../include/footer')%>
+    </body>
+</html>

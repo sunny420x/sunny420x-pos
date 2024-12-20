@@ -1,0 +1,63 @@
+<html>
+    <head>
+        <title>ประวัติการขายสินค้า | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <script>
+            searchByCustomer('<%=customer_id%>')
+
+            function searchByCustomer(owner) {
+                let req_url = '/getBillingHistoriesByCustomer?customer_id='+encodeURIComponent(owner)
+                fetch(req_url)
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errorData => { throw new Error(errorData.error); });
+                    }
+                    return res.text();
+                })
+                .then(data => {
+                    document.getElementById('billingHistoriesHTML').innerHTML = data;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                    });
+                });  
+            }
+        </script>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" onclick="history.back()">
+                        <i class="fa-solid fa-chevron-left me-4"></i> ประวัติการขายสินค้า</a></div>
+                </nav>
+                <%-include('include/navigator')%>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-file-invoice-dollar me-1"></i> ประวัติการขายสินค้า</h2>
+                        <div class="row mb-4">
+                            <div class="col">
+                                <select class="form-select" id="search_by_owner" onchange="searchByCustomer(this.value)">
+                                    <option value="all">เลือกลูกค้าทั้งหมด</option>
+                                    <% owners.forEach(row => {
+                                    %>
+                                    <option value="<%=row.id%>" <%if(row.id == customer_id) {%>selected<%}%>><%=row.first_name%> <%=row.last_name%></option>
+                                    <%
+                                    }) 
+                                    %>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="billingHistoriesHTML"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

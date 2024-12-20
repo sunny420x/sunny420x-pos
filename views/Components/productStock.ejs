@@ -1,0 +1,22 @@
+<div class="table-responsive">
+    <table class="table">
+        <thead class="table-light text-center">
+            <tr>
+                <th>รายการ</th>
+                <th>คงเหลือ</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <% products_stock.forEach((row) => { %>
+            <tbody class="text-center">
+                <tr>
+                    <td><%=row.name%> (<%=row.type%>)</td>
+                    <td><%if(row.value != 0) {%><%=row.value%><%} else {%><span class="badge bg-danger">สินค้าหมด</span><%}%></td>
+                    <td>
+                        <button class="btn btn-primary" onclick="openLink('/products_stock/<%=row.type_id%>/<%=row.name%>')"><i class="fa-solid fa-up-right-from-square"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        <%})%>
+    </table>
+</div> 

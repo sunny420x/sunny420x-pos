@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>เข้าสู่ระบบ | SoftwareLab Electronics Stock Manager | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="container-sm">
+            <div class="card white mt-4">
+                <h3 class="mb-2 card-header p-3"><i class="fa-solid fa-boxes-stacked ms-1 me-2"></i> SoftwareLab Animal Healthcares.</h3>
+                <div class="card-body p-4">
+                    <p><i class="fa-solid fa-lock me-1"></i> เข้าสู่ระบบจัดการคลินิกสัตว์</p>
+                    <form action="/login" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">ชื่อผู้ใช้ (Username): </label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">รหัสผ่าน (Password): </label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                        <input type="submit" value="เข้าสู่ระบบ" class="btn btn-primary w-100 btn-lg">
+                    </form>
+                </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

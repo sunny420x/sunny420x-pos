@@ -1,0 +1,99 @@
+<html>
+    <head>
+        <title>แก้ไขข้อมูลลูกค้า | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <script>
+            let editing = false
+
+            function toggleEdit() {
+                if(editing) {
+                    document.querySelectorAll('input').forEach(input => {
+                        input.removeAttribute('readonly');
+                    });
+                    document.querySelectorAll('textarea').forEach(input => {
+                        input.removeAttribute('readonly');
+                    });
+                    document.querySelectorAll('select').forEach(input => {
+                        input.removeAttribute('disabled');
+                    });
+                    document.getElementById("save_btn").style.display = "block";
+                    editing = false
+                } else {
+                    document.querySelectorAll('textarea').forEach(input => {
+                        input.setAttribute('readonly', true);
+                    });
+                    document.querySelectorAll('input').forEach(input => {
+                        input.setAttribute('readonly', true);
+                    });
+                    document.querySelectorAll('select').forEach(input => {
+                        input.setAttribute('disabled', true);
+                    });
+                    document.getElementById("save_btn").style.display = "none";
+                    editing = true
+                }
+            }
+        </script>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/customers">
+                        <i class="fa-solid fa-chevron-left me-4"></i> ข้อมูลลูกค้า</a></div>
+                </nav>
+                <%-include('include/navigator')%>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-user-cog me-1"></i> ข้อมูลลูกค้า
+                            <button class="btn btn-secondary btn-sm p-2" onclick="toggleEdit()"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </h2>
+                        <form action="/editCustomer" method="post">
+                            <input type="hidden" name="id" value="<%=customer.id%>">
+                            <div class="row">
+                                <div class="mb-2 col">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" placeholder="กรอกชื่อ" id="first_name" name="first_name" value="<%=customer.first_name%>" required>
+                                        <label for="address">ชื่อ</label>
+                                    </div>
+                                </div>
+                                <div class="mb-2 col">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" placeholder="กรอกนามสกุล" id="last_name" name="last_name" value="<%=customer.last_name%>" required>
+                                        <label for="address">นามสกุล</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" placeholder="กรอกเลขบัตรประจำตัวประชาชน" id="card_id" name="card_id" value="<%=customer.card_id%>" required>
+                                    <label for="address">เลขบัตรประจำตัวประชาชน</label>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" placeholder="กรอกเบอร์โทรศัพท์" id="phone_number" name="phone_number" min="9" value="<%=customer.phone_number%>" required>
+                                    <label for="address">เบอร์โทรศัพท์</label>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="form-floating">
+                                    <textarea class="form-control" placeholder="กรอกที่อยู่ตามบัตรประชาชน" id="address" name="address" style="height: 100px;" required><%=customer.address%></textarea>
+                                    <label for="address">ที่อยู่</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" id="save_btn"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกการเปลี่ยนแปลง</button>
+                        </form>
+                        <!-- <ul class="list-group">
+                            <li class="list-group-item"></li>
+                        </ul> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            toggleEdit()
+        </script>
+        <%-include('include/footer')%>
+    </body>
+</html>

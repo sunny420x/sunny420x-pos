@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <title>จัดการข้อมูลส่วนตัว | SoftwareLab Electronics Stock Manager | SunnyPOS</title>
+        <%-include('../include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('../include/sidebar')%>
+            <div class="container overflow-hidden">
+                <%-include('../include/navigator')%>
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/settings">
+                        <i class="fa-solid fa-chevron-left me-4"></i> ตั้งค่า</a></div>
+                </nav>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-user-cog mx-1"></i> แก้ไขข้อมูลส่วนตัว</h2>
+                        <form action="" method="post">
+                            <input type="hidden" name="id" value="<%=user_data[0].id%>">
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" name="username" placeholder="กรอก user_data[0]name ของผู้ใช้" required value="<%=user_data[0].username%>">
+                                    <label for="username">ชื่อผู้ใช้: </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" name="full_name" placeholder="กรอก ชื่อ-นามสกุล ของผู้ใช้" required value="<%=user_data[0].full_name%>">
+                                    <label for="full_name">ชื่อ-นามสกุล: </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกการเปลี่ยนแปลง</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('../include/footer')%>
+    </body>
+</html>

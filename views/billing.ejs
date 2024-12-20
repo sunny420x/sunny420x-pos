@@ -1,0 +1,124 @@
+<html>
+    <head>
+        <%-include('include/head')%>
+        <style>
+            td {
+                padding: 0 10px;
+            }
+            table {
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    <body>
+        <%
+        helper = new Helper()
+        sum = 0
+        %>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <nav class="navbar navbar-light bg-white">
+            <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" onclick="window.location=document.referrer">
+                <i class="fa-solid fa-chevron-left me-2"></i> ย้อนกลับ</a></div>
+        </nav>
+        <div class="container bg-white px-5 pb-4" style="width: 1200px" id="billing_content">
+            <div class="row text-center mx-2">
+                <div class="col-5">
+                    <img src="/banner.jpg" alt="" class="img-fluid">
+                </div>
+                <div class="col-7 pt-5 text-end">
+                    <p>ที่อยู่</p>
+                </div>
+            </div>
+            <h5 class="bg-dark text-center text-white p-2 mb-3">ใบเสร็จรับเงิน</h5>
+            <div class="d-flex flex-row px-2 my-2 gx-2" style="border: 1px solid #000; border-radius: 10px;">
+                <div class="col-9 p-2">
+                    <p>ชื่อลูกค้า: <%if(bill[0].first_name != null && bill[0].last_name != null) { %><%=bill[0].first_name%> <%=bill[0].last_name%><% } else {%>-<%}%></p>
+                    <p>โทรศัพท์: <%if(bill[0].phone_number != undefined) {%><%=helper.ThaiPhoneNumber(bill[0].phone_number)%><% } else {%>-<%}%></p>
+                </div>
+                <div class="col-3 p-2 ms-2">
+                    <p>เวลา: <%=moment(bill[0].created_at).add(543, 'years').format("DD/MM/YYYY HH:mm:ss")%></p>
+                </div>
+            </div>
+            <table border="1" style="width: 100%;">
+                <div class="watermark"></div>
+                <thead>
+                    <tr style="background: #000; color: #fff; text-align: center;">
+                        <th>รายการ</th>
+                        <th>จำนวน</th>
+                        <th colspan="2">ราคา</th>
+                        <!-- <th>ส่วนลด</th> -->
+                        <th>จำนวนเงิน</th>
+                    </tr>
+                </thead>
+                <% 
+                var sum = 0
+                var count = 1
+                %>
+                <tbody>
+                    <%bill.forEach(row => {%>
+                        <% sum += parseInt(row.total_price) %>
+                        <tr style="text-align: center; line-height: 40px;">
+                            <td style="text-align: left;"><%=count%>. <%=row.name%></td>
+                            <td style="border-left: 1px solid #000; border-bottom: 0;"><%=row.amount%></td>
+                            <td style="text-align: right; border-left: 1px solid #000; border-bottom: 0;" colspan="2"><%=helper.numberWithCommas(row.price)%></td>
+                            <!-- <td style="text-align: right; border-left: 1px solid #000; border-bottom: 0;"></td> -->
+                            <td style="text-align: right; border: 1px solid #000; border-top: 0; border-bottom: 0;"><%=helper.numberWithCommas(row.total_price)%></td>
+                        </tr>
+                        <% count++ %>
+                    <%})%>
+                    <tr style="text-align: right; line-height: 40px; border-top: 1px solid #000;">
+                        <td></td>
+                        <td style="text-align: center; border: 1px solid #000; border-right: 0;">รวม</td>
+                        <td style="border-left: 1px solid #000; border-top: 1px solid #000;" colspan="2"><%=helper.numberWithCommas(sum)%></td>
+                        <!-- <td colspan="1" style="border-left: 1px solid #000; border-top: 1px solid #000;" colspan="1"></td> -->
+                        <td style="border-top: 1px solid #000; border-left: 1px solid #000;"><%=helper.numberWithCommas(sum)%></td>
+                    </tr>
+                    <tr style="text-align: left; line-height: 40px;">
+                        <td colspan="4">
+                        </td>
+                        <!-- <td colspan="2" style="border: 1px solid #000; border-bottom: 0; border-right: 0;"><b>มัดจำ</b></td>
+                        <td class="text-end" style="border-left: 1px solid #000;">
+                        -
+                        </td> -->
+                    </tr>
+                    <tr style="text-align: left; line-height: 40px;">
+                        <td colspan="2">
+                            <!-- <b>ชำระโดย:</b>  -->
+                            
+                        </td>
+                        <td colspan="2" style="border: 0px solid #000; border-top: 0; border-bottom: 0; border-right: 0;" class="bg-dark text-white"><b>ชำระสุทธิ:</b></td>
+                            
+                        <td class="text-end bg-dark text-white"><%=helper.numberWithCommas(sum)%>.-</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="p-4 bg-secondary text-white">
+
+            </div>
+        </div>
+        <div class="container text-end my-4" style="width: 1200px;">
+            <button class="btn btn-primary" onclick="exportToPDF()">ส่งออกเป็น PDF</button>
+        </div>
+        <script>
+            function exportToPDF() {
+              const { jsPDF } = window.jspdf;
+              const pdf = new jsPDF('l', 'mm', 'a5');
+          
+              const content = document.getElementById('billing_content');
+              
+              html2canvas(content).then((canvas) => {
+                const imgData = canvas.toDataURL('image/png');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio);
+                pdf.save('ใบเสร็จรับเงิน.pdf');
+              });
+            }
+          </script>
+    </body>
+</html>

@@ -1,0 +1,55 @@
+<html>
+    <head>
+        <title>เพิ่มผู้ใช้ | SoftwareLab Electronics Stock Manager | SunnyPOS</title>
+        <%-include('../include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('../include/sidebar')%>
+            <div class="container overflow-hidden">
+                <%-include('../include/navigator')%>
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/settings">
+                        <i class="fa-solid fa-chevron-left me-4"></i> ตั้งค่า</a></div>
+                </nav>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-user-plus mx-1"></i> เพิ่มพนักงาน</h2>
+                        <form action="" method="post">
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" placeholder="กรอก username ของพนักงาน" id="username" name="username" required>
+                                    <label for="username">ชื่อผู้ใช้</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" placeholder="กรอก ชื่อ-นามสกุล ของผู้ใช้" id="full_name" name="full_name" required>
+                                    <label for="full_name">ชื่อ-นามสกุล</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="password" class="form-control" placeholder="กรอกรหัสผ่านเริ่มต้นของผู้ใข้" id="password" name="password" required>
+                                    <label for="password">รหัสผ่าน</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <select class="form-select" name="type">
+                                        <option selected value="">เลือกประเภทของผู้ใช้</option>
+                                        <option value="0">ผู้ดูแล</option>
+                                        <option value="1">พนักงาน</option>
+                                    </select>
+                                    <label for="type">ประเภทของผู้ใช้: </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-plus me-1"></i> เพิ่มผู้ใช้</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('../include/footer')%>
+    </body>
+</html>

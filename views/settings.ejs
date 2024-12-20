@@ -1,0 +1,58 @@
+<html>
+    <head>
+        <title>ตั้งค่า | SoftwareLab Electronics Stock Manager | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <%-include('include/navigator')%>
+                <div class="container my-4 px-4">
+                    <div class="card p-3 row">
+                        <!-- <img src="/default-avatar.jpg" class="rounded-circle col-md-auto me-4" alt="..." width="150" height="150"> -->
+                        <div class="col-9 p-2 py-2">
+                            <h2>ชื่อผู้ใช้: <%=user_data[0].username%></h2>
+                            <p>ชื่อ-นามสกุล: <%=user_data[0].full_name%></p>
+                            <p>ประเภท: <%if(user_data[0].type == '0') {%><span class="badge bg-danger">ผู้ดูแล</span><%} else {%><span class="badge bg-primary">พนักงาน</span><%}%></span></p>
+                        </div>
+                    </div>
+                    <div class="row card my-4 pb-4">
+                        <h3><i class="fa-solid fa-cog m-4 mx-2"></i> ข้อมูลในระบบ</h3>
+                        <div class="col">
+                            <div class="list-group">
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/product_types')">
+                                    <i class="fa-solid fa-boxes me-1"></i> ประเภทของสินค้า</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row gap-4 mt-4">
+                        <% if(user_data[0].type == 0) { %>
+                        <div class="card col p-3 pt-4">
+                            <h3><i class="fa-solid fa-users mx-1"></i> พนักงาน</h3>
+                            <div class="list-group mt-3">
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/Users')">
+                                    <i class="fa-solid fa-users-cog me-1"></i> จัดการพนักงาน</button>
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/addUser')">
+                                    <i class="fa-solid fa-user-plus me-1"></i> เพิ่มพนักงาน</button>
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/loginHistories')">
+                                    <i class="fa-solid fa-user-clock me-1"></i> ประวัติการเข้าสู่ระบบของผู้ใช้</button>
+                            </div>
+                        </div>
+                        <%}%>
+                        <div class="card col p-3 pt-4">
+                            <h3><i class="fa-solid fa-user mx-1"></i> บัญชี</h3>
+                            <div class="list-group mt-3">
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/editProfile')">
+                                    <i class="fa-solid fa-user-cog me-1"></i> แก้ไขข้อมูลส่วนตัว</button>
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/changePassword')">
+                                    <i class="fa-solid fa-user-lock me-1"></i> เปลี่ยนรหัสผ่าน</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

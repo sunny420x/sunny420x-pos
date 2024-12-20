@@ -1,0 +1,14 @@
+<div class="mb-3">
+    <div class="form-floating">
+        <select class="form-select" id="name">
+            <option value="">โปรดเลือกสินค้า</option>
+            <% products_stock.forEach(row => {
+            %>
+            <option value="<%=row.name%>"><%=row.name%></option>
+            <%
+            }) 
+            %>
+        </select>
+        <label for="type">เลือกสินค้า *</label>
+    </div>
+</div>

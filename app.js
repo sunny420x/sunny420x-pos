@@ -73,7 +73,7 @@ function getProductsStock() {
         db.query(`SELECT t.id, t.name, pt.name as type, t.type as type_id, SUM(t.value) as value  
             FROM transaction as t 
             JOIN product_types as pt ON pt.id = t.type 
-            GROUP BY t.type, t.name ORDER BY SUM(t.value) ASC`, (err, result) => {
+            GROUP BY t.type, t.name ORDER BY SUM(t.value), t.name ASC`, (err, result) => {
             if(err) throw err;
             resolve(result)
         })
@@ -85,7 +85,7 @@ function getSellProductsByType(type) {
         db.query(`SELECT pd.id, pd.name, pt.name as type, pd.type as type_id, pd.price 
             FROM products as pd  
             JOIN product_types as pt ON pt.id = pd.type 
-            WHERE pd.type = ? AND is_sold = 0 GROUP BY pd.name`, [type], (err, result) => {
+            WHERE pd.type = ? AND is_sold = 0 GROUP BY pd.name ORDER BY pd.name DESC`, [type], (err, result) => {
             if(err) throw err;
             resolve(result)
         })

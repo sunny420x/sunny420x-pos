@@ -500,6 +500,7 @@ app.get("/products_stock/:type/:name", (req,res) => {
                     getProductTypes().then(product_types => {
                         getProductsStockByTypeAndName(type, name).then((products_stock) => {
                             res.render('products_stock_detail', {
+                                user_data:user_data,
                                 products_stock:products_stock,
                                 product_types:product_types,
                                 moment:moment
@@ -1532,7 +1533,7 @@ app.post("/changePassword", (req,res) => {
 })
 
 app.get('*', (req, res) => {
-    // res.render('error', {title: "ไม่พบข้อมูล", content: "ลิงค์นี้อาจจะถูกย้าย หรือหมดอายุแล้ว"})
+    res.render('error', {title: "ไม่พบข้อมูล", content: "ลิงค์นี้อาจจะถูกย้าย หรือหมดอายุแล้ว โปรดตรวจสอบลิงค์ว่าถูกต้อง"})
     res.end()
 })
 

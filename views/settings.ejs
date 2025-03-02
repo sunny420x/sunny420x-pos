@@ -14,7 +14,7 @@
                         <div class="col-9 p-2 py-2">
                             <h2>ชื่อผู้ใช้: <%=user_data[0].username%></h2>
                             <p>ชื่อ-นามสกุล: <%=user_data[0].full_name%></p>
-                            <p>ประเภท: <%if(user_data[0].type == '0') {%><span class="badge bg-danger">ผู้ดูแล</span><%} else {%><span class="badge bg-primary">พนักงาน</span><%}%></span></p>
+                            <p>ประเภท: <span class="badge bg-secondary"><%=user_data[0].type%></span></p>
                         </div>
                     </div>
                     <div class="row card my-4 pb-4">

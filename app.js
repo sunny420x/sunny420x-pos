@@ -50,7 +50,8 @@ function initAccessToken(token) {
         const username = token.split(':')[0]
         const password = token.split(':')[1]
 
-        db.query("SELECT * FROM users WHERE username = ? AND password = ?", [username,password], (err,result) => {
+        db.query(`SELECT u.id, u.username, u.full_name, ut.name as type, u.type as type_id FROM users as u JOIN user_types as ut ON ut.id = u.type 
+             WHERE u.username = ? AND u.password = ?`, [username,password], (err,result) => {
             if(err) throw err;
             if(result.length == 1) {
                 resolve(result)

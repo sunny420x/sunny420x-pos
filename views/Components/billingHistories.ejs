@@ -16,9 +16,9 @@
                 <td>
                     <%=moment(row.created_at).add(543, 'years').format("DD/MM/YYYY")%>
                 </td>
-                <td><%if(row.first_name != undefined && row.last_name != undefined) {%><%=row.first_name%> <%=row.last_name%><%} else {%>-<%}%></td>
-                <td><%=row.billing_id%></td>
-                <td><%=row.amount%></td>
+                <td><i class="fa-solid fa-user me-1"></i> <%if(row.first_name != undefined && row.last_name != undefined) {%><%=row.first_name%> <%=row.last_name%><%} else {%>-<%}%></td>
+                <td># <%=row.billing_id%></td>
+                <td><i class="fa-solid fa-box me-1"></i> <%=row.amount%></td>
                 <td>
                     <button class="btn btn-primary" onclick="openLink('/billing/<%=row.billing_id%>')"><i class="fa-solid fa-eye"></i></button>
                     <button class="btn btn-danger" onclick="

@@ -109,7 +109,7 @@ function getAllBilling() {
 function getBillingHistoriesByCustomer(owner) {
     return new Promise((resolve) => {
         if(owner != 'all') {
-            db.query(`SELECT t.id, t.billing_id, c.first_name, c.last_name, COUNT(*) as amount 
+            db.query(`SELECT t.id, t.billing_id, c.first_name, c.last_name, COUNT(*) as amount, t.created_at 
                 FROM transaction as t 
                 LEFT JOIN customers as c ON t.customer_id = c.id 
                 WHERE t.customer_id = ? GROUP BY t.billing_id ASC`, [owner], (err, result) => {

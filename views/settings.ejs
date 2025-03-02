@@ -9,16 +9,22 @@
             <div class="container overflow-hidden">
                 <%-include('include/navigator')%>
                 <div class="container my-4 px-4">
-                    <div class="card p-3 row">
-                        <!-- <img src="/default-avatar.jpg" class="rounded-circle col-md-auto me-4" alt="..." width="150" height="150"> -->
-                        <div class="col-9 p-2 py-2">
-                            <h2>ชื่อผู้ใช้: <%=user_data[0].username%></h2>
-                            <p>ชื่อ-นามสกุล: <%=user_data[0].full_name%></p>
-                            <p>ประเภท: <span class="badge bg-secondary"><%=user_data[0].type%></span></p>
+                    <div class="card p-4">
+                        <div class="row grid-2 g-0 gap-3">
+                            <div class="col-lg-auto">
+                                <div style="width: 80px; height: 80px; background-color: #B7B1F2;" class="rounded mx-auto">
+                                    <div style="text-align: center; margin: auto; display: block; padding: 20px; font-size: 28px; text-transform: capitalize;"><%=user_data[0].username[0]%></div>
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                <h4>ชื่อผู้ใช้: <%=user_data[0].username%></h4>
+                                <p>ชื่อ-นามสกุล: <%=user_data[0].full_name%></p>
+                                <p>ประเภท: <span class="badge bg-secondary"><%=user_data[0].type%></span></p>
+                            </div>
                         </div>
                     </div>
-                    <div class="row card my-4 pb-4">
-                        <h3><i class="fa-solid fa-cog m-4 mx-2"></i> ข้อมูลในระบบ</h3>
+                    <div class="row card my-4 p-4 g-0">
+                        <h3><i class="fa-solid fa-cog m-4 mx-2 mt-2"></i> ข้อมูลในระบบ</h3>
                         <div class="col">
                             <div class="list-group">
                                 <%if(user_data[0].permission.split(',').includes('customers')) {%>
@@ -32,9 +38,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row gap-4 mt-4">
+                    <div class="row gap-4 g-0 mt-4">
                         <%if(user_data[0].permission.split(',').includes('users')) {%>
-                        <div class="card col p-3 pt-4">
+                        <div class="card col p-4">
                             <h3><i class="fa-solid fa-users mx-1"></i> พนักงาน</h3>
                             <div class="list-group mt-3">
                                 <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/Users')">
@@ -46,7 +52,7 @@
                             </div>
                         </div>
                         <%}%>
-                        <div class="card col p-3 pt-4">
+                        <div class="card col p-4">
                             <h3><i class="fa-solid fa-user mx-1"></i> บัญชี</h3>
                             <div class="list-group mt-3">
                                 <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/editProfile')">

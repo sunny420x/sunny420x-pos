@@ -21,13 +21,19 @@
                         <h3><i class="fa-solid fa-cog m-4 mx-2"></i> ข้อมูลในระบบ</h3>
                         <div class="col">
                             <div class="list-group">
-                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/product_types')">
-                                    <i class="fa-solid fa-boxes me-1"></i> ประเภทของสินค้า</button>
+                                <%if(user_data[0].permission.split(',').includes('customers')) {%>
+                                    <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/product_types')">
+                                        <i class="fa-solid fa-boxes me-1"></i> ประเภทของสินค้า</button>
+                                <%}%>
+                                <%if(user_data[0].permission.split(',').includes('users')) {%>
+                                    <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/user_types')">
+                                        <i class="fa-solid fa-users-cog me-1"></i> ประเภทของผู้ใช้</button>
+                                <%}%>
                             </div>
                         </div>
                     </div>
                     <div class="row gap-4 mt-4">
-                        <% if(user_data[0].type == 0) { %>
+                        <%if(user_data[0].permission.split(',').includes('users')) {%>
                         <div class="card col p-3 pt-4">
                             <h3><i class="fa-solid fa-users mx-1"></i> พนักงาน</h3>
                             <div class="list-group mt-3">

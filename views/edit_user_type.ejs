@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title>แก้ไขประเภทผู้ใช้ | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/user_types">
+                        <i class="fa-solid fa-chevron-left me-4"></i> แก้ไขประเภทผู้ใช้</a></div>
+                </nav>
+                <%-include('include/navigator')%>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-users-cog me-1"></i> แก้ไขข้อมูลผู้ใช้</h2>
+                        <form action="/editUserType" method="post">
+                            <input type="hidden" name="id" value="<%=row.id%>">
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" placeholder="กรอกชื่อประเภท" id="name" name="name" value="<%=row.name%>" required>
+                                    <label for="name">ชื่อประเภท *</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" placeholder="permission" id="permission" name="permission" value="<%=row.permission%>" required>
+                                    <label for="name">สิทธิ์ผู้ใช้ *</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกการเปลี่ยนแปลง</button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <%-include('include/footer')%>
+    </body>
+</html>

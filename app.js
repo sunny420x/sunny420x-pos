@@ -50,7 +50,7 @@ function initAccessToken(token) {
         const username = token.split(':')[0]
         const password = token.split(':')[1]
 
-        db.query(`SELECT u.id, u.username, u.full_name, ut.name as type, u.type as type_id FROM users as u JOIN user_types as ut ON ut.id = u.type 
+        db.query(`SELECT u.id, u.username, u.full_name, ut.name as type, u.type as type_id, ut.permission FROM users as u JOIN user_types as ut ON ut.id = u.type 
              WHERE u.username = ? AND u.password = ?`, [username,password], (err,result) => {
             if(err) throw err;
             if(result.length == 1) {
@@ -204,6 +204,15 @@ function getTotalCustomers() {
     })
 }
 
+function getUserTypes() {
+    return new Promise((resolve) => {
+        db.query(`SELECT * FROM user_types ORDER BY id ASC`, (err, result) => {
+            if(err) throw err;
+            resolve(result)
+        })
+    })
+}
+
 app.get("/", (req,res) => {
     if(req.cookies.access_token == undefined) {
         res.redirect('/login')
@@ -215,6 +224,7 @@ app.get("/", (req,res) => {
                     getProductSellingChart().then(productSellingChart => {
                         getTotalCustomers().then(total_customers => {
                                 res.render("home", {
+                                    user_data:user_data,
                                     total_customers: total_customers[0],
                                     productSellingChart:productSellingChart,
                                     expired_products:expired_products,
@@ -237,12 +247,18 @@ app.get("/customers", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                getCustomers().then(customers => {
-                    res.render('customers', {
-                        customers:customers,
-                        Helper:Helper
+                if(user_data[0].permission.split(',').includes('customers')) {
+                    getCustomers().then(customers => {
+                        res.render('customers', {
+                            user_data:user_data,
+                            customers:customers,
+                            Helper:Helper
+                        })
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -255,13 +271,19 @@ app.get("/editCustomer/:id", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const id = req.params.id
-                db.query("SELECT * FROM customers WHERE id = ?", [id], (err, customer) => {
-                    if(err) throw err;
-                    res.render('edit_customer', {
-                        customer:customer[0]
+                if(user_data[0].permission.split(',').includes('customers')) {
+                    const id = req.params.id
+                    db.query("SELECT * FROM customers WHERE id = ?", [id], (err, customer) => {
+                        if(err) throw err;
+                        res.render('edit_customer', {
+                            user_data:user_data,
+                            customer:customer[0]
+                        })
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -274,23 +296,28 @@ app.post("/editCustomer", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const id = req.body.id
-                const first_name = req.body.first_name
-                const last_name = req.body.last_name
-                const card_id = req.body.card_id
-                const address = req.body.address
-                const phone_number = req.body.phone_number
-                const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
-            
-                db.query("UPDATE customers SET first_name = ?, last_name = ?, card_id = ?, address = ?, phone_number = ?, updated_at = ? WHERE id = ?", 
-                    [first_name, last_name, card_id, address, phone_number, updated_at, id], (err) => {
-                    if(err) {
-                        throw err;
-                    } else {
-                        res.cookie('alert', 'success')
-                        res.redirect('/editCustomer/'+id)
-                    }
-                })
+                if(user_data[0].permission.split(',').includes('customers')) {
+                    const id = req.body.id
+                    const first_name = req.body.first_name
+                    const last_name = req.body.last_name
+                    const card_id = req.body.card_id
+                    const address = req.body.address
+                    const phone_number = req.body.phone_number
+                    const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
+                
+                    db.query("UPDATE customers SET first_name = ?, last_name = ?, card_id = ?, address = ?, phone_number = ?, updated_at = ? WHERE id = ?", 
+                        [first_name, last_name, card_id, address, phone_number, updated_at, id], (err) => {
+                        if(err) {
+                            throw err;
+                        } else {
+                            res.cookie('alert', 'success')
+                            res.redirect('/editCustomer/'+id)
+                        }
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -303,8 +330,14 @@ app.get("/addCustomer", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                res.render("add_customer", {
-                })
+                if(user_data[0].permission.split(',').includes('customers')) {
+                    res.render("add_customer", {
+                        user_data:user_data
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -317,22 +350,27 @@ app.post("/addCustomer", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const first_name = req.body.first_name
-                const last_name = req.body.last_name
-                const card_id = req.body.card_id
-                const address = req.body.address
-                const phone_number = req.body.phone_number
-                const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
-            
-                db.query("INSERT INTO customers(first_name, last_name, card_id, address, phone_number, created_at) VALUES(?,?,?,?,?,?)", 
-                    [first_name, last_name, card_id, address, phone_number, created_at], (err) => {
-                    if(err) {
-                        throw err;
-                    } else {
-                        res.cookie('alert', 'addSuccess')
-                        res.redirect('/addCustomer')
-                    }
-                })
+                if(user_data[0].permission.split(',').includes('customers')) {
+                    const first_name = req.body.first_name
+                    const last_name = req.body.last_name
+                    const card_id = req.body.card_id
+                    const address = req.body.address
+                    const phone_number = req.body.phone_number
+                    const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
+                
+                    db.query("INSERT INTO customers(first_name, last_name, card_id, address, phone_number, created_at) VALUES(?,?,?,?,?,?)", 
+                        [first_name, last_name, card_id, address, phone_number, created_at], (err) => {
+                        if(err) {
+                            throw err;
+                        } else {
+                            res.cookie('alert', 'addSuccess')
+                            res.redirect('/addCustomer')
+                        }
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -345,14 +383,19 @@ app.get("/deleteCustomer/:id", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const id = req.params.id
+                if(user_data[0].permission.split(',').includes('customers')) {
+                    const id = req.params.id
 
-                db.query("DELETE FROM customers WHERE id = ?", [id], (err) => {
-                    if(err) throw err;
-                    res.cookie('alert', 'deleteSuccess')
-                    res.redirect('/customers')
-                    res.end()
-                })
+                    db.query("DELETE FROM customers WHERE id = ?", [id], (err) => {
+                        if(err) throw err;
+                        res.cookie('alert', 'deleteSuccess')
+                        res.redirect('/customers')
+                        res.end()
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -365,16 +408,22 @@ app.get("/products_stock", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                getProductTypes().then(product_types => {
-                    getCustomers().then(customers => {
-                        res.render('products_stock', {
-                            product_types:product_types,
-                            customers:customers,
-                            Helper:Helper
+                if(user_data[0].permission.split(',').includes('products')) {
+                    getProductTypes().then(product_types => {
+                        getCustomers().then(customers => {
+                            res.render('products_stock', {
+                                user_data:user_data,
+                                product_types:product_types,
+                                customers:customers,
+                                Helper:Helper
+                            })
+                            res.end()
                         })
-                        res.end()
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -445,18 +494,23 @@ app.get("/products_stock/:type/:name", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const name = req.params.name
-                const type = req.params.type
-                getProductTypes().then(product_types => {
-                    getProductsStockByTypeAndName(type, name).then((products_stock) => {
-                        res.render('products_stock_detail', {
-                            products_stock:products_stock,
-                            product_types:product_types,
-                            moment:moment
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const name = req.params.name
+                    const type = req.params.type
+                    getProductTypes().then(product_types => {
+                        getProductsStockByTypeAndName(type, name).then((products_stock) => {
+                            res.render('products_stock_detail', {
+                                products_stock:products_stock,
+                                product_types:product_types,
+                                moment:moment
+                            })
+                            res.end()
                         })
-                        res.end()
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -507,20 +561,25 @@ app.post("/addProductStock", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const name = req.body.name
-                const type = req.body.type
-                const amount = req.body.amount
-                const price = req.body.price
-                const expired_date = req.body.expired_date || null
-                const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
-
-                addProductStock(name,type,price,expired_date,created_at,amount).then((result) => {
-                    if(result == true) {
-                        res.status(200).json({ success: true, message: 'Insert products successful!' });
-                    } else {
-                        res.status(500).json({ error: result.code });
-                    }
-                })
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const name = req.body.name
+                    const type = req.body.type
+                    const amount = req.body.amount
+                    const price = req.body.price
+                    const expired_date = req.body.expired_date || null
+                    const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
+    
+                    addProductStock(name,type,price,expired_date,created_at,amount).then((result) => {
+                        if(result == true) {
+                            res.status(200).json({ success: true, message: 'Insert products successful!' });
+                        } else {
+                            res.status(500).json({ error: result.code });
+                        }
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -533,93 +592,98 @@ app.post('/sellProduct', (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const cart = req.body.cart
-                const customer = req.body.customer === "-" ? null : req.body.customer;
-                const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
-                
-                async function processCart() {
-                    try {
-                        // Get the last billing ID
-                        const lastBillingResult = await new Promise((resolve, reject) => {
-                            db.query(
-                                "SELECT billing_id FROM transaction WHERE billing_id IS NOT NULL ORDER BY id DESC LIMIT 1",
-                                (err, result) => (err ? reject(err) : resolve(result))
-                            );
-                        });
-                
-                        let billing_id = 1; // Default to 1 if no previous billing ID exists
-                        if (lastBillingResult.length > 0) {
-                            billing_id = parseInt(lastBillingResult[0].billing_id) + 1;
-                        }
-                
-                        // First, check if enough products are available in the inventory
-                        for (let i = 0; i < cart.length; i++) {
-                            const { product_type, product_name, product_price, amount } = cart[i];
-                
-                            // Check the available quantity of the product
-                            const availableProductResult = await new Promise((resolve, reject) => {
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const cart = req.body.cart
+                    const customer = req.body.customer === "-" ? null : req.body.customer;
+                    const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
+                    
+                    async function processCart() {
+                        try {
+                            // Get the last billing ID
+                            const lastBillingResult = await new Promise((resolve, reject) => {
                                 db.query(
-                                    "SELECT COUNT(*) AS available_count FROM products WHERE is_sold = 0 AND type = ? AND name = ? AND price = ?",
-                                    [product_type, product_name, product_price],
+                                    "SELECT billing_id FROM transaction WHERE billing_id IS NOT NULL ORDER BY id DESC LIMIT 1",
                                     (err, result) => (err ? reject(err) : resolve(result))
                                 );
                             });
-                
-                            const availableCount = availableProductResult[0].available_count;
-                
-                            // If there aren't enough products available, throw an error
-                            if (availableCount < amount) {
-                                throw new Error(`สินค้า: ${product_name} มีไม่เพียงพอสำหรับคำสั่งซื้อนี้`);
+                    
+                            let billing_id = 1; // Default to 1 if no previous billing ID exists
+                            if (lastBillingResult.length > 0) {
+                                billing_id = parseInt(lastBillingResult[0].billing_id) + 1;
                             }
-                
-                            // If enough stock is available, proceed with the transaction
-                            for (let j = 0; j < amount; j++) {
-                                // Select product ID
-                                const productResult = await new Promise((resolve, reject) => {
+                    
+                            // First, check if enough products are available in the inventory
+                            for (let i = 0; i < cart.length; i++) {
+                                const { product_type, product_name, product_price, amount } = cart[i];
+                    
+                                // Check the available quantity of the product
+                                const availableProductResult = await new Promise((resolve, reject) => {
                                     db.query(
-                                        "SELECT id FROM products WHERE is_sold = 0 AND type = ? AND name = ? AND price = ? LIMIT 1",
+                                        "SELECT COUNT(*) AS available_count FROM products WHERE is_sold = 0 AND type = ? AND name = ? AND price = ?",
                                         [product_type, product_name, product_price],
                                         (err, result) => (err ? reject(err) : resolve(result))
                                     );
                                 });
-                
-                                if (productResult.length === 0) {
-                                    throw new Error("สินค้าหมด");
+                    
+                                const availableCount = availableProductResult[0].available_count;
+                    
+                                // If there aren't enough products available, throw an error
+                                if (availableCount < amount) {
+                                    throw new Error(`สินค้า: ${product_name} มีไม่เพียงพอสำหรับคำสั่งซื้อนี้`);
                                 }
-                
-                                const product_id = productResult[0].id;
-                
-                                // Mark product as sold
-                                await new Promise((resolve, reject) => {
-                                    db.query(
-                                        "UPDATE products SET is_sold = 1 WHERE id = ?",
-                                        [product_id],
-                                        (err) => (err ? reject(err) : resolve())
-                                    );
-                                });
-                
-                                // Insert transaction
-                                await new Promise((resolve, reject) => {
-                                    db.query(
-                                        "INSERT INTO transaction(type, name, value, stock_id, customer_id, billing_id, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                                        [product_type, product_name, -1, product_id, customer, billing_id, created_at],
-                                        (err) => (err ? reject(err) : resolve())
-                                    );
-                                });
+                    
+                                // If enough stock is available, proceed with the transaction
+                                for (let j = 0; j < amount; j++) {
+                                    // Select product ID
+                                    const productResult = await new Promise((resolve, reject) => {
+                                        db.query(
+                                            "SELECT id FROM products WHERE is_sold = 0 AND type = ? AND name = ? AND price = ? LIMIT 1",
+                                            [product_type, product_name, product_price],
+                                            (err, result) => (err ? reject(err) : resolve(result))
+                                        );
+                                    });
+                    
+                                    if (productResult.length === 0) {
+                                        throw new Error("สินค้าหมด");
+                                    }
+                    
+                                    const product_id = productResult[0].id;
+                    
+                                    // Mark product as sold
+                                    await new Promise((resolve, reject) => {
+                                        db.query(
+                                            "UPDATE products SET is_sold = 1 WHERE id = ?",
+                                            [product_id],
+                                            (err) => (err ? reject(err) : resolve())
+                                        );
+                                    });
+                    
+                                    // Insert transaction
+                                    await new Promise((resolve, reject) => {
+                                        db.query(
+                                            "INSERT INTO transaction(type, name, value, stock_id, customer_id, billing_id, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)",
+                                            [product_type, product_name, -1, product_id, customer, billing_id, created_at],
+                                            (err) => (err ? reject(err) : resolve())
+                                        );
+                                    });
+                                }
                             }
+                    
+                            // Send response when all transactions are complete
+                            res.status(200).json({ success: true, bill: `/billing/${billing_id}` });
+                    
+                        } catch (err) {
+                            console.error(err);
+                            res.status(500).json({ error: err.message });
                         }
-                
-                        // Send response when all transactions are complete
-                        res.status(200).json({ success: true, bill: `/billing/${billing_id}` });
-                
-                    } catch (err) {
-                        console.error(err);
-                        res.status(500).json({ error: err.message });
-                    }
-                }                
-                
-                // Call the async function
-                processCart();
+                    }                
+                    
+                    // Call the async function
+                    processCart();
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -660,10 +724,15 @@ app.get('/deleteProductByTransction/:id', (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const transaction_id = req.params.id
-                deleteProductsByTransaction(transaction_id).then(() => {
-                    res.redirect('/products_stock')
-                })
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const transaction_id = req.params.id
+                    deleteProductsByTransaction(transaction_id).then(() => {
+                        res.redirect('/products_stock')
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -676,52 +745,58 @@ app.get('/billing/:id', (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const id = req.params.id
+                if(user_data[0].permission.split(',').includes('bills')) {
+                    const id = req.params.id
 
-                db.query(`SELECT 
-                    t.name,
-                    sub.price,
-                    sub.total_price,
-                    sub.amount,
-                    c.first_name,
-                    c.last_name,
-                    c.id,
-                    t.created_at,
-                    c.phone_number
-                FROM 
-                    (
-                        SELECT 
-                            t.name,
-                            pd.price AS price,
-                            SUM(pd.price) AS total_price,
-                            COUNT(*) AS amount
-                        FROM 
-                            transaction AS t
-                        JOIN 
-                            products AS pd ON pd.id = t.stock_id
-                        WHERE 
-                            t.billing_id = ?
-                        GROUP BY 
-                            t.name
-                    ) AS sub
-                JOIN 
-                    transaction AS t ON t.name = sub.name
-                JOIN 
-                    products AS pd ON pd.id = t.stock_id
-                LEFT JOIN 
-                    customers AS c ON c.id = t.customer_id
-                WHERE 
-                    t.billing_id = ?
-                GROUP BY 
-                    t.name, pd.price;
-                `, [id, id], (err, bill) => {
-                    if(err) throw err;
-                    res.render('billing', {
-                        bill:bill,
-                        moment:moment,
-                        Helper: Helper
+                    db.query(`SELECT 
+                        t.name,
+                        sub.price,
+                        sub.total_price,
+                        sub.amount,
+                        c.first_name,
+                        c.last_name,
+                        c.id,
+                        t.created_at,
+                        c.phone_number
+                    FROM 
+                        (
+                            SELECT 
+                                t.name,
+                                pd.price AS price,
+                                SUM(pd.price) AS total_price,
+                                COUNT(*) AS amount
+                            FROM 
+                                transaction AS t
+                            JOIN 
+                                products AS pd ON pd.id = t.stock_id
+                            WHERE 
+                                t.billing_id = ?
+                            GROUP BY 
+                                t.name
+                        ) AS sub
+                    JOIN 
+                        transaction AS t ON t.name = sub.name
+                    JOIN 
+                        products AS pd ON pd.id = t.stock_id
+                    LEFT JOIN 
+                        customers AS c ON c.id = t.customer_id
+                    WHERE 
+                        t.billing_id = ?
+                    GROUP BY 
+                        t.name, pd.price;
+                    `, [id, id], (err, bill) => {
+                        if(err) throw err;
+                        res.render('billing', {
+                            user_data:user_data,
+                            bill:bill,
+                            moment:moment,
+                            Helper: Helper
+                        })
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -734,16 +809,22 @@ app.get("/billingHistories", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                let customer_id = req.query.customer_id !== undefined ? req.query.customer_id : 'all';
-                getCustomers().then(owners => {
-                    getAllBilling().then(bill => {
-                        res.render('billing_histories', {
-                            bill:bill,
-                            owners:owners,
-                            customer_id:customer_id
+                if(user_data[0].permission.split(',').includes('bills')) {
+                    let customer_id = req.query.customer_id !== undefined ? req.query.customer_id : 'all';
+                    getCustomers().then(owners => {
+                        getAllBilling().then(bill => {
+                            res.render('billing_histories', {
+                                user_data:user_data,
+                                bill:bill,
+                                owners:owners,
+                                customer_id:customer_id
+                            })
                         })
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -775,17 +856,22 @@ app.get("/deleteBill/:id", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const id = req.params.id
+                if(user_data[0].permission.split(',').includes('bills')) {
+                    const id = req.params.id
 
-                db.query("UPDATE products SET is_sold = 0 WHERE id IN (SELECT stock_id FROM transaction WHERE billing_id = ?)", [id], (err) => {
-                    if(err) throw err;
-                    db.query("DELETE FROM transaction WHERE billing_id = ?", [id], (err) => {
+                    db.query("UPDATE products SET is_sold = 0 WHERE id IN (SELECT stock_id FROM transaction WHERE billing_id = ?)", [id], (err) => {
                         if(err) throw err;
-                        res.cookie('alert', 'deleteSuccess')
-                        res.redirect('/billingHistories')
-                        res.end()
+                        db.query("DELETE FROM transaction WHERE billing_id = ?", [id], (err) => {
+                            if(err) throw err;
+                            res.cookie('alert', 'deleteSuccess')
+                            res.redirect('/billingHistories')
+                            res.end()
+                        })
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -798,20 +884,26 @@ app.get("/editProduct/:transaction", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const transaction = req.params.transaction
-                db.query(`SELECT pd.name, pd.type, t.expired_date, pd.price, pd.transaction_id, t.created_at, pd.updated_at  
-                    FROM products as pd JOIN transaction as t ON t.id = pd.transaction_id 
-                    WHERE pd.transaction_id = ? GROUP BY name, type`, [transaction], (err, stock) => {
-                    if(err) throw err;
-                    getProductTypes().then((product_types) => {
-                        res.render("edit_product", {
-                            stock:stock[0],
-                            product_types:product_types,
-                            moment:moment
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const transaction = req.params.transaction
+                    db.query(`SELECT pd.name, pd.type, t.expired_date, pd.price, pd.transaction_id, t.created_at, pd.updated_at  
+                        FROM products as pd JOIN transaction as t ON t.id = pd.transaction_id 
+                        WHERE pd.transaction_id = ? GROUP BY name, type`, [transaction], (err, stock) => {
+                        if(err) throw err;
+                        getProductTypes().then((product_types) => {
+                            res.render("edit_product", {
+                                user_data:user_data,
+                                stock:stock[0],
+                                product_types:product_types,
+                                moment:moment
+                            })
+                            res.end()
                         })
-                        res.end()
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -824,21 +916,26 @@ app.post("/editProduct", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const type = req.body.type
-                const name = req.body.name
-                const price = req.body.price
-                const expired_date = req.body.expired_date || null
-                const transaction_id = req.body.transaction_id
-                const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
-
-                db.query("UPDATE products SET type = ?, name = ?, price = ?, updated_at = ? WHERE transaction_id = ?", [type, name, price, updated_at, transaction_id], (err) => {
-                    if(err) throw err;
-                    db.query("UPDATE transaction SET type = ?, name = ?, expired_date = ? WHERE id = ?", [type, name, expired_date, transaction_id], (err) => {
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const type = req.body.type
+                    const name = req.body.name
+                    const price = req.body.price
+                    const expired_date = req.body.expired_date || null
+                    const transaction_id = req.body.transaction_id
+                    const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
+    
+                    db.query("UPDATE products SET type = ?, name = ?, price = ?, updated_at = ? WHERE transaction_id = ?", [type, name, price, updated_at, transaction_id], (err) => {
                         if(err) throw err;
-                        res.cookie('alert', 'success')
-                        res.redirect('/editProduct/'+transaction_id)
+                        db.query("UPDATE transaction SET type = ?, name = ?, expired_date = ? WHERE id = ?", [type, name, expired_date, transaction_id], (err) => {
+                            if(err) throw err;
+                            res.cookie('alert', 'success')
+                            res.redirect('/editProduct/'+transaction_id)
+                        })
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -851,11 +948,17 @@ app.get("/product_types", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                getProductTypes().then(product_types => {
-                    res.render('product_types', {
-                        product_types:product_types
+                if(user_data[0].permission.split(',').includes('products')) {
+                    getProductTypes().then(product_types => {
+                        res.render('product_types', {
+                            user_data:user_data,
+                            product_types:product_types
+                        })
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -868,12 +971,17 @@ app.post("/addProductType", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const name = req.body.name
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const name = req.body.name
 
-                db.query("INSERT INTO product_types(name) VALUES(?)", [name], (err) => {
-                    if(err) res.status(500).json({ error: err.code });
-                    res.status(200).json({ success: true, message: 'Insert product type successful!' });
-                })
+                    db.query("INSERT INTO product_types(name) VALUES(?)", [name], (err) => {
+                        if(err) res.status(500).json({ error: err.code });
+                        res.status(200).json({ success: true, message: 'Insert product type successful!' });
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -886,14 +994,19 @@ app.get("/deleteProductType/:id", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const id = req.params.id
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const id = req.params.id
 
-                db.query("DELETE FROM product_types WHERE id = ?", [id], (err) => {
-                    if(err) throw err;
-                    res.cookie('alert', 'deleteSuccess')
-                    res.redirect('/product_types')
-                    res.end()
-                })
+                    db.query("DELETE FROM product_types WHERE id = ?", [id], (err) => {
+                        if(err) throw err;
+                        res.cookie('alert', 'deleteSuccess')
+                        res.redirect('/product_types')
+                        res.end()
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -906,12 +1019,18 @@ app.get("/editProductType/:id", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                db.query("SELECT * FROM product_types WHERE id = ?", [req.params.id], (err,result) => {
-                    if(err) throw err;
-                    res.render('edit_product_type', {
-                        row:result[0]
+                if(user_data[0].permission.split(',').includes('products')) {
+                    db.query("SELECT * FROM product_types WHERE id = ?", [req.params.id], (err,result) => {
+                        if(err) throw err;
+                        res.render('edit_product_type', {
+                            user_data:user_data,
+                            row:result[0]
+                        })
                     })
-                })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -924,14 +1043,142 @@ app.post("/editProductType", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                const id = req.body.id
-                const name = req.body.name
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const id = req.body.id
+                    const name = req.body.name
+    
+                    db.query("UPDATE product_types SET name = ? WHERE id = ?", [name, id], (err) => {
+                        if(err) throw err;
+                        res.cookie('alert', 'success')
+                        res.redirect('/editProductType/'+id)
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
+            }
+        })
+    }
+})
 
-                db.query("UPDATE product_types SET name = ? WHERE id = ?", [name, id], (err) => {
-                    if(err) throw err;
-                    res.cookie('alert', 'success')
-                    res.redirect('/editProductType/'+id)
-                })
+//UserTypes
+app.get("/user_types", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('users')) {
+                    getUserTypes().then(user_types => {
+                        res.render('user_types', {
+                            user_data:user_data,
+                            user_types:user_types
+                        })
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
+            }
+        })
+    }
+})
+
+app.post("/addUserType", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('users')) {
+                    const name = req.body.name
+                    const permission = req.body.permission
+    
+                    db.query("INSERT INTO user_types(name,permission) VALUES(?,?)", [name,permission], (err) => {
+                        if(err) res.status(500).json({ error: err.code });
+                        res.status(200).json({ success: true, message: 'Insert user type successful!' });
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
+            }
+        })
+    }
+})
+
+app.get("/deleteUserType/:id", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('users')) {
+                    const id = req.params.id
+
+                    db.query("DELETE FROM user_types WHERE id = ?", [id], (err) => {
+                        if(err) throw err;
+                        res.cookie('alert', 'deleteSuccess')
+                        res.redirect('/user_types')
+                        res.end()
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
+            }
+        })
+    }
+})
+
+app.get("/editUserType/:id", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('users')) {
+                    db.query("SELECT * FROM user_types WHERE id = ?", [req.params.id], (err,result) => {
+                        if(err) throw err;
+                        res.render('edit_user_type', {
+                            user_data:user_data,
+                            row:result[0]
+                        })
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
+            }
+        })
+    }
+})
+
+app.post("/editUserType", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('users')) {
+                    const id = req.body.id
+                    const name = req.body.name
+                    const permission = req.body.permission
+    
+                    db.query("UPDATE user_types SET name = ?, permission = ? WHERE id = ?", [name, permission, id], (err) => {
+                        if(err) throw err;
+                        res.cookie('alert', 'success')
+                        res.redirect('/editUserType/'+id)
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect("back")
+                }
             }
         })
     }
@@ -1029,7 +1276,7 @@ app.get("/loginHistories", (req,res) => {
         res.end()
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1 && user_data[0].type == 0) {
+            if(user_data[0].permission.split(',').includes('users')) {
                 const id = req.params.id
                 db.query('SELECT u.full_name, u.username, h.time, h.ip_address FROM login_history as h JOIN users as u ON u.id = h.user_id ORDER BY h.time DESC', [id], (err, history) => {
                     if(err) throw err;
@@ -1053,7 +1300,7 @@ app.get("/Users", (req,res) => {
         res.end()
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1 && user_data[0].type == '0') {
+            if(user_data[0].permission.split(',').includes('users')) {
                 db.query("SELECT id, username, full_name, type FROM users ORDER BY type ASC", (err,users) => {
                     if(err) throw err;
                     res.render('Users/users', {
@@ -1075,7 +1322,7 @@ app.get("/editUser/:id", (req,res) => {
         res.end()
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1 && user_data[0].type == '0') {
+            if(user_data[0].permission.split(',').includes('users')) {
                 const id = req.params.id
                 db.query("SELECT id, username, full_name, type FROM users WHERE id = ?", [id], (err,user) => {
                     if(err) throw err;
@@ -1098,7 +1345,7 @@ app.post("/editUser", (req,res) => {
         res.end()
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1 && user_data[0].type == '0') {
+            if(user_data[0].permission.split(',').includes('users')) {
                 const id = req.body.id
                 const username = req.body.username
                 const type = req.body.type
@@ -1125,7 +1372,7 @@ app.get("/addUser", (req,res) => {
         res.end()
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1 && user_data[0].type == '0') {
+            if(user_data[0].permission.split(',').includes('users')) {
                 res.render('Users/add_user', {
                     user_data:user_data
                 })
@@ -1143,7 +1390,7 @@ app.post("/addUser", (req,res) => {
         res.end()
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1 && user_data[0].type == '0') {
+            if(user_data[0].permission.split(',').includes('users')) {
                 const username = req.body.username
                 const password = createHash('sha256').update(req.body.password).digest('base64');
                 const type = req.body.type
@@ -1170,7 +1417,7 @@ app.get("/deleteUser/:id", (req,res) => {
         res.end()
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1 && user_data[0].type == '0') {
+            if(user_data[0].permission.split(',').includes('users')) {
                 const id = req.params.id
 
                 db.query("DELETE FROM users WHERE id = ?", [id], (err) => {

@@ -19,6 +19,7 @@
         </a>
     </li>
 </ul>
+<%if(user_data[0].permission.split(',').includes('customers')) {%>
 <ul class="nav flex-column">
     <li class="nav-item">
         <h5 class="ms-2 py-2 border-bottom border-2">ลูกค้า</h5>
@@ -29,6 +30,7 @@
         </a>
     </li>
 </ul>
+<% } %>
 <ul class="nav flex-column">
     <li class="nav-item">
         <h5 class="ms-2 py-2 border-bottom border-2">สินค้า</h5>

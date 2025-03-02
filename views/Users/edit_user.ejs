@@ -33,8 +33,9 @@
                                 <div class="form-floating">
                                     <select class="form-select" name="type">
                                         <option selected value="">เลือกประเภทของผู้ใช้</option>
-                                        <option value="0" <%if(user.type == '0') {%>selected<%}%>>ผู้ดูแล</option>
-                                        <option value="1" <%if(user.type == '1') {%>selected<%}%>>พนักงาน</option>
+                                        <%user_types.forEach(row => {%>
+                                        <option value="<%=row.id%>" <%if(user.type == row.id) {%>selected<%}%>><%=row.name%></option>
+                                        <%})%>
                                     </select>
                                     <label for="type">ประเภทของผู้ใช้: </label>
                                 </div>

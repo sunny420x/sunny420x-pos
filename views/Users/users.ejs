@@ -29,7 +29,7 @@
                                         <tr onclick="openLink('/editUser/<%=user.id%>')" style="cursor: pointer;">
                                             <td><%=user.username%></td>
                                             <td><%=user.full_name%></td>
-                                            <td><%if(user.type == '0') {%><span class="badge bg-danger">ผู้ดูแล</span><%} else {%><span class="badge bg-primary">พนักงาน</span><%}%></td>
+                                            <td><span class="badge bg-secondary"><%=user.type%></span></td>
                                         </tr>
                                     <%})%>
                                 </tbody>

@@ -235,6 +235,8 @@ app.get("/", (req,res) => {
                         })
                     })
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -257,8 +259,10 @@ app.get("/customers", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -282,8 +286,10 @@ app.get("/editCustomer/:id", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -316,8 +322,10 @@ app.post("/editCustomer", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -336,8 +344,10 @@ app.get("/addCustomer", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -369,8 +379,10 @@ app.post("/addCustomer", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -394,8 +406,10 @@ app.get("/deleteCustomer/:id", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -422,8 +436,10 @@ app.get("/products_stock", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -443,6 +459,8 @@ app.get("/getSellProducts", (req,res) => {
                     })
                     res.end()
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -462,6 +480,8 @@ app.get("/getProductsHistoriesByType", (req,res) => {
                     })
                     res.end()
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -482,6 +502,8 @@ app.get("/getProductStock", (req,res) => {
                     })
                     res.end()
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -510,8 +532,10 @@ app.get("/products_stock/:type/:name", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -579,8 +603,10 @@ app.post("/addProductStock", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -683,8 +709,10 @@ app.post('/sellProduct', (req,res) => {
                     processCart();
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -732,8 +760,10 @@ app.get('/deleteProductByTransction/:id', (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -796,8 +826,10 @@ app.get('/billing/:id', (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -824,8 +856,10 @@ app.get("/billingHistories", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -845,6 +879,8 @@ app.get("/getBillingHistoriesByCustomer", (req,res) => {
                         moment:moment
                     })
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -871,8 +907,10 @@ app.get("/deleteBill/:id", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -903,8 +941,10 @@ app.get("/editProduct/:transaction", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -935,8 +975,10 @@ app.post("/editProduct", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -958,8 +1000,10 @@ app.get("/product_types", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -981,8 +1025,10 @@ app.post("/addProductType", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1006,8 +1052,10 @@ app.get("/deleteProductType/:id", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1030,8 +1078,10 @@ app.get("/editProductType/:id", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1055,8 +1105,10 @@ app.post("/editProductType", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1079,8 +1131,10 @@ app.get("/user_types", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1103,8 +1157,10 @@ app.post("/addUserType", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1128,8 +1184,10 @@ app.get("/deleteUserType/:id", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1152,8 +1210,10 @@ app.get("/editUserType/:id", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1178,8 +1238,10 @@ app.post("/editUserType", (req,res) => {
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1266,6 +1328,8 @@ app.get("/settings", (req,res) => {
                 res.render('settings', {
                     user_data:user_data
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1289,7 +1353,7 @@ app.get("/loginHistories", (req,res) => {
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
-                res.redirect("back")
+                res.redirect(req.get("Referrer"))
             }
         })
     }
@@ -1302,7 +1366,7 @@ app.get("/Users", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data[0].permission.split(',').includes('users')) {
-                db.query("SELECT id, username, full_name, type FROM users ORDER BY type ASC", (err,users) => {
+                db.query("SELECT u.id, u.username, u.full_name, ut.name as type FROM users as u JOIN user_types as ut ON ut.id = u.type ORDER BY u.type ASC", (err,users) => {
                     if(err) throw err;
                     res.render('Users/users', {
                         user_data:user_data,
@@ -1311,7 +1375,7 @@ app.get("/Users", (req,res) => {
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
-                res.redirect("back")
+                res.redirect(req.get("Referrer"))
             }
         })
     }
@@ -1324,17 +1388,20 @@ app.get("/editUser/:id", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data[0].permission.split(',').includes('users')) {
-                const id = req.params.id
-                db.query("SELECT id, username, full_name, type FROM users WHERE id = ?", [id], (err,user) => {
-                    if(err) throw err;
-                    res.render('Users/edit_user', {
-                        user_data:user_data,
-                        user:user[0]
+                getUserTypes().then(user_types => {
+                    const id = req.params.id
+                    db.query("SELECT id, username, full_name, type FROM users WHERE id = ?", [id], (err,user) => {
+                        if(err) throw err;
+                        res.render('Users/edit_user', {
+                            user_data:user_data,
+                            user_types:user_types,
+                            user:user[0]
+                        })
                     })
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
-                res.redirect("back")
+                res.redirect(req.get("Referrer"))
             }
         })
     }
@@ -1361,7 +1428,7 @@ app.post("/editUser", (req,res) => {
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
-                res.redirect("back")
+                res.redirect(req.get("Referrer"))
             }
         })
     }
@@ -1374,12 +1441,15 @@ app.get("/addUser", (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data[0].permission.split(',').includes('users')) {
-                res.render('Users/add_user', {
-                    user_data:user_data
+                getUserTypes().then(user_types => {
+                    res.render('Users/add_user', {
+                        user_data:user_data,
+                        user_types:user_types
+                    })
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
-                res.redirect("back")
+                res.redirect(req.get("Referrer"))
             }
         })
     }
@@ -1406,7 +1476,7 @@ app.post("/addUser", (req,res) => {
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
-                res.redirect("back")
+                res.redirect(req.get("Referrer"))
             }
         })
     }
@@ -1428,7 +1498,7 @@ app.get("/deleteUser/:id", (req,res) => {
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
-                res.redirect("back")
+                res.redirect(req.get("Referrer"))
             }
         })
     }
@@ -1444,6 +1514,8 @@ app.get('/editProfile', (req,res) => {
                 res.render('Users/edit_profile', {
                     user_data:user_data
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1470,6 +1542,8 @@ app.post('/editProfile', (req,res) => {
                     res.cookie('alert', 'success')
                     res.redirect('/editProfile')
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1485,6 +1559,8 @@ app.get('/changePassword', (req,res) => {
                 res.render('Users/change_password', {
                     user_data:user_data
                 })
+            } else {
+                res.redirect('/logout')
             }
         })
     }
@@ -1504,7 +1580,7 @@ app.post("/changePassword", (req,res) => {
 
                 if(new_password != confirm_password) {
                     res.cookie('alert', 'passwordNotMatch')
-                    res.redirect("back")
+                    res.redirect(req.get("Referrer"))
                 }
 
                 old_password = createHash('sha256').update(old_password).digest('base64');
@@ -1525,8 +1601,7 @@ app.post("/changePassword", (req,res) => {
                 })
 
             } else {
-                res.cookie('alert', 'permissionDenial')
-                res.redirect("/settings")
+                res.redirect('/logout')
             }
         })
     }

@@ -13,3 +13,12 @@ body {
     width: 100%;
     min-width: max-content;
 }
+
+a.list-group-item {
+    transition: ease-in-out .12s;
+}
+
+a.list-group-item:hover {
+    background: #dddbe8a6;
+    border-radius: 4px;
+}

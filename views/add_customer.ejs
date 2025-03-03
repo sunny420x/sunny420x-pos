@@ -21,20 +21,20 @@
                                     <div class="mb-2 col">
                                         <div class="form-floating">
                                             <input type="text" class="form-control" placeholder="กรอกชื่อ" id="first_name" name="first_name" required>
-                                            <label for="address">ชื่อ</label>
+                                            <label for="address">ชื่อ *</label>
                                         </div>
                                     </div>
                                     <div class="mb-2 col">
                                         <div class="form-floating">
                                             <input type="text" class="form-control" placeholder="กรอกนามสกุล" id="last_name" name="last_name" required>
-                                            <label for="address">นามสกุล</label>
+                                            <label for="address">นามสกุล *</label>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="mb-2">
                                     <div class="form-floating">
                                         <input type="number" class="form-control" placeholder="กรอกเลขบัตรประจำตัวประชาชน" id="card_id" name="card_id" required>
-                                        <label for="address">เลขบัตรประจำตัวประชาชน</label>
+                                        <label for="address">เลขบัตรประจำตัวประชาชน *</label>
                                     </div>
                                 </div>
                                 <div class="mb-2">
@@ -43,10 +43,46 @@
                                         <label for="address">เบอร์โทรศัพท์</label>
                                     </div>
                                 </div>
-                                <div class="mb-2">
-                                    <div class="form-floating">
-                                        <textarea class="form-control" placeholder="กรอกที่อยู่ตามบัตรประชาชน" id="address" name="address" style="height: 100px;" required></textarea>
-                                        <label for="address">ที่อยู่</label>
+                                <div class="mb-2 row">
+                                    <div class="col">
+                                        <label for="home_id">บ้านเลขที่ *</label>
+                                        <input type="text" class="form-control" id="home_id" name="home_id" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="moo">หมู่ *</label>
+                                        <input type="text" class="form-control" id="moo" name="moo" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="village">หมู่บ้าน *</label>
+                                        <input type="text" class="form-control" id="village" name="village" required>
+                                    </div>
+                                </div>
+                                <div class="mb-2 row">
+                                    <div class="col">
+                                        <label for="soi">ซอย *</label>
+                                        <input type="text" class="form-control" id="soi" name="soi" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="street">ถนน *</label>
+                                        <input type="text" class="form-control" id="street" name="street" required>
+                                    </div>
+                                </div>
+                                <div class="mb-2 row">
+                                    <div class="col">
+                                        <label for="sub_district">ตำบล *</label>
+                                        <input type="text" class="form-control" id="sub_district" name="sub_district" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="district">อำเภอ *</label>
+                                        <input type="text" class="form-control" id="district" name="district" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="state">จังหวัด *</label>
+                                        <input type="text" class="form-control" id="state" name="state" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="zip">รหัสไปรษณีย์ *</label>
+                                        <input type="text" class="form-control" id="zip" name="zip" required>
                                     </div>
                                 </div>
                                 <div class="mt-3">

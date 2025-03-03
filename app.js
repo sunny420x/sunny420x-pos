@@ -312,12 +312,26 @@ app.post("/editCustomer", (req,res) => {
                     const first_name = req.body.first_name
                     const last_name = req.body.last_name
                     const card_id = req.body.card_id
-                    const address = req.body.address
                     const phone_number = req.body.phone_number
+
+                    const home_id = req.body.home_id
+                    const moo = req.body.moo
+                    const village = req.body.village
+                    const soi = req.body.soi
+                    const street = req.body.street
+                    const sub_district = req.body.sub_district
+                    const district = req.body.district
+                    const state = req.body.state
+                    const zip = req.body.zip
+
                     const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
                 
-                    db.query("UPDATE customers SET first_name = ?, last_name = ?, card_id = ?, address = ?, phone_number = ?, updated_at = ? WHERE id = ?", 
-                        [first_name, last_name, card_id, address, phone_number, updated_at, id], (err) => {
+                    db.query(`UPDATE customers SET 
+                        first_name = ?, last_name = ?, card_id = ?, 
+                        home_id = ?, moo = ?, village = ?, soi = ?, 
+                        street = ?, sub_district = ?, district = ?, 
+                        state = ?, zip = ?, phone_number = ?, updated_at = ? WHERE id = ?`, 
+                        [first_name, last_name, card_id, home_id, moo, village, soi, street, sub_district, district, state, zip, phone_number, updated_at, id], (err) => {
                         if(err) {
                             throw err;
                         } else {
@@ -369,12 +383,22 @@ app.post("/addCustomer", (req,res) => {
                     const first_name = req.body.first_name
                     const last_name = req.body.last_name
                     const card_id = req.body.card_id
-                    const address = req.body.address
+
+                    const home_id = req.body.home_id
+                    const moo = req.body.moo
+                    const village = req.body.village
+                    const soi = req.body.soi
+                    const street = req.body.street
+                    const sub_district = req.body.sub_district
+                    const district = req.body.district
+                    const state = req.body.state
+                    const zip = req.body.zip
+
                     const phone_number = req.body.phone_number
                     const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
                 
-                    db.query("INSERT INTO customers(first_name, last_name, card_id, address, phone_number, created_at) VALUES(?,?,?,?,?,?)", 
-                        [first_name, last_name, card_id, address, phone_number, created_at], (err) => {
+                    db.query("INSERT INTO customers(first_name, last_name, card_id, home_id, moo, village, soi, street, sub_district, district, state, zip, phone_number, created_at) VALUES(?,?,?,?,?,?)", 
+                        [first_name, last_name, card_id, home_id, moo, village, soi, street, sub_district, district, state, zip, phone_number, created_at], (err) => {
                         if(err) {
                             throw err;
                         } else {

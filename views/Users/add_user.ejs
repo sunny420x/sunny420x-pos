@@ -14,7 +14,7 @@
                 </nav>
                 <div class="container mb-4 mt-2">
                     <div class="card p-4">
-                        <h2 class="mb-4"><i class="fa-solid fa-user-plus mx-1"></i> เพิ่มพนักงาน</h2>
+                        <h2 class="mb-4"><i class="fa-solid fa-user-plus mx-1"></i> เพิ่มผู้ใช้</h2>
                         <form action="" method="post">
                             <div class="mb-3">
                                 <div class="form-floating">
@@ -39,7 +39,7 @@
                                     <select class="form-select" name="type">
                                         <option selected value="">เลือกประเภทของผู้ใช้</option>
                                         <%user_types.forEach(row => {%>
-                                            <option value="<%=row.id%>">value="<%=row.name%>"</option>
+                                            <option value="<%=row.id%>"><%=row.name%></option>
                                         <%})%>
                                     </select>
                                     <label for="type">ประเภทของผู้ใช้: </label>

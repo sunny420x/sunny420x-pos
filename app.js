@@ -10,6 +10,8 @@ const { publicEncrypt, privateDecrypt, createHash, createDecipheriv, createCiphe
 const db = require('./database')
 const app = express()
 
+var app_verified = false;
+
 app.set('trust proxy', true);
 
 require('dotenv').config({ path: path.join(__dirname, '.env') });
@@ -214,6 +216,9 @@ function getUserTypes() {
 }
 
 app.get("/", (req,res) => {
+    if(!app_verified) {
+        checkCurrentURL(req)
+    }
     if(req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
@@ -1607,8 +1612,39 @@ app.post("/changePassword", (req,res) => {
     }
 })
 
+function checkCurrentURL(req) {
+    var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+
+    fetch(`https://softwares.sunny420x.com/LicenseVerifier/SunnyPOS/${encodeURIComponent(fullUrl)}`)
+    .then(res => {
+        if (!res.ok) {
+            return res.json().then(errorData => { throw new Error(errorData.error); });
+        }
+        return res.json();
+    })
+    .then(data => {
+        if(data.msg == 'no') {
+            console.log(`[-] ยืนยันการเป็นเจ้าของผลิตภัณฑ์ล้มเหลว สำหรับ URL: ${fullUrl} !`)
+        } else {
+            app_verified = true
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    }); 
+}
+
+app.get('/getURL', (req,res) => {
+    var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+
+    res.render('error', {
+        title: 'Developer options',
+        content: `Current URL: ${fullUrl}`
+    })
+})
+
 app.get('*', (req, res) => {
-    res.render('error', {title: "ไม่พบข้อมูล", content: "ลิงค์นี้อาจจะถูกย้าย หรือหมดอายุแล้ว โปรดตรวจสอบลิงค์ว่าถูกต้อง"})
+    res.render('error', {title: "พบข้อผิดพลาด: ไม่พบข้อมูล", content: "ลิงค์นี้อาจจะถูกย้าย หรือหมดอายุแล้ว โปรดตรวจสอบลิงค์ว่าถูกต้อง"})
     res.end()
 })
 

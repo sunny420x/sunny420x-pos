@@ -109,6 +109,54 @@ function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+function toggleEdit() {
+    if(editing) {
+        document.querySelectorAll('input').forEach(input => {
+            input.removeAttribute('readonly');
+        });
+        document.querySelectorAll('textarea').forEach(input => {
+            input.removeAttribute('readonly');
+        });
+        document.querySelectorAll('select').forEach(input => {
+            input.removeAttribute('readonly');
+        });
+        document.querySelectorAll('input[type=checkbox]').forEach(input => {
+            input.removeAttribute('readonly');
+        });
+        document.getElementById("save_btn").style.display = "block";
+        if(document.getElementById("toggle_btn")) {
+            document.getElementById("toggle_btn").style.display = "block";
+        }
+        editing = false
+
+        document.getElementById('editing_status').classList.remove('btn-success')
+        document.getElementById('editing_status').classList.add('btn-secondary')
+        document.getElementById('editing_status_text').innerHTML = "<i class='fa-solid fa-eye'></i>"
+    } else {
+        document.querySelectorAll('textarea').forEach(input => {
+            input.setAttribute('readonly', true);
+        });
+        document.querySelectorAll('input').forEach(input => {
+            input.setAttribute('readonly', true);
+        });
+        document.querySelectorAll('select').forEach(input => {
+            input.setAttribute('readonly', true);
+        });
+        document.querySelectorAll('input[type=checkbox]').forEach(input => {
+            input.setAttribute('readonly', true);
+        });
+        document.getElementById("save_btn").style.display = "none";
+        if(document.getElementById("toggle_btn")) {
+            document.getElementById("toggle_btn").style.display = "none";
+        }
+        editing = true
+
+        document.getElementById('editing_status').classList.remove('btn-secondary')
+        document.getElementById('editing_status').classList.add('btn-primary')
+        document.getElementById('editing_status_text').innerHTML = "<i class='fa-solid fa-pen-to-square'></i>"
+    }
+}
+
 function getRoute(route) {
     if(route != undefined) {
         return route.split('//')[1].split("/") || "/"
@@ -134,3 +182,7 @@ function initNavigatorItems() {
 }
 
 initNavigatorItems()
+
+function generateDiscountCode() {
+    return (Math.random() + 1).toString(36).substring(2).toUpperCase();
+}

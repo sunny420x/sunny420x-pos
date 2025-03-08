@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>รายชื่อลูกค้า | SunnyPOS</title>
+        <title>รายการส่วนลด | SunnyPOS</title>
         <%-include('include/head')%>
     </head>
     <body>
@@ -17,26 +17,28 @@
                 <%-include('include/navigator')%>
                 <div class="container my-4">
                     <div class="card p-4">
-                        <h2 class="mb-4"><i class="fa-solid fa-users me-1"></i> รายชื่อลูกค้า <button type="button" class="btn btn-primary btn-sm" onclick="openLink('/addCustomer')"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลลูกค้า</button></h2>
+                        <h2 class="mb-4"><i class="fa-solid fa-percentage me-1"></i> รายการส่วนลด <button type="button" class="btn btn-primary btn-sm" onclick="openLink('/addDiscount')"><i class="fa-solid fa-plus me-1"></i> เพิ่มส่วนลด</button></h2>
                         <div class="row">
                             <div class="table-responsive col">
                                 <table class="table">
                                     <thead class="table-light text-center">
                                         <tr>
                                             <th>#</th>
-                                            <th>ชื่อ-นามสกุล</th>
-                                            <th>เบอร์โทรศัพท์</th>
+                                            <th>โค้ดส่วนลด</th>
+                                            <th>(%) ส่วนลดร้อยละ</th>
+                                            <th>สถานะ</th>
                                             <th>จัดการ</th>
                                         </tr>
                                     </thead>
-                                    <% customers.forEach((row) => { %>
+                                    <% discounts.forEach((row) => { %>
                                         <tbody class="text-center">
                                             <tr>
                                                 <td><%=row.id%></td>
-                                                <td><%=row.first_name%> <%=row.last_name%></td>
-                                                <td><%=helper.ThaiPhoneNumber(row.phone_number)%></td>
+                                                <td><%=row.code%></td>
+                                                <td><%=row.amount%> %</td>
+                                                <td><%if(row.status == 0) {%><span class="badge bg-success">ยังไม่ถูกใช้งาน</span><%} else {%><span class="badge bg-danger">ใช้งานแล้ว</span><%}%></td>
                                                 <td>
-                                                    <button class="btn btn-primary" onclick="openLink('/customers/<%=row.id%>')"><i class="fa-solid fa-folder"></i></button>
+                                                    <button class="btn btn-primary" onclick="openLink('/discounts/<%=row.id%>')"><i class="fa-solid fa-folder"></i></button>
                                                     <button class="btn btn-danger" onclick="
                                                     Swal.fire({
                                                     title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
@@ -49,7 +51,7 @@
                                                     cancelButtonText: 'ย้อนกลับ',
                                                     }).then((result) => {
                                                     if (result.isConfirmed) {
-                                                        openLink('/deleteCustomer/<%=row.id%>')
+                                                        openLink('/deleteDiscount/<%=row.id%>')
                                                     }
                                                     });
                                                     "><i class="fa-solid fa-trash"></i></button>

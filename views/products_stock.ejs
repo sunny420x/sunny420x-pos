@@ -257,6 +257,12 @@
                             <label for="customer">ลูกค้า *</label>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" name="discount_code" id="discount_code" value="">
+                            <label for="amount">โค้ดส่วนลด *</label>
+                        </div>
+                    </div>
                     <button class="btn btn-primary" onclick="addProductToCart()">เพิ่มสินค้าชิ้นนี้</button>
                     <button class="btn btn-secondary" onclick="resetCart()">ล้างข้อมูล</button>
                 </div>
@@ -343,6 +349,7 @@
                     }
                     function sellProducts() {
                         let customer = document.getElementById('customer').value
+                        let discount_code = document.getElementById('discount_code').value || null
 
                         const options = {
                         method: 'POST',
@@ -351,7 +358,8 @@
                         },
                         body: JSON.stringify({
                             cart: cart,
-                            customer:customer
+                            customer:customer,
+                            discount_code:discount_code
                         })
                         };
 

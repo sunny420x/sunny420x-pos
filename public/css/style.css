@@ -23,6 +23,14 @@ a.list-group-item {
     border-radius: 4px;
 } */
 
+select[readonly] {
+    pointer-events: none;
+}
+
+input[type=checkbox][readonly] {
+    pointer-events: none;
+}
+
 a.list-group-item-action.active {
     background: #dddbe8a6;
     border-radius: 4px;

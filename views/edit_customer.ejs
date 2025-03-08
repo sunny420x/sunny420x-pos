@@ -6,34 +6,6 @@
     <body>
         <script>
             let editing = false
-
-            function toggleEdit() {
-                if(editing) {
-                    document.querySelectorAll('input').forEach(input => {
-                        input.removeAttribute('readonly');
-                    });
-                    document.querySelectorAll('textarea').forEach(input => {
-                        input.removeAttribute('readonly');
-                    });
-                    document.querySelectorAll('select').forEach(input => {
-                        input.removeAttribute('disabled');
-                    });
-                    document.getElementById("save_btn").style.display = "block";
-                    editing = false
-                } else {
-                    document.querySelectorAll('textarea').forEach(input => {
-                        input.setAttribute('readonly', true);
-                    });
-                    document.querySelectorAll('input').forEach(input => {
-                        input.setAttribute('readonly', true);
-                    });
-                    document.querySelectorAll('select').forEach(input => {
-                        input.setAttribute('disabled', true);
-                    });
-                    document.getElementById("save_btn").style.display = "none";
-                    editing = true
-                }
-            }
         </script>
         <div class="d-flex">
             <%-include('include/sidebar')%>
@@ -46,9 +18,9 @@
                 <div class="container mb-4 mt-2">
                     <div class="card p-4">
                         <h2 class="mb-4"><i class="fa-solid fa-user-cog me-1"></i> ข้อมูลลูกค้า
-                            <button class="btn btn-secondary btn-sm p-2" onclick="toggleEdit()"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn btn-secondary btn-sm p-2" id="editing_status" onclick="toggleEdit()"><span id="editing_status_text"></span></button>
                         </h2>
-                        <form action="/editCustomer" method="post">
+                        <form action="/customers" method="post">
                             <input type="hidden" name="id" value="<%=customer.id%>">
                             <div class="row">
                                 <div class="mb-2 col">
@@ -127,9 +99,9 @@
                 </div>
             </div>
         </div>
+        <%-include('include/footer')%>
         <script>
             toggleEdit()
         </script>
-        <%-include('include/footer')%>
     </body>
 </html>

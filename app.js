@@ -215,6 +215,44 @@ function getUserTypes() {
     })
 }
 
+function getAllDiscounts() {
+    return new Promise((resolve) => {
+        db.query(`SELECT * FROM discounts ORDER BY id DESC`, (err, result) => {
+            if(err) throw err;
+            resolve(result)
+        })
+    })
+}
+
+function getDiscountsByStatus(status) {
+    return new Promise((resolve) => {
+        if(status != undefined && status != null) {
+            db.query(`SELECT * FROM discounts WHERE status = ? ORDER BY id DESC`, [status], (err, result) => {
+                if(err) throw err;
+                resolve(result)
+            })
+        } else {
+            resolve(getAllDiscounts())
+        }
+    })
+}
+
+function checkDiscount(code) {
+    return new Promise((resolve) => {
+        db.query(`SELECT * FROM discounts WHERE status = 0 AND code = ? LIMIT 1`, [code], (err, result) => {
+            if(err) throw err;
+            if(result.length == 1) {
+                db.query("UPDATE discounts SET status = 1 WHERE code = ?", [code], (err) => {
+                    if(err) throw err;
+                    resolve(result[0].amount)
+                })
+            } else {
+                resolve(null)
+            }
+        })
+    })
+}
+
 app.get("/", (req,res) => {
     if(!app_verified) {
         checkCurrentURL(req)
@@ -273,7 +311,7 @@ app.get("/customers", (req,res) => {
     }
 })
 
-app.get("/editCustomer/:id", (req,res) => {
+app.get("/customers/:id", (req,res) => {
     if(req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
@@ -300,7 +338,7 @@ app.get("/editCustomer/:id", (req,res) => {
     }
 })
 
-app.post("/editCustomer", (req,res) => {
+app.post("/customers", (req,res) => {
     if(req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
@@ -336,7 +374,7 @@ app.post("/editCustomer", (req,res) => {
                             throw err;
                         } else {
                             res.cookie('alert', 'success')
-                            res.redirect('/editCustomer/'+id)
+                            res.redirect('/customers/'+id)
                         }
                     })
                 } else {
@@ -651,7 +689,21 @@ app.post('/sellProduct', (req,res) => {
                 if(user_data[0].permission.split(',').includes('products')) {
                     const cart = req.body.cart
                     const customer = req.body.customer === "-" ? null : req.body.customer;
+                    const discount_code = req.body.discount_code || null
                     const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
+
+                    if(discount_code != null) {
+                        checkDiscount(discount_code).then(discount_result => {
+                            if(discount_result == null) {
+                                res.status(500).json({ error: "โค้ดส่วนลดไม่ถูกต้อง!" });
+                                return;
+                            } else {
+                                processCart();
+                            }
+                        })
+                    } else {
+                        processCart();
+                    }
                     
                     async function processCart() {
                         try {
@@ -724,18 +776,19 @@ app.post('/sellProduct', (req,res) => {
                                     });
                                 }
                             }
-                    
-                            // Send response when all transactions are complete
-                            res.status(200).json({ success: true, bill: `/billing/${billing_id}` });
-                    
+                            if(discount_code != null) {
+                                db.query("UPDATE discounts SET billing_id = ? WHERE code = ?", [billing_id, discount_code], (err) => {
+                                    if(err) res.sendStatus(500).json({error: err.message})
+                                    res.status(200).json({ success: true, bill: `/billing/${billing_id}` });
+                                })
+                            } else {
+                                res.status(200).json({ success: true, bill: `/billing/${billing_id}` });
+                            }
                         } catch (err) {
                             console.error(err);
                             res.status(500).json({ error: err.message });
                         }
                     }                
-                    
-                    // Call the async function
-                    processCart();
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
@@ -817,7 +870,8 @@ app.get('/billing/:id', (req,res) => {
                         c.last_name,
                         c.id,
                         t.created_at,
-                        c.phone_number
+                        c.phone_number,
+                        dc.amount as discount_amount
                     FROM 
                         (
                             SELECT 
@@ -840,6 +894,8 @@ app.get('/billing/:id', (req,res) => {
                         products AS pd ON pd.id = t.stock_id
                     LEFT JOIN 
                         customers AS c ON c.id = t.customer_id
+                    LEFT JOIN
+                        discounts AS dc ON dc.billing_id = t.billing_id 
                     WHERE 
                         t.billing_id = ?
                     GROUP BY 
@@ -1001,6 +1057,177 @@ app.post("/editProduct", (req,res) => {
                             res.cookie('alert', 'success')
                             res.redirect('/editProduct/'+transaction_id)
                         })
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect(req.get("Referrer"))
+                }
+            } else {
+                res.redirect('/logout')
+            }
+        })
+    }
+})
+
+//Discounts
+app.get("/discounts", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('products')) {
+                    getAllDiscounts().then(discounts => {
+                        res.render('discounts', {
+                            user_data:user_data,
+                            discounts:discounts,
+                            Helper:Helper
+                        })
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect(req.get("Referrer"))
+                }
+            } else {
+                res.redirect('/logout')
+            }
+        })
+    }
+})
+
+app.get("/discounts/:id", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const id = req.params.id
+                    db.query("SELECT * FROM discounts WHERE id = ?", [id], (err, discount) => {
+                        if(err) throw err;
+                        res.render('edit_discount', {
+                            user_data:user_data,
+                            discount:discount[0]
+                        })
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect(req.get("Referrer"))
+                }
+            } else {
+                res.redirect('/logout')
+            }
+        })
+    }
+})
+
+app.post("/discounts", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const id = req.body.id
+                    const code = req.body.code
+                    const amount = req.body.amount
+                    const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
+                    const updated_by = user_data[0].id
+                
+                    db.query(`UPDATE discounts SET 
+                        code = ?, amount = ?, updated_at = ?, updated_by = ? WHERE id = ?`, 
+                        [code, amount, updated_at, updated_by, id], (err) => {
+                        if(err) {
+                            throw err;
+                        } else {
+                            res.cookie('alert', 'success')
+                            res.redirect('/discounts/'+id)
+                        }
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect(req.get("Referrer"))
+                }
+            } else {
+                res.redirect('/logout')
+            }
+        })
+    }
+})
+
+app.get("/addDiscount", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('products')) {
+                    res.render("add_discount", {
+                        user_data:user_data
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect(req.get("Referrer"))
+                }
+            } else {
+                res.redirect('/logout')
+            }
+        })
+    }
+})
+
+app.post("/addDiscount", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const code = req.body.code
+                    const amount = req.body.amount
+                    const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
+                    const created_by = user_data[0].id
+                
+                    db.query("INSERT INTO discounts(code,amount,created_at,created_by) VALUES(?,?,?,?)", 
+                        [code, amount, created_at, created_by], (err) => {
+                        if(err) {
+                            throw err;
+                        } else {
+                            res.cookie('alert', 'addSuccess')
+                            res.redirect('/discounts')
+                        }
+                    })
+                } else {
+                    res.cookie('alert', 'permissionDenial')
+                    res.redirect(req.get("Referrer"))
+                }
+            } else {
+                res.redirect('/logout')
+            }
+        })
+    }
+})
+
+app.get("/deleteDiscount/:id", (req,res) => {
+    if(req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if(user_data.length == 1) {
+                if(user_data[0].permission.split(',').includes('products')) {
+                    const id = req.params.id
+
+                    db.query("DELETE FROM discounts WHERE id = ?", [id], (err) => {
+                        if(err) throw err;
+                        res.cookie('alert', 'deleteSuccess')
+                        res.redirect('/discounts')
+                        res.end()
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')

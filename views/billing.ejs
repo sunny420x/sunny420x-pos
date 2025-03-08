@@ -14,6 +14,7 @@
         <%
         helper = new Helper()
         sum = 0
+        discount = bill[0].discount_amount || 0
         %>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -82,14 +83,25 @@
                         -
                         </td> -->
                     </tr>
+                    <%if(discount != 0) {%>
                     <tr style="text-align: left; line-height: 40px;">
-                        <td colspan="2">
-                            <!-- <b>ชำระโดย:</b>  -->
+                        <td colspan="2">                       
+                        </td>
+                        <td colspan="2" style="border: 1px solid #000; border-bottom: 0; border-right: 0;"><b>ส่วนลด:</b></td>
                             
+                        <td class="text-end" style="border: 1px solid #000; border-bottom: 0; border-right: 0;"><%=bill[0].discount_amount%> %</td>
+                    </tr>
+                    <%}%>
+                    <tr style="text-align: left; line-height: 40px;">
+                        <td colspan="2">                       
                         </td>
                         <td colspan="2" style="border: 0px solid #000; border-top: 0; border-bottom: 0; border-right: 0;" class="bg-dark text-white"><b>ชำระสุทธิ:</b></td>
-                            
-                        <td class="text-end bg-dark text-white"><%=helper.numberWithCommas(sum)%>.-</td>
+                        
+                        <%if(discount == 0) {%>
+                            <td class="text-end bg-dark text-white"><%=helper.numberWithCommas(sum)%>.-</td>
+                        <%} else {%>
+                        <td class="text-end bg-dark text-white"><%=helper.numberWithCommas((sum*discount)/100)%>.-</td>
+                        <%}%>
                     </tr>
                 </tbody>
             </table>

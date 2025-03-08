@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <title>เพิ่มส่วนลด | SunnyPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex">
+            <%-include('include/sidebar')%>
+            <div class="container overflow-hidden">
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/discounts">
+                        <i class="fa-solid fa-chevron-left me-4"></i> เพิ่มส่วนลด</a></div>
+                </nav>
+                <%-include('include/navigator')%>
+                <div class="container mb-4 mt-2">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-percentage me-1"></i> เพิ่มส่วนลด</h2>
+                        <form action="/addDiscount" method="post">
+                            <div class="">
+                                <div class="row">
+                                    <div class="mb-2 col">
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="form-floating">
+                                                    <input type="text" class="form-control" placeholder="กรอกโค้ดส่วนลด" id="code" name="code" required>
+                                                    <label for="address">Code *</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 col">
+                                        <div class="form-floating">
+                                            <input type="number" class="form-control" placeholder="กรอก % ส่วนลด" id="amount" name="amount" min="0" max="100" required>
+                                            <label for="address">ลดร้อยละ (%) *</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <span class="btn btn-warning" onclick="document.getElementById('code').value = generateDiscountCode()"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> สร้างโค้ดส่วนลด</span>
+                                    <button class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> เพิ่มส่วนลด</button>
+                                    <button class="btn btn-secondary" type="reset"><i class="fa-solid fa-history me-1"></i> ล้างข้อมูล</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

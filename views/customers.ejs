@@ -7,6 +7,53 @@
         <%
         helper = new Helper()
         %>
+        <script>
+            searchCustomerByFullName('all')
+    
+            function searchCustomerByCardId(query) {
+                let req_url = '/searchCustomerByCardId?q='+query
+                fetch(req_url)
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errorData => { throw new Error(errorData.error); });
+                    }
+                    return res.text();
+                })
+                .then(data => {
+                    document.getElementById('customerHTML').innerHTML = data;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                    });
+                });  
+            }
+    
+            function searchCustomerByFullName(query) {
+                let req_url = '/searchCustomerByFullName?q='+query
+                fetch(req_url)
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errorData => { throw new Error(errorData.error); });
+                    }
+                    return res.text();
+                })
+                .then(data => {
+                    document.getElementById('customerHTML').innerHTML = data;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                    });
+                });  
+            }
+        </script>
         <div class="d-flex">
             <%-include('include/sidebar')%>
             <div class="container overflow-hidden">
@@ -17,48 +64,13 @@
                 <%-include('include/navigator')%>
                 <div class="container my-4">
                     <div class="card p-4">
-                        <h2 class="mb-4"><i class="fa-solid fa-users me-1"></i> รายชื่อลูกค้า <button type="button" class="btn btn-primary btn-sm" onclick="openLink('/addCustomer')"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลลูกค้า</button></h2>
+                        <div class="row mb-3">
+                            <div class="col-md"><input type="text" class="form-control" onchange="searchCustomerByCardId(this.value)" placeholder="หมายเลขบัตรประจำตัวประชาชน" id="search_customer_by_id" maxlength="13"></div>
+                            <div class="col-md"><input type="text" class="form-control" onchange="searchCustomerByFullName(this.value)" placeholder="ชื่อ-นามสกุล" id="search_customer_by_fullname"></div>
+                        </div>
+                        <h2 class="mt-2 mb-4"><i class="fa-solid fa-users me-1"></i> รายชื่อลูกค้า <button type="button" class="btn btn-primary btn-sm" onclick="openLink('/addCustomer')"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลลูกค้า</button></h2>
                         <div class="row">
-                            <div class="table-responsive col">
-                                <table class="table">
-                                    <thead class="table-light text-center">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>ชื่อ-นามสกุล</th>
-                                            <th>เบอร์โทรศัพท์</th>
-                                            <th>จัดการ</th>
-                                        </tr>
-                                    </thead>
-                                    <% customers.forEach((row) => { %>
-                                        <tbody class="text-center">
-                                            <tr>
-                                                <td><%=row.id%></td>
-                                                <td><%=row.first_name%> <%=row.last_name%></td>
-                                                <td><%=helper.ThaiPhoneNumber(row.phone_number)%></td>
-                                                <td>
-                                                    <button class="btn btn-primary" onclick="openLink('/customers/<%=row.id%>')"><i class="fa-solid fa-folder"></i></button>
-                                                    <button class="btn btn-danger" onclick="
-                                                    Swal.fire({
-                                                    title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
-                                                    text: 'การลบจะไม่สามารถย้อนกลับได้',
-                                                    icon: 'warning',
-                                                    showCancelButton: true,
-                                                    confirmButtonColor: '#3085d6',
-                                                    cancelButtonColor: '#d33',
-                                                    confirmButtonText: 'ยืนยัน',
-                                                    cancelButtonText: 'ย้อนกลับ',
-                                                    }).then((result) => {
-                                                    if (result.isConfirmed) {
-                                                        openLink('/deleteCustomer/<%=row.id%>')
-                                                    }
-                                                    });
-                                                    "><i class="fa-solid fa-trash"></i></button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    <%})%>
-                                </table>
-                            </div>
+                            <div id="customerHTML"></div>
                         </div>
                     </div>
                 </div>

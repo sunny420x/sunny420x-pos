@@ -45,6 +45,15 @@ class Helper {
     }
 }
 
+function Pagination(page) {
+    page = parseInt(page)
+    const per_page = 10;
+    const limit_start = (page - 1) * per_page;
+    const limit_end = per_page;
+
+    return {limit_start, limit_end}
+}
+
 function initAccessToken(token) {
     return new Promise((resolve) => {
         token = Buffer.from(token, 'base64').toString('utf-8')
@@ -70,6 +79,76 @@ function getCustomers() {
         })
     })
 }
+
+function searchCustomerByFullName(q) {
+    return new Promise((resolve) => {
+        if(q != 'all' && q != '') {
+            db.query(`SELECT c.id, c.first_name, c.last_name, c.phone_number FROM customers as c WHERE CONCAT(c.first_name, " ", c.last_name) LIKE ?`, [`%${q}%`], (err, result) => {
+                if (err) throw err;
+                resolve(result)
+            })
+        } else {
+            resolve(getCustomers())
+        }
+    })
+}
+
+function searchCustomerByCardId(card_id) {
+    return new Promise((resolve) => {
+        if(card_id != 'all' && card_id != '') {
+            db.query(`SELECT c.id, c.first_name, c.last_name, c.phone_number FROM customers as c WHERE c.card_id LIKE ?`, [`%${card_id}%`], (err, result) => {
+                if (err) throw err;
+                resolve(result)
+            })
+        } else {
+            resolve(getCustomers())
+        }
+    })
+}
+
+app.get("/searchCustomerByCardId", (req, res) => {
+    if (req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if (user_data.length == 1) {
+                let query = req.query.q !== undefined ? decodeURIComponent(req.query.q) : 'all';
+                searchCustomerByCardId(query).then(customers => {
+                    res.render('Components/customers', {
+                        customers: customers,
+                        moment: moment,
+                        user_data: user_data[0]
+                    })
+                })
+            } else {
+                res.redirect('/logout')
+            }
+        })
+    }
+})
+
+app.get("/searchCustomerByFullName", (req, res) => {
+    if (req.cookies.access_token == undefined) {
+        res.redirect('/login')
+        res.end()
+    } else {
+        initAccessToken(req.cookies.access_token).then((user_data) => {
+            if (user_data.length == 1) {
+                let query = req.query.q !== undefined ? decodeURIComponent(req.query.q) : 'all';
+                searchCustomerByFullName(query).then(customers => {
+                    res.render('Components/customers', {
+                        customers: customers,
+                        moment: moment,
+                        user_data: user_data[0]
+                    })
+                })
+            } else {
+                res.redirect('/logout')
+            }
+        })
+    }
+})
 
 function getProductsStock() {
     return new Promise((resolve) => {
@@ -215,9 +294,10 @@ function getUserTypes() {
     })
 }
 
-function getAllDiscounts() {
+function getAllDiscounts(page) {
     return new Promise((resolve) => {
-        db.query(`SELECT * FROM discounts ORDER BY id DESC`, (err, result) => {
+        const {limit_start, limit_end} = Pagination(page)
+        db.query(`SELECT * FROM discounts ORDER BY id DESC LIMIT ?,?`, [limit_start, limit_end], (err, result) => {
             if(err) throw err;
             resolve(result)
         })
@@ -293,12 +373,9 @@ app.get("/customers", (req,res) => {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
                 if(user_data[0].permission.split(',').includes('customers')) {
-                    getCustomers().then(customers => {
-                        res.render('customers', {
-                            user_data:user_data,
-                            customers:customers,
-                            Helper:Helper
-                        })
+                    res.render('customers', {
+                        user_data:user_data,
+                        Helper:Helper
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
@@ -930,13 +1007,10 @@ app.get("/billingHistories", (req,res) => {
                 if(user_data[0].permission.split(',').includes('bills')) {
                     let customer_id = req.query.customer_id !== undefined ? req.query.customer_id : 'all';
                     getCustomers().then(owners => {
-                        getAllBilling().then(bill => {
-                            res.render('billing_histories', {
-                                user_data:user_data,
-                                bill:bill,
-                                owners:owners,
-                                customer_id:customer_id
-                            })
+                        res.render('billing_histories', {
+                            user_data:user_data,
+                            owners:owners,
+                            customer_id:customer_id
                         })
                     })
                 } else {
@@ -1078,10 +1152,15 @@ app.get("/discounts", (req,res) => {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
                 if(user_data[0].permission.split(',').includes('products')) {
-                    getAllDiscounts().then(discounts => {
+
+                    let page = req.query.page || 1
+                    if(page < 1) { page = 1 } 
+
+                    getAllDiscounts(page).then(discounts => {
                         res.render('discounts', {
                             user_data:user_data,
                             discounts:discounts,
+                            page:page,
                             Helper:Helper
                         })
                     })

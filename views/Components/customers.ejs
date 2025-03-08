@@ -1,0 +1,40 @@
+<div class="table-responsive col">
+    <table class="table">
+        <thead class="table-light text-center">
+            <tr>
+                <th>#</th>
+                <th>ชื่อ-นามสกุล</th>
+                <th>เบอร์โทรศัพท์</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <% customers.forEach((row) => { %>
+            <tbody class="text-center">
+                <tr>
+                    <td><%=row.id%></td>
+                    <td><%=row.first_name%> <%=row.last_name%></td>
+                    <td><%=helper.ThaiPhoneNumber(row.phone_number)%></td>
+                    <td>
+                        <button class="btn btn-primary" onclick="openLink('/customers/<%=row.id%>')"><i class="fa-solid fa-folder"></i></button>
+                        <button class="btn btn-danger" onclick="
+                        Swal.fire({
+                        title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
+                        text: 'การลบจะไม่สามารถย้อนกลับได้',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'ยืนยัน',
+                        cancelButtonText: 'ย้อนกลับ',
+                        }).then((result) => {
+                        if (result.isConfirmed) {
+                            openLink('/deleteCustomer/<%=row.id%>')
+                        }
+                        });
+                        "><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        <%})%>
+    </table>
+</div>

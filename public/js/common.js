@@ -108,3 +108,29 @@ if(alert_cookie != undefined) {
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+function getRoute(route) {
+    if(route != undefined) {
+        return route.split('//')[1].split("/") || "/"
+    } else {
+        route = document.location.href.split('//')[1].split("/") || "/"
+        if(route[1].split("?").length == 2) {
+            return (route[0] + "/" + route[1].split("?")[0]).split("/")
+        } else {
+            return route
+        }
+    }
+}
+
+function initNavigatorItems() {
+    let navItems = document.getElementsByClassName('list-group-item-action')
+
+    for(i = 0; i < navItems.length; i++) {
+        if(getRoute(navItems[i].href)[1] == getRoute()[1]) {
+            navItems[i].classList.add('active')
+            return;
+        }
+    }
+}
+
+initNavigatorItems()

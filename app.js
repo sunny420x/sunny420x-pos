@@ -1891,7 +1891,7 @@ app.get('/changePassword', (req,res) => {
     } else {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
-                if(user_info[0].username == "demo") {
+                if(user_data[0].username == "demo") {
                     res.send("ไม่สามารถเปลี่ยนรหัสผ่านของผู้ใช้ทดลองได้!")
                     return;
                 }

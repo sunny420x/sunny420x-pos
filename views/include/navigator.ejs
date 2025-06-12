@@ -23,7 +23,10 @@
         <div class="col">
             <div class="d-flex flex-row-reverse">
                 <div class="dropdown dropstart">
-                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-user me-1"></i> <%=user_data[0].username%></button>
+                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><span class="rounded" id="profileCircleHeader"><%=user_data[0].username[0].toUpperCase()%></span> </i> <%=user_data[0].username%></button>
+                    <script>
+                        document.getElementById('profileCircleHeader').setAttribute("style", "padding: 0 8px; background: <%=user_data[0].color%>;")
+                    </script>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/settings"><i class="fa-solid fa-cog"></i> ตั้งค่า</a></li>
                         <li><a class="dropdown-item" href="/editProfile"><i class="fa-solid fa-user-cog"></i> แก้ไขข้อมูลส่วนตัว</a></li>

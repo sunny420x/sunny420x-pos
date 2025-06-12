@@ -7,12 +7,12 @@
         <div class="d-flex">
             <%-include('include/sidebar')%>
             <div class="container overflow-hidden">
+                <%-include('include/navigator')%>
                 <nav class="navbar">
                     <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/products_stock/<%=stock.type%>/<%=stock.name%>">
                         <i class="fa-solid fa-chevron-left me-4"></i> แก้ไขข้อมูลสินค้า</a></div>
                 </nav>
-                <%-include('include/navigator')%>
-                <div class="container mb-4 mt-2">
+                <div class="container px-4">
                     <div class="card p-4">
                         <h2 class="mb-4"><i class="fa-solid fa-box-open me-1"></i> แก้ไขข้อมูลสินค้า</h2>
                         <div class="row">

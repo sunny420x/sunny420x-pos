@@ -29,6 +29,36 @@
                                     <label for="full_name">ชื่อ-นามสกุล: </label>
                                 </div>
                             </div>
+
+                                                        <!-- Profile Colors -->
+                            <input type="hidden" id="color" name="color">
+                            <div class="row gap-2 m-2 mb-3">
+                                <div class="col-md-auto profileColor" style="width: 40px; height: 40px; border-radius: 10px; background: #B7B1F2; cursor: pointer;"  onclick="setProfileColor('#B7B1F2')" id="#B7B1F2"></div>
+                                <div class="col-md-auto profileColor" style="width: 40px; height: 40px; border-radius: 10px; background: #ACD3A8; cursor: pointer;" onclick="setProfileColor('#ACD3A8')" id="#ACD3A8"></div>
+                                <div class="col-md-auto profileColor" style="width: 40px; height: 40px; border-radius: 10px; background: #F38C79; cursor: pointer;" onclick="setProfileColor('#F38C79')" id="#F38C79"></div>
+                                <div class="col-md-auto profileColor" style="width: 40px; height: 40px; border-radius: 10px; background: #F7A8C4; cursor: pointer;" onclick="setProfileColor('#F7A8C4')" id="#F7A8C4"></div>
+                                <div class="col-md-auto profileColor" style="width: 40px; height: 40px; border-radius: 10px; background: #80CBC4; cursor: pointer;" onclick="setProfileColor('#80CBC4')" id="#80CBC4"></div>
+                                <div class="col-md-auto profileColor" style="width: 40px; height: 40px; border-radius: 10px; background: #D5C7A3; cursor: pointer;" onclick="setProfileColor('#D5C7A3')" id="#D5C7A3"></div>
+                            </div>
+                            <script>
+                                initProfileColor()
+                                function setProfileColor(color) {
+                                    document.getElementById('color').value = color
+                                    uncheckColors() 
+                                    document.getElementById(color).style.opacity = 0.5
+                                }
+                                function initProfileColor() {
+                                    document.getElementById('color').value = "<%=user_data.color%>"
+                                    document.getElementById("<%=user_data.color%>").style.opacity = 0.5
+                                }
+                                function uncheckColors() {
+                                    let profileColors = document.getElementsByClassName('profileColor')
+                                    for(let i = 0; i < profileColors.length; i++) {
+                                        profileColors[i].style.opacity = 1
+                                    }
+                                }
+                            </script>
+                            
                             <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกการเปลี่ยนแปลง</button>
                         </form>
                     </div>

@@ -61,7 +61,7 @@ function initAccessToken(token) {
         const username = token.split(':')[0]
         const password = token.split(':')[1]
 
-        db.query(`SELECT u.id, u.username, u.full_name, ut.name as type, u.type as type_id, ut.permission FROM users as u JOIN user_types as ut ON ut.id = u.type 
+        db.query(`SELECT u.id, u.username, u.full_name, ut.name as type, u.type as type_id, ut.permission, u.color FROM users as u JOIN user_types as ut ON ut.id = u.type 
              WHERE u.username = ? AND u.password = ?`, [username,password], (err,result) => {
             if(err) throw err;
             if(result.length == 1) {
@@ -1866,13 +1866,14 @@ app.post('/editProfile', (req,res) => {
                 const id = req.body.id
                 const username = req.body.username
                 const full_name = req.body.full_name
+                const color = req.body.color
 
                 if(user_data[0].id != id) {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect('/editProfile')
                 }
 
-                db.query("UPDATE users SET username = ?, full_name = ? WHERE id = ?", [username, full_name, id], (err) => {
+                db.query("UPDATE users SET username = ?, full_name = ?, color = ? WHERE id = ?", [username, full_name, color, id], (err) => {
                     if(err) throw err;
                     res.cookie('alert', 'success')
                     res.redirect('/editProfile')

@@ -12,7 +12,10 @@
                     <div class="card p-4">
                         <div class="row grid-2 g-0 gap-3">
                             <div class="col-lg-auto">
-                                <div style="width: 80px; height: 80px; background-color: #B7B1F2;" class="rounded mx-auto">
+                                <div class="rounded mx-auto" id="profileCircleSetting">
+                                    <script>
+                                        document.getElementById('profileCircleSetting').setAttribute("style", "width: 80px; height: 80px; background: <%=user_data[0].color%>;")
+                                    </script>
                                     <div style="text-align: center; margin: auto; display: block; padding: 20px; font-size: 28px; text-transform: capitalize;"><%=user_data[0].username[0]%></div>
                                 </div>
                             </div>

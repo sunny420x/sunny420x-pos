@@ -1,8 +1,13 @@
 <div class="row w-100 grid-2 g-0 gap-3 p-2">
-    <div class="col-lg-auto">
-        <div style="width: 60px; height: 60px; background-color: #B7B1F2;" class="rounded">
+    <div class="col-auto">
+        <div class="rounded profileCircle">
             <div style="text-align: center; margin: auto; display: block; padding: 10px; font-size: 28px; text-transform: capitalize;"><%=user_data[0].username[0]%></div>
         </div>
+        <script>
+            for(i = 0; i < document.getElementsByClassName('profileCircle').length; i++) {
+                document.getElementsByClassName('profileCircle')[i].setAttribute("style", "width: 60px; height: 60px; background: <%=user_data[0].color%>;")
+            }
+        </script>
     </div>
     <div class="col-lg">
         <h5 class="mb-2" style="text-transform: capitalize;"><%=user_data[0].username%></h5>

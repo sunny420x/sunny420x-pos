@@ -1978,6 +1978,10 @@ app.get('/getURL', (req,res) => {
     })
 })
 
+const stockRouter = require('./frontend')
+
+app.use('/stock', stockRouter);
+
 app.get('*', (req, res) => {
     res.render('error', {title: "พบข้อผิดพลาด: ไม่พบข้อมูล", content: "ลิงค์นี้อาจจะถูกย้าย หรือหมดอายุแล้ว โปรดตรวจสอบลิงค์ว่าถูกต้อง"})
     res.end()
@@ -1986,3 +1990,7 @@ app.get('*', (req, res) => {
 app.listen(process.env.PORT ,() => {
     console.log(moment().format("DD/MM/YY HH:mm:ss")+" [+] Sunny420x POS System been started at http://localhost:"+process.env.PORT)
 })
+
+module.exports = {
+    getSellProductsByType
+}

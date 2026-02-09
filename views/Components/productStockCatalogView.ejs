@@ -1,0 +1,11 @@
+<div class="row row-cols-lg-4 row-cols-md-3 row-cols-1 g-0">
+    <% products_stock.forEach((row) => { %>
+        <div class="col p-3">
+            <h5><%=row.name%> (<%=row.type%>)</h5>
+            <p class="mb-1">ราคา: <%=row.price%></p>
+            <p class="mb-2">คงเหลือ: <%if(row.value != 0) {%><%=row.value%><%} else {%><span class="badge bg-danger">สินค้าหมด</span><%}%></p>
+            <button class="btn btn-warning" onclick="addToCart('<%=row.type_id%>', '<%=row.name%>', '<%=row.price%>', 1)"><i class="fa-solid fa-shopping-cart"></i></button>
+            <button class="btn btn-primary" onclick="openLink('/products_stock/<%=row.type_id%>/<%=encodeURIComponent(row.name)%>?option=catalog&type=<%=type%>')"><i class="fa-solid fa-up-right-from-square"></i></button>
+        </div>
+    <%})%>
+</div>

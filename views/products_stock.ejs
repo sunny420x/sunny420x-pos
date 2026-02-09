@@ -7,11 +7,12 @@
         <script>
             let cart = []
             let totals = 0
+            let _type = "<%=type%>"
 
-            searchByType('all')
+            searchByType(_type)
 
             function searchByType(type) {
-                let req_url = '/getProductStock?type='+encodeURIComponent(type)
+                let req_url = '/getProductStock?type='+encodeURIComponent(type)+'&option=<%=option%>'
                 fetch(req_url)
                 .then(res => {
                     if (!res.ok) {
@@ -21,6 +22,10 @@
                 })
                 .then(data => {
                     document.getElementById('productStock').innerHTML = data;
+
+                    //append _type and type in URL
+                    _type = type
+                    history.pushState('', '', `?type=${_type}&option=<%=option%>`);
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -39,19 +44,25 @@
                 <div class="container p-4">
                     <div class="card p-4">
                         <h2 class="mb-4"><i class="fa-solid fa-boxes me-1"></i> รายการสินค้าในระบบ 
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sell_modal"><i class="fa-solid fa-coins me-1"></i> ขายสินค้า</button>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sell_modal"><i class="fa-solid fa-shopping-cart me-1"></i> รถเข็น</button>
                             <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addStock_modal"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลการนำเข้าสินค้า</button>
                         </h2>
                         <div class="row mb-4">
-                            <div class="col">
+                            <div class="col-lg">
                                 <select class="form-select" id="search_by_type" onchange="searchByType(this.value)">
                                     <option value="all">เลือกทุกประเภท</option>
                                     <% product_types.forEach(row => {
                                     %>
-                                    <option value="<%=row.id%>"><%=row.name%></option>
+                                    <option value="<%=row.id%>" <%if(row.id == type) {%>selected<%}%>><%=row.name%></option>
                                     <%
                                     }) 
                                     %>
+                                </select>
+                            </div>
+                            <div class="col-lg-3">
+                                <select onchange="selectOption(this.value)" class="form-select">
+                                    <option value="list" <%if(option == 'list') {%>selected<%}%>>List View</option>
+                                    <option value="catalog" <%if(option == 'catalog') {%>selected<%}%>>Catalog View</option>
                                 </select>
                             </div>
                         </div>
@@ -205,7 +216,7 @@
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h1 class="modal-title fs-5" id="modal_title">ขายสินค้า</h1>
+                  <h1 class="modal-title fs-5" id="modal_title"><i class="fa-solid fa-shopping-cart"></i> รถเข็น</h1>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -260,11 +271,11 @@
                     <div class="mb-3">
                         <div class="form-floating">
                             <input type="text" class="form-control" name="discount_code" id="discount_code" value="">
-                            <label for="amount">โค้ดส่วนลด *</label>
+                            <label for="amount">โค้ดส่วนลด</label>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="addProductToCart()">เพิ่มสินค้าชิ้นนี้</button>
-                    <button class="btn btn-secondary" onclick="resetCart()">ล้างข้อมูล</button>
+                    <button class="btn btn-primary" onclick="addProductToCart()"><i class="fa-solid fa-plus"></i> เพิ่มสินค้าชิ้นนี้</button>
+                    <button class="btn btn-secondary" onclick="resetCart()"><i class="fa-solid fa-refresh"></i>  ล้างข้อมูล</button>
                 </div>
                 <script>
                     initTotal()
@@ -309,6 +320,34 @@
                             amount: amount
                         })
 
+                        initCart(product_name, amount, product_price)
+
+                        initTotal(parseInt(product_price) * parseInt(amount))
+                        initProductType('')
+                    }
+
+                    function addToCart(product_type, product_name, product_price, amount) {
+                        cart.push({
+                            product_type: product_type,
+                            product_name: product_name,
+                            product_price: product_price,
+                            amount: amount
+                        })
+                        totals += parseInt(product_price) * parseInt(amount)
+                        initTotal()
+                        Swal.fire({
+                            title: "เพิ่มสินค้าลงในรถเข็นแล้ว !",
+                            icon: "success"
+                        })
+                        initCart(product_name, amount, product_price)
+                        if(document.getElementById('customer').value == '-') {
+                            document.getElementById('customer').disabled = false
+                        } else {
+                            document.getElementById('customer').disabled = true
+                        }
+                    }
+
+                    function initCart(product_name, amount, product_price) {
                         var table = document.getElementById("cart");
 
                         var row = table.insertRow(-1);
@@ -321,14 +360,14 @@
                         product_amount_cell.innerHTML = amount;
                         product_price_cell.innerHTML = numberWithCommas(parseInt(product_price) * parseInt(amount));
 
-                        document.getElementById('sell_product_type').value = ""
-                        document.getElementById('sell_product_id').value = ""
+                        if(document.getElementById('sell_product_type').value != '' && document.getElementById('sell_product_id').value != '') {
+                            document.getElementById('sell_product_type').value = ""
+                            document.getElementById('sell_product_id').value = ""
+                        }
                         document.getElementById('customer').disabled = true
                         document.getElementById('buy_amount').value = 1
-
-                        initTotal(parseInt(product_price) * parseInt(amount))
-                        initProductType('')
                     }
+
                     function initTotal(product_price) {
                         if(product_price) {
                             totals = numberWithCommas(parseInt(totals) + parseInt(product_price))
@@ -343,9 +382,14 @@
                         document.getElementById("cart").innerHTML = ""
                         document.getElementById('sell_product_type').value = ""
                         document.getElementById('sell_product_id').value = ""
-                        document.getElementById('customer').value = ""
                         document.getElementById('buy_amount').value = 1
-                        document.getElementById('customer').disabled = false
+                        resetCustomer()
+                    }
+                    function resetCustomer() {
+                        if(document.getElementById('customer').value != "-") {
+                            document.getElementById('customer').value = '-'
+                            document.getElementById('customer').disabled = false
+                        }
                     }
                     function sellProducts() {
                         let customer = document.getElementById('customer').value
@@ -394,6 +438,10 @@
                                 text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
                             });
                         });  
+                    }
+
+                    function selectOption(value) {
+                        window.location.href=`/products_stock?type=${_type}&option=${value}`
                     }
                 </script>
                 <div class="modal-footer">

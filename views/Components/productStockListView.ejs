@@ -3,6 +3,7 @@
         <thead class="table-light text-center">
             <tr>
                 <th>รายการ</th>
+                <th>ราคา</th>
                 <th>คงเหลือ</th>
                 <th>จัดการ</th>
             </tr>
@@ -11,8 +12,10 @@
             <tbody class="text-center">
                 <tr>
                     <td><%=row.name%> (<%=row.type%>)</td>
+                    <td><%=row.price%></td>
                     <td><%if(row.value != 0) {%><%=row.value%><%} else {%><span class="badge bg-danger">สินค้าหมด</span><%}%></td>
                     <td>
+                        <button class="btn btn-warning" onclick="addToCart('<%=row.type_id%>', '<%=row.name%>', '<%=row.price%>', 1)"><i class="fa-solid fa-shopping-cart"></i></button>
                         <button class="btn btn-primary" onclick="openLink('/products_stock/<%=row.type_id%>/<%=encodeURIComponent(row.name)%>')"><i class="fa-solid fa-up-right-from-square"></i></button>
                     </td>
                 </tr>

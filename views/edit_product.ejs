@@ -9,7 +9,7 @@
             <div class="container overflow-hidden">
                 <%-include('include/navigator')%>
                 <nav class="navbar">
-                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/products_stock/<%=stock.type%>/<%=stock.name%>">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/products_stock/<%=encodeURIComponent(stock.type)%>/<%=encodeURIComponent(stock.name)%>?type=<%=type%>&option=<%=option%>">
                         <i class="fa-solid fa-chevron-left me-4"></i> แก้ไขข้อมูลสินค้า</a></div>
                 </nav>
                 <div class="container px-4">
@@ -29,7 +29,7 @@
                                 </div>
                             </div>
                         </div>
-                        <form action="/editProduct" method="post">
+                        <form action="/editProduct?type=<%=type%>&option=<%=option%>" method="post">
                             <input type="hidden" name="transaction_id" value="<%=stock.transaction_id%>">
                             <div class="mb-3">
                                 <div class="form-floating">

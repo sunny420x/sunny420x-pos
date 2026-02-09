@@ -152,10 +152,22 @@ app.get("/searchCustomerByFullName", (req, res) => {
 
 function getProductsStock() {
     return new Promise((resolve) => {
-        db.query(`SELECT t.id, t.name, pt.name as type, t.type as type_id, SUM(t.value) as value  
-            FROM transaction as t 
-            JOIN product_types as pt ON pt.id = t.type 
-            GROUP BY t.type, t.name ORDER BY SUM(t.value), t.name ASC`, (err, result) => {
+        db.query(`SELECT
+            t.name,
+            pt.name AS type,
+            SUM(t.value) AS value,
+            pd.price,
+            pt.id as type_id 
+        FROM transaction t
+        JOIN product_types pt ON pt.id = t.type
+        LEFT JOIN (
+            SELECT name, MAX(price) AS price
+            FROM products
+            GROUP BY name
+        ) pd ON pd.name = t.name
+        GROUP BY t.name, t.type, pd.price
+        ORDER BY value, t.name ASC;
+        `, (err, result) => {
             if(err) throw err;
             resolve(result)
         })
@@ -206,10 +218,20 @@ function getBillingHistoriesByCustomer(owner) {
 function getProductsStockByType(type) {
     return new Promise((resolve) => {
         if(type != 'all') {
-            db.query(`SELECT t.id, t.name, pt.name as type, t.type as type_id, SUM(t.value) as value  
-                FROM transaction as t 
-                JOIN product_types as pt ON pt.id = t.type 
-                WHERE t.type = ? GROUP BY t.type, t.name ORDER BY SUM(t.value) ASC`, [type], (err, result) => {
+            db.query(`SELECT
+                    t.name,
+                    pt.name AS type,
+                    SUM(t.value) AS value,
+                    pd.price,
+                    pt.id as type_id 
+                FROM transaction t
+                JOIN product_types pt ON pt.id = t.type
+                LEFT JOIN (
+                    SELECT name, MAX(price) AS price
+                    FROM products
+                    GROUP BY name
+                ) pd ON pd.name = t.name
+                WHERE t.type = ? GROUP BY t.name, t.type, pd.price ORDER BY value, t.name ASC`, [type], (err, result) => {
                 if(err) throw err;
                 resolve(result)
             })
@@ -567,13 +589,17 @@ app.get("/products_stock", (req,res) => {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
                 if(user_data[0].permission.split(',').includes('products')) {
+                    let option = req.query.option ?? "list"
+                    let type = req.query.type ?? "all"
                     getProductTypes().then(product_types => {
                         getCustomers().then(customers => {
                             res.render('products_stock', {
                                 user_data:user_data,
                                 product_types:product_types,
                                 customers:customers,
-                                Helper:Helper
+                                Helper:Helper,
+                                option:option,
+                                type:type,
                             })
                             res.end()
                         })
@@ -639,10 +665,21 @@ app.get("/getProductStock", (req,res) => {
         initAccessToken(req.cookies.access_token).then((user_data) => {
             if(user_data.length == 1) {
                 let type = req.query.type !== undefined ? decodeURIComponent(req.query.type) : 'all';
+                let option = req.query.option !== undefined ? decodeURIComponent(req.query.option) : 'list';
                 getProductsStockByType(type).then((products_stock) => {
-                    res.render('Components/productStock', {
+                    if(option == "catalog") {
+                        res.render('Components/productStockCatalogView', {
+                            products_stock:products_stock,
+                            moment:moment,
+                            type:type,
+                        })
+                        res.end()
+                        return
+                    }
+                    res.render('Components/productStockListView', {
                         products_stock:products_stock,
-                        moment:moment
+                        moment:moment,
+                        type:type,
                     })
                     res.end()
                 })
@@ -662,14 +699,18 @@ app.get("/products_stock/:type/:name", (req,res) => {
             if(user_data.length == 1) {
                 if(user_data[0].permission.split(',').includes('products')) {
                     const name = req.params.name
-                    const type = req.params.type
+                    const _type = req.params.type
+                    const option = req.query.option ?? "list"
+                    const type = req.query.type ?? "all"
                     getProductTypes().then(product_types => {
-                        getProductsStockByTypeAndName(type, name).then((products_stock) => {
+                        getProductsStockByTypeAndName(_type, name).then((products_stock) => {
                             res.render('products_stock_detail', {
                                 user_data:user_data,
                                 products_stock:products_stock,
                                 product_types:product_types,
-                                moment:moment
+                                moment:moment,
+                                option:option,
+                                type:type
                             })
                             res.end()
                         })
@@ -1084,6 +1125,8 @@ app.get("/editProduct/:transaction", (req,res) => {
             if(user_data.length == 1) {
                 if(user_data[0].permission.split(',').includes('products')) {
                     const transaction = req.params.transaction
+                    const type = req.query.type ?? "all"
+                    const option = req.query.option ?? "list"
                     db.query(`SELECT pd.name, pd.type, t.expired_date, pd.price, pd.transaction_id, t.created_at, pd.updated_at  
                         FROM products as pd JOIN transaction as t ON t.id = pd.transaction_id 
                         WHERE pd.transaction_id = ? GROUP BY name, type`, [transaction], (err, stock) => {
@@ -1093,7 +1136,9 @@ app.get("/editProduct/:transaction", (req,res) => {
                                 user_data:user_data,
                                 stock:stock[0],
                                 product_types:product_types,
-                                moment:moment
+                                moment:moment,
+                                type:type,
+                                option:option,
                             })
                             res.end()
                         })
@@ -1123,13 +1168,16 @@ app.post("/editProduct", (req,res) => {
                     const expired_date = req.body.expired_date || null
                     const transaction_id = req.body.transaction_id
                     const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
+
+                    const _type = req.query.type ?? "catalog"
+                    const option = req.query.option ?? "list"
     
                     db.query("UPDATE products SET type = ?, name = ?, price = ?, updated_at = ? WHERE transaction_id = ?", [type, name, price, updated_at, transaction_id], (err) => {
                         if(err) throw err;
                         db.query("UPDATE transaction SET type = ?, name = ?, expired_date = ? WHERE id = ?", [type, name, expired_date, transaction_id], (err) => {
                             if(err) throw err;
                             res.cookie('alert', 'success')
-                            res.redirect('/editProduct/'+transaction_id)
+                            res.redirect(`/editProduct/${transaction_id}?type=${_type}&option=${option}`)
                         })
                     })
                 } else {

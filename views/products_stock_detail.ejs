@@ -9,7 +9,7 @@
             <div class="container overflow-hidden">
                 <%-include('include/navigator')%>
                 <nav class="navbar">
-                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/products_stock">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/products_stock?type=<%=type%>&option=<%=option%>"">
                         <i class="fa-solid fa-chevron-left me-4"></i> รายการนำเข้าสินค้า</a></div>
                 </nav>
                 <div class="container px-4">
@@ -34,11 +34,14 @@
                                             <td><%=row.id%></td>
                                             <td><%=row.name%> (<%=row.type%>)</td>
                                             <td><%=moment(row.created_at).add(543, 'years').format("DD/MM/YYYY")%></td>
-                                            <td><%if(row.expired_date != null) {%><%if(moment(row.expired_date).diff(moment(), 'days') > 0) {%><span class="badge text-bg-secondary">หมดอายุในอีก <%=moment(row.expired_date).diff(moment(), 'days')%> วัน<%} else {%><span class="badge text-bg-danger">หมดอายุแล้ว</span><%}%><%} else {%>-<%}%></span></td>
+                                            <td><%if(row.expired_date != null) {%><%if(moment(row.expired_date).diff(moment(), 'days') > 0) {%>
+                                                <span class="badge text-bg-secondary">หมดอายุในอีก <%=moment(row.expired_date).diff(moment(), 'days')%> วัน<%} else {%>
+                                                <span class="badge text-bg-danger">หมดอายุแล้ว</span><%}%><%} else {%>-<%}%></span>
+                                            </td>
                                             <td><%=row.price%></td>
                                             <td><%=row.value%></td>
                                             <td>
-                                                <button class="btn btn-warning" onclick="openLink('/editProduct/<%=row.id%>')"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button class="btn btn-warning" onclick="openLink('/editProduct/<%=row.id%>?type=<%=type%>&option=<%=option%>')"><i class="fa-solid fa-pen-to-square"></i></button>
                                                 <button class="btn btn-danger" onclick="
                                                 Swal.fire({
                                                 title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',

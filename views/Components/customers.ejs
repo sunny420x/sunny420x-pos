@@ -5,17 +5,21 @@
                 <th>#</th>
                 <th>ชื่อ-นามสกุล</th>
                 <th>เบอร์โทรศัพท์</th>
+                <th>ออเดอร์ทั้งหมด</th>
                 <th>จัดการ</th>
             </tr>
         </thead>
         <% customers.forEach((row) => { %>
             <tbody class="text-center">
+                <% if(row.id) { %>
                 <tr>
                     <td><%=row.id%></td>
                     <td><%=row.first_name%> <%=row.last_name%></td>
-                    <td><%=helper.ThaiPhoneNumber(row.phone_number)%></td>
+                    <td><%if(row.phone_number) {%> <%=helper.ThaiPhoneNumber(row.phone_number)%> <%}%></td>
+                    <td><%=row.total_orders ?? 0%></td>
                     <td>
                         <button class="btn btn-primary" onclick="openLink('/customers/<%=row.id%>')"><i class="fa-solid fa-folder"></i></button>
+                        <button class="btn btn-warning" onclick="openLink('/billingHistories/?customer_id=<%=row.id%>')"><i class="fa-solid fa-box-open"></i></button>
                         <button class="btn btn-danger" onclick="
                         Swal.fire({
                         title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
@@ -34,6 +38,7 @@
                         "><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
+                <%}%>
             </tbody>
         <%})%>
     </table>

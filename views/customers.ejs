@@ -53,6 +53,28 @@
                     });
                 });  
             }
+
+            function searchCustomerByPhoneNumber(phone_number) {
+                let req_url = '/searchCustomerByPhoneNumber?q='+phone_number
+                fetch(req_url)
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errorData => { throw new Error(errorData.error); });
+                    }
+                    return res.text();
+                })
+                .then(data => {
+                    document.getElementById('customerHTML').innerHTML = data;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                    });
+                }); 
+            }
         </script>
         <div class="d-flex">
             <%-include('include/sidebar')%>
@@ -67,6 +89,7 @@
                         <div class="row mb-3">
                             <div class="col-md"><input type="text" class="form-control" onchange="searchCustomerByCardId(this.value)" placeholder="หมายเลขบัตรประจำตัวประชาชน" id="search_customer_by_id" maxlength="13"></div>
                             <div class="col-md"><input type="text" class="form-control" onchange="searchCustomerByFullName(this.value)" placeholder="ชื่อ-นามสกุล" id="search_customer_by_fullname"></div>
+                            <div class="col-md"><input type="text" class="form-control" onchange="searchCustomerByPhoneNumber(this.value)" placeholder="เบอร์โทรศัพท์" id="search_customer_by_phone_number"></div>
                         </div>
                         <h2 class="mt-2 mb-4"><i class="fa-solid fa-users me-1"></i> รายชื่อลูกค้า <button type="button" class="btn btn-primary btn-sm" onclick="openLink('/addCustomer')"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลลูกค้า</button></h2>
                         <div class="row">

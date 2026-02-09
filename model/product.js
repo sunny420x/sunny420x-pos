@@ -136,6 +136,33 @@ function getProductTypes() {
     })
 }
 
+function deleteProductsByTransaction(transaction_id) {
+    return new Promise((resolve, reject) => {
+        db.query("SELECT p.id FROM transaction as t JOIN products as p ON p.transaction_id = t.id WHERE p.is_sold = 1 AND t.id = ?", [transaction_id], (err, products) => {
+            if (err) throw(err);
+            db.query("DELETE FROM products WHERE transaction_id = ?", [transaction_id], (err) => {
+                if (err) throw(err);
+                db.query("DELETE FROM transaction WHERE id = ?", [transaction_id], (err) => {
+                    if (err) return reject(err);
+                    let completed = 0;
+                    for (let i = 0; i < products.length; i++) {
+                        db.query("DELETE FROM transaction WHERE stock_id = ?", [products[i].id], (err) => {
+                            if (err) throw(err);
+                            completed++;
+                            if (completed === products.length) {
+                                resolve();
+                            }
+                        });
+                    }
+                })
+            })
+            if (products.length === 0) {
+                resolve();
+            }
+        });
+    });
+}
+
 module.exports = {
     getBillingHistoriesByCustomer, 
     getProductTypes, 
@@ -146,4 +173,5 @@ module.exports = {
     getProductsStockByType, 
     getProductsStockByTypeAndName, 
     getSellProductsByType,
+    deleteProductsByTransaction,
 }

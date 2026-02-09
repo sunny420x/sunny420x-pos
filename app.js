@@ -14,6 +14,7 @@ const {
     getProductTypes, 
     getProductsStockByType,
     getProductsStockByTypeAndName,
+    deleteProductsByTransaction,
 } = require('./model/product')
 
 const { 
@@ -27,6 +28,12 @@ const {
     checkDiscount,
     getAllDiscounts
 } = require('./model/discount')
+
+const {
+    getProductSellingChart,
+    getTotalCustomers,
+    getBestSeller,
+} = require('./model/chart')
 
 const db = require('./database')
 const app = express()
@@ -159,27 +166,6 @@ app.get("/searchCustomerByPhoneNumber", (req, res) => {
     }
 })
 
-function getProductSellingChart() {
-    return new Promise((resolve) => {
-        db.query(`SELECT COUNT(*) as amounts, DATE(t.created_at) as days 
-            FROM transaction as t 
-            WHERE t.value = -1 AND MONTH(t.created_at) = MONTH(CURRENT_DATE()) AND YEAR(t.created_at) = YEAR(CURRENT_DATE()) AND stock_id IS NOT NULL  
-            GROUP BY DATE(t.created_at)`, (err,result) => {
-            if(err) throw err;
-            resolve(result)
-        })
-    })
-}
-
-function getTotalCustomers() {
-    return new Promise((resolve) => {
-        db.query(`SELECT COUNT(*) as amounts FROM customers`, (err,result) => {
-            if(err) throw err;
-            resolve(result)
-        })
-    })
-}
-
 function getUserTypes() {
     return new Promise((resolve) => {
         db.query(`SELECT * FROM user_types ORDER BY id ASC`, (err, result) => {
@@ -202,15 +188,17 @@ app.get("/", (req,res) => {
                 getExpiredProducts().then(expired_products => {
                     getProductSellingChart().then(productSellingChart => {
                         getTotalCustomers().then(total_customers => {
+                            getBestSeller().then(bestseller => {
                                 res.render("home", {
                                     user_data:user_data,
                                     total_customers: total_customers[0],
                                     productSellingChart:productSellingChart,
                                     expired_products:expired_products,
                                     moment:moment,
-                                    Helper:Helper
+                                    Helper:Helper,
+                                    bestseller:bestseller
                                 })
-
+                            })
                         })
                     })
                 })
@@ -751,34 +739,6 @@ app.post('/sellProduct', (req,res) => {
         })
     }
 })
-
-function deleteProductsByTransaction(transaction_id) {
-    return new Promise((resolve, reject) => {
-        db.query("SELECT p.id FROM transaction as t JOIN products as p ON p.transaction_id = t.id WHERE p.is_sold = 1 AND t.id = ?", [transaction_id], (err, products) => {
-            if (err) throw(err);
-            db.query("DELETE FROM products WHERE transaction_id = ?", [transaction_id], (err) => {
-                if (err) throw(err);
-                db.query("DELETE FROM transaction WHERE id = ?", [transaction_id], (err) => {
-                    if (err) return reject(err);
-                    let completed = 0;
-                    for (let i = 0; i < products.length; i++) {
-                        db.query("DELETE FROM transaction WHERE stock_id = ?", [products[i].id], (err) => {
-                            if (err) throw(err);
-                            completed++;
-                            if (completed === products.length) {
-                                resolve();
-                            }
-                        });
-                    }
-                })
-            })
-            if (products.length === 0) {
-                resolve();
-            }
-        });
-    });
-}
-
 
 app.get('/deleteProductByTransction/:id', (req,res) => {
     if(req.cookies.access_token == undefined) {
@@ -1872,7 +1832,3 @@ app.get('*', (req, res) => {
 app.listen(process.env.PORT ,() => {
     console.log(moment().format("DD/MM/YY HH:mm:ss")+" [+] Sunny420x POS System been started at http://localhost:"+process.env.PORT)
 })
-
-module.exports = {
-    getSellProductsByType
-}

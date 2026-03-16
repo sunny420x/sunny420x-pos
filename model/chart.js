@@ -40,7 +40,7 @@ function getProfits() {
         db.query(`SELECT SUM(pd.price - pd.import_price) AS profits
             FROM transaction as t JOIN products as pd ON pd.id = t.stock_id WHERE t.value = -1 AND YEAR(t.created_at) = YEAR(CURDATE()) AND MONTH(t.created_at) = MONTH(CURDATE())`, (err,result) => {
             if(err) throw err;
-            resolve(result[0])
+            resolve(result[0].profits || 0)
         })
     })
 }

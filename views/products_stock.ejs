@@ -336,8 +336,11 @@
                         totals += parseInt(product_price) * parseInt(amount)
                         initTotal()
                         Swal.fire({
-                            title: "เพิ่มสินค้าลงในรถเข็นแล้ว !",
-                            icon: "success"
+                            position: "top-end",
+                            title: "<i class='fa-solid fa-circle-check text-success'></i> เพิ่มสินค้าลงในรถเข็นแล้ว !",
+                            showConfirmButton: false,
+                            timer: 1000,
+                            backdrop: false
                         })
                         initCart(product_name, amount, product_price)
                         if(document.getElementById('customer').value == '-') {

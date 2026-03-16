@@ -53,8 +53,14 @@
                             </div>
                             <div class="mb-3">
                                 <div class="form-floating">
+                                    <input type="text" class="form-control" placeholder="กรอกราคา" id="import_price" name="import_price" value="<%=stock.import_price%>" required>
+                                    <label for="price">ราคาซื้อ (ต่อหน่วย)</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-floating">
                                     <input type="text" class="form-control" placeholder="กรอกราคา" id="price" name="price" value="<%=stock.price%>" required>
-                                    <label for="price">ราคา *</label>
+                                    <label for="price">ราคาขาย (ต่อหน่วย) *</label>
                                 </div>
                             </div>
                             <div class="mb-3">

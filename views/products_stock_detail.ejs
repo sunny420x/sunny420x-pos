@@ -23,7 +23,8 @@
                                         <th>รายการ</th>
                                         <th>นำเข้าเมื่อ</th>
                                         <th>วันหมดอายุ</th>
-                                        <th>ราคา</th>
+                                        <th>ราคาซื้อ</th>
+                                        <th>ราคาขาย</th>
                                         <th>นำเข้าจำนวน</th>
                                         <th>จัดการ</th>
                                     </tr>
@@ -38,6 +39,7 @@
                                                 <span class="badge text-bg-secondary">หมดอายุในอีก <%=moment(row.expired_date).diff(moment(), 'days')%> วัน<%} else {%>
                                                 <span class="badge text-bg-danger">หมดอายุแล้ว</span><%}%><%} else {%>-<%}%></span>
                                             </td>
+                                            <td><%=row.import_price%></td>
                                             <td><%=row.price%></td>
                                             <td><%=row.value%></td>
                                             <td>

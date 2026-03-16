@@ -116,7 +116,7 @@ function getExpiredProducts() {
 
 function getProductsStockByTypeAndName(type,name) {
     return new Promise((resolve) => {
-        db.query(`SELECT t.id, t.name, pt.name as type, t.type as type_id, t.id, pd.price, t.value, t.created_at, t.expired_date 
+        db.query(`SELECT t.id, t.name, pt.name as type, t.type as type_id, t.id, pd.price, pd.import_price, t.value, t.created_at, t.expired_date 
             FROM transaction as t 
             JOIN product_types as pt ON pt.id = t.type 
             JOIN products as pd ON pd.transaction_id = t.id 

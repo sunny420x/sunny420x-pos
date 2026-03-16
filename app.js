@@ -33,6 +33,7 @@ const {
     getProductSellingChart,
     getTotalCustomers,
     getBestSeller,
+    getProfits,
 } = require('./model/chart')
 
 const db = require('./database')
@@ -183,24 +184,23 @@ app.get("/", (req,res) => {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
+        initAccessToken(req.cookies.access_token).then(async (user_data) => {
             if(user_data.length == 1) {
-                getExpiredProducts().then(expired_products => {
-                    getProductSellingChart().then(productSellingChart => {
-                        getTotalCustomers().then(total_customers => {
-                            getBestSeller().then(bestseller => {
-                                res.render("home", {
-                                    user_data:user_data,
-                                    total_customers: total_customers[0],
-                                    productSellingChart:productSellingChart,
-                                    expired_products:expired_products,
-                                    moment:moment,
-                                    Helper:Helper,
-                                    bestseller:bestseller
-                                })
-                            })
-                        })
-                    })
+                const expired_products = await getExpiredProducts()
+                const productSellingChart = await getProductSellingChart()
+                const total_customers = await getTotalCustomers()
+                const bestseller = await getBestSeller()
+                const profits = await getProfits()
+
+                res.render("home", {
+                    user_data:user_data,
+                    total_customers: total_customers[0],
+                    productSellingChart:productSellingChart,
+                    expired_products:expired_products,
+                    moment:moment,
+                    Helper:Helper,
+                    bestseller:bestseller,
+                    profits:profits
                 })
             } else {
                 res.redirect('/logout')
@@ -566,8 +566,8 @@ function addProductStock(name, type, price, expired_date, created_at, amount) {
                         promises.push(
                             new Promise((resolve, reject) => {
                                 db.query(
-                                    "INSERT INTO products(name, type, price, transaction_id, created_at) VALUES(?,?,?,?,?)",
-                                    [name, type, price, transaction_id, created_at],
+                                    "INSERT INTO products(name, type, price, import_price, transaction_id, created_at) VALUES(?,?,?,?,?,?)",
+                                    [name, type, price, import_price, transaction_id, created_at],
                                     (err) => {
                                         if (err) reject(err);
                                         else resolve();
@@ -598,10 +598,11 @@ app.post("/addProductStock", (req,res) => {
                     const type = req.body.type
                     const amount = req.body.amount
                     const price = req.body.price
+                    const import_price = req.body.import_price
                     const expired_date = req.body.expired_date || null
                     const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
     
-                    addProductStock(name,type,price,expired_date,created_at,amount).then((result) => {
+                    addProductStock(name,type,price,import_price,expired_date,created_at,amount).then((result) => {
                         if(result == true) {
                             res.status(200).json({ success: true, message: 'Insert products successful!' });
                         } else {
@@ -921,7 +922,7 @@ app.get("/editProduct/:transaction", (req,res) => {
                     const transaction = req.params.transaction
                     const type = req.query.type ?? "all"
                     const option = req.query.option ?? "list"
-                    db.query(`SELECT pd.name, pd.type, t.expired_date, pd.price, pd.transaction_id, t.created_at, pd.updated_at  
+                    db.query(`SELECT pd.name, pd.type, t.expired_date, pd.price, pd.transaction_id, t.created_at, pd.updated_at, pd.import_price 
                         FROM products as pd JOIN transaction as t ON t.id = pd.transaction_id 
                         WHERE pd.transaction_id = ? GROUP BY name, type`, [transaction], (err, stock) => {
                         if(err) throw err;
@@ -959,6 +960,7 @@ app.post("/editProduct", (req,res) => {
                     const type = req.body.type
                     const name = req.body.name
                     const price = req.body.price
+                    const import_price = req.body.import_price
                     const expired_date = req.body.expired_date || null
                     const transaction_id = req.body.transaction_id
                     const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
@@ -966,7 +968,7 @@ app.post("/editProduct", (req,res) => {
                     const _type = req.query.type ?? "catalog"
                     const option = req.query.option ?? "list"
     
-                    db.query("UPDATE products SET type = ?, name = ?, price = ?, updated_at = ? WHERE transaction_id = ?", [type, name, price, updated_at, transaction_id], (err) => {
+                    db.query("UPDATE products SET type = ?, name = ?, price = ?, import_price = ?, updated_at = ? WHERE transaction_id = ?", [type, name, price, import_price, updated_at, transaction_id], (err) => {
                         if(err) throw err;
                         db.query("UPDATE transaction SET type = ?, name = ?, expired_date = ? WHERE id = ?", [type, name, expired_date, transaction_id], (err) => {
                             if(err) throw err;

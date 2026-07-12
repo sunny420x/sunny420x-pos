@@ -174,7 +174,7 @@ function initNavigatorItems() {
     let navItems = document.getElementsByClassName('list-group-item-action')
 
     for(i = 0; i < navItems.length; i++) {
-        if(getRoute(navItems[i].href)[1] == getRoute()[1]) {
+        if(getRoute(navItems[i].href)[2] == getRoute()[2]) {
             navItems[i].classList.add('active')
             return;
         }

@@ -1,0 +1,82 @@
+<div class="row w-100 grid-2 g-0 gap-3 p-2">
+    <div class="col-auto">
+        <div class="rounded profileCircle">
+            <div style="text-align: center; margin: auto; display: block; padding: 10px; font-size: 28px; text-transform: capitalize;"><%=user_data[0].username[0]%></div>
+        </div>
+        <script>
+            for(i = 0; i < document.getElementsByClassName('profileCircle').length; i++) {
+                document.getElementsByClassName('profileCircle')[i].setAttribute("style", "width: 60px; height: 60px; background: <%=user_data[0].color%>;")
+            }
+        </script>
+    </div>
+    <div class="col-lg">
+        <h5 class="mb-2" style="text-transform: capitalize;"><%=user_data[0].username%></h5>
+        <p class="mb-2" style="text-transform: capitalize;"><%=user_data[0].type%></p>
+    </div>
+</div>
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <h5 class="ms-2 py-2 border-bottom border-2"></h5>
+    </li>
+    <li class="nav-item">
+        <a href="/admin" class="list-group-item list-group-item-action border-0 p-2">
+            <i class="fa-solid fa-home me-1"></i> หน้าหลัก
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="/" class="list-group-item list-group-item-action border-0 p-2">
+            <i class="fa-solid fa-shopping-cart me-1"></i> ร้านค้า
+        </a>
+    </li>
+</ul>
+<%if(user_data[0].permission.split(',').includes('customers')) {%>
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <h5 class="ms-2 py-2 border-bottom border-2">ลูกค้า</h5>
+    </li>
+    <li class="nav-item">
+        <a href="/admin/customers" class="list-group-item list-group-item-action border-0 p-2">
+            <i class="fa-solid fa-users me-1"></i> รายชื่อลูกค้า
+        </a>
+    </li>
+</ul>
+<% } %>
+<%if(user_data[0].permission.split(',').includes('products')) {%>
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <h5 class="ms-2 py-2 border-bottom border-2">สินค้า</h5>
+    </li>
+    <li class="nav-item">
+        <a href="/admin/products_stock" class="list-group-item list-group-item-action border-0 p-2">
+            <i class="fa-solid fa-boxes me-1"></i> รายการสินค้า
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="/admin/discounts" class="list-group-item list-group-item-action border-0 p-2">
+            <i class="fa-solid fa-percentage me-1"></i> ส่วนลด
+        </a>
+    </li>
+    <%if(user_data[0].permission.split(',').includes('bills')) {%>
+    <li class="nav-item">
+        <a href="/admin/billingHistories" class="list-group-item list-group-item-action border-0 p-2">
+            <i class="fa-solid fa-file-invoice-dollar me-1"></i> ประวัติการขายสินค้า
+        </a>
+    </li>
+    <% } %>
+</ul>
+<% } %>
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <h5 class="ms-2 py-2 border-bottom border-2">บัญชี</h5>
+    </li>
+    <li class="nav-item">
+        <a href="/admin/settings" class="list-group-item list-group-item-action border-0 p-2">
+            <i class="fa-solid fa-cog"></i> ตั้งค่า
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="/admin/logout" class="list-group-item list-group-item-action border-0 p-2">
+            <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+        </a>
+    </li>
+</ul>

@@ -21,8 +21,19 @@
         <!-- Section-->
         <section class="py-5">
             <div class="container px-4 px-lg-5 mt-5">
-                <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
-                    <% products.forEach((product) => { %>
+                    <% 
+                    current_type = ""
+                    products.forEach((product) => { 
+                    %>
+                    <% if(current_type != product.type) { %>
+                    <% if(current_type != "") { %>
+                    </div>
+                    <% } %>
+                    <h3 class="mb-4"><%=product.type%></h3>
+                    <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-left">
+                        <% 
+                            current_type = product.type
+                        } %>
                     <div class="col mb-5">
                         <div class="card h-100">
                             <% if(product.is_sale == true) { %>

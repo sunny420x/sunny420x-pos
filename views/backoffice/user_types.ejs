@@ -9,7 +9,7 @@
             <div class="container-fluid p-0 overflow-hidden">
                 <%-include('include/navigator')%>
                 <nav class="navbar">
-                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/settings">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/admin/admin/settings">
                         <i class="fa-solid fa-chevron-left me-4"></i> จัดการประเภทผู้ใช้</a></div>
                 </nav>
                 <div class="container-fluid px-4">
@@ -30,7 +30,7 @@
                                             <td><%=row.name%></td>
                                             <td><%=row.permission%></td>
                                             <td>
-                                                <button class="btn btn-warning" onclick="openLink('/editUserType/<%=row.id%>')"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button class="btn btn-warning" onclick="openLink('/admin/editUserType/<%=row.id%>')"><i class="fa-solid fa-pen-to-square"></i></button>
                                                 <button class="btn btn-danger" onclick="
                                                 Swal.fire({
                                                 title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',

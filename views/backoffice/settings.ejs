@@ -31,11 +31,11 @@
                         <div class="col">
                             <div class="list-group">
                                 <%if(user_data[0].permission.split(',').includes('customers')) {%>
-                                    <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/product_types')">
+                                    <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/admin/product_types')">
                                         <i class="fa-solid fa-boxes me-1"></i> ประเภทของสินค้า</button>
                                 <%}%>
                                 <%if(user_data[0].permission.split(',').includes('users')) {%>
-                                    <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/user_types')">
+                                    <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/admin/user_types')">
                                         <i class="fa-solid fa-users-cog me-1"></i> ประเภทของผู้ใช้</button>
                                 <%}%>
                             </div>
@@ -46,11 +46,11 @@
                         <div class="card col p-4">
                             <h3><i class="fa-solid fa-users mx-1"></i> ผู้ใช้</h3>
                             <div class="list-group mt-3">
-                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/Users')">
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/admin/Users')">
                                     <i class="fa-solid fa-users-cog me-1"></i> จัดการผู้ใช้</button>
-                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/addUser')">
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/admin/addUser')">
                                     <i class="fa-solid fa-user-plus me-1"></i> เพิ่มผู้ใช้</button>
-                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/loginHistories')">
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/admin/loginHistories')">
                                     <i class="fa-solid fa-user-clock me-1"></i> ประวัติการเข้าสู่ระบบของผู้ใช้</button>
                             </div>
                         </div>
@@ -58,9 +58,9 @@
                         <div class="card col p-4">
                             <h3><i class="fa-solid fa-user mx-1"></i> บัญชี</h3>
                             <div class="list-group mt-3">
-                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/editProfile')">
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/admin/editProfile')">
                                     <i class="fa-solid fa-user-cog me-1"></i> แก้ไขข้อมูลส่วนตัว</button>
-                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/changePassword')">
+                                <button type="button" class="list-group-item list-group-item-action" onclick="openLink('/admin/changePassword')">
                                     <i class="fa-solid fa-user-lock me-1"></i> เปลี่ยนรหัสผ่าน</button>
                             </div>
                         </div>

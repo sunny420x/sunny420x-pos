@@ -30,7 +30,7 @@ function getSellProductsByType(type) {
             db.query(`SELECT pd.id, pd.name, pt.name as type, pd.type as type_id, pd.price 
                 FROM products as pd  
                 JOIN product_types as pt ON pt.id = pd.type 
-                WHERE pd.type = ? AND is_sold = 0 GROUP BY pd.name ORDER BY pd.name DESC`, [type], (err, result) => {
+                WHERE pd.type = ? AND is_sold = 0 GROUP BY pd.name ORDER BY pd.type DESC`, [type], (err, result) => {
                 if(err) throw err;
                 resolve(result)
             })
@@ -40,7 +40,7 @@ function getSellProductsByType(type) {
             db.query(`SELECT pd.id, pd.name, pt.name as type, pd.type as type_id, pd.price 
                 FROM products as pd  
                 JOIN product_types as pt ON pt.id = pd.type 
-                WHERE is_sold = 0 GROUP BY pd.name ORDER BY pd.name DESC`, (err, result) => {
+                WHERE is_sold = 0 GROUP BY pd.name ORDER BY pd.type DESC`, (err, result) => {
                 if(err) throw err;
                 resolve(result)
             })

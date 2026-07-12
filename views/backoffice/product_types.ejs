@@ -9,7 +9,7 @@
             <div class="container-fluid p-0 overflow-hidden">
                 <%-include('include/navigator')%>
                 <nav class="navbar">
-                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/settings">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/admin/settings">
                         <i class="fa-solid fa-chevron-left me-4"></i> จัดการประเภทสินค้า</a></div>
                 </nav>
                 <div class="container-fluid px-4">
@@ -28,7 +28,7 @@
                                         <tr>
                                             <td><%=row.name%></td>
                                             <td>
-                                                <button class="btn btn-warning" onclick="openLink('/editProductType/<%=row.id%>')"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button class="btn btn-warning" onclick="openLink('/admin/editProductType/<%=row.id%>')"><i class="fa-solid fa-pen-to-square"></i></button>
                                                 <button class="btn btn-danger" onclick="
                                                 Swal.fire({
                                                 title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',

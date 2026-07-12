@@ -117,7 +117,7 @@ app.get("/searchCustomerByCardId", (req, res) => {
                     })
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -139,7 +139,7 @@ app.get("/searchCustomerByFullName", (req, res) => {
                     })
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -161,7 +161,7 @@ app.get("/searchCustomerByPhoneNumber", (req, res) => {
                     })
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -203,7 +203,7 @@ app.get("/admin", (req,res) => {
                     profits:profits
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -226,7 +226,7 @@ app.get("/admin/customers", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -253,7 +253,7 @@ app.get("/admin/customers/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -295,7 +295,7 @@ app.post("/customers", (req,res) => {
                             throw err;
                         } else {
                             res.cookie('alert', 'success')
-                            res.redirect('/customers/'+id)
+                            res.redirect('/admin/customers/'+id)
                         }
                     })
                 } else {
@@ -303,7 +303,7 @@ app.post("/customers", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -325,7 +325,7 @@ app.get("/admin/addCustomer", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -362,7 +362,7 @@ app.post("/addCustomer", (req,res) => {
                             throw err;
                         } else {
                             res.cookie('alert', 'addSuccess')
-                            res.redirect('/addCustomer')
+                            res.redirect('/admin/addCustomer')
                         }
                     })
                 } else {
@@ -370,7 +370,7 @@ app.post("/addCustomer", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -389,7 +389,7 @@ app.get("/admin/deleteCustomer/:id", (req,res) => {
                     db.query("DELETE FROM customers WHERE id = ?", [id], (err) => {
                         if(err) throw err;
                         res.cookie('alert', 'deleteSuccess')
-                        res.redirect('/customers')
+                        res.redirect('/admin/customers')
                         res.end()
                     })
                 } else {
@@ -397,7 +397,7 @@ app.get("/admin/deleteCustomer/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -431,7 +431,7 @@ app.get("/admin/products_stock", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -452,7 +452,7 @@ app.get("/getSellProducts", (req,res) => {
                     res.end()
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -473,7 +473,7 @@ app.get("/getProductsHistoriesByType", (req,res) => {
                     res.end()
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -506,7 +506,7 @@ app.get("/getProductStock", (req,res) => {
                     res.end()
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -542,7 +542,7 @@ app.get("/admin/products_stock/:type/:name", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -614,7 +614,7 @@ app.post("/addProductStock", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -735,7 +735,7 @@ app.post('/sellProduct', (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -751,14 +751,14 @@ app.get('/admin/deleteProductByTransction/:id', (req,res) => {
                 if(user_data[0].permission.split(',').includes('products')) {
                     const transaction_id = req.params.id
                     deleteProductsByTransaction(transaction_id).then(() => {
-                        res.redirect('/products_stock')
+                        res.redirect('/admin/products_stock')
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -827,7 +827,7 @@ app.get('/billing/:id', (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -854,7 +854,7 @@ app.get("/admin/billingHistories", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -875,7 +875,7 @@ app.get("/getBillingHistoriesByCustomer", (req,res) => {
                     })
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -896,7 +896,7 @@ app.get("/admin/deleteBill/:id", (req,res) => {
                         db.query("DELETE FROM transaction WHERE billing_id = ?", [id], (err) => {
                             if(err) throw err;
                             res.cookie('alert', 'deleteSuccess')
-                            res.redirect('/billingHistories')
+                            res.redirect('/admin/billingHistories')
                             res.end()
                         })
                     })
@@ -905,7 +905,7 @@ app.get("/admin/deleteBill/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -943,7 +943,7 @@ app.get("/admin/editProduct/:transaction", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -981,7 +981,7 @@ app.post("/editProduct", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1013,7 +1013,7 @@ app.get("/admin/discounts", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1040,7 +1040,7 @@ app.get("/admin/discounts/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1067,7 +1067,7 @@ app.post("/discounts", (req,res) => {
                             throw err;
                         } else {
                             res.cookie('alert', 'success')
-                            res.redirect('/discounts/'+id)
+                            res.redirect('/admin/discounts/'+id)
                         }
                     })
                 } else {
@@ -1075,7 +1075,7 @@ app.post("/discounts", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1097,7 +1097,7 @@ app.get("/admin/addDiscount", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1122,7 +1122,7 @@ app.post("/addDiscount", (req,res) => {
                             throw err;
                         } else {
                             res.cookie('alert', 'addSuccess')
-                            res.redirect('/discounts')
+                            res.redirect('/admin/discounts')
                         }
                     })
                 } else {
@@ -1130,7 +1130,7 @@ app.post("/addDiscount", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1149,7 +1149,7 @@ app.get("/admin/deleteDiscount/:id", (req,res) => {
                     db.query("DELETE FROM discounts WHERE id = ?", [id], (err) => {
                         if(err) throw err;
                         res.cookie('alert', 'deleteSuccess')
-                        res.redirect('/discounts')
+                        res.redirect('/admin/discounts')
                         res.end()
                     })
                 } else {
@@ -1157,7 +1157,7 @@ app.get("/admin/deleteDiscount/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1182,7 +1182,7 @@ app.get("/admin/product_types", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1207,7 +1207,7 @@ app.post("/addProductType", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1226,7 +1226,7 @@ app.get("/admin/deleteProductType/:id", (req,res) => {
                     db.query("DELETE FROM product_types WHERE id = ?", [id], (err) => {
                         if(err) throw err;
                         res.cookie('alert', 'deleteSuccess')
-                        res.redirect('/product_types')
+                        res.redirect('/admin/product_types')
                         res.end()
                     })
                 } else {
@@ -1234,7 +1234,7 @@ app.get("/admin/deleteProductType/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1260,7 +1260,7 @@ app.get("/admin/editProductType/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1280,14 +1280,14 @@ app.post("/editProductType", (req,res) => {
                     db.query("UPDATE product_types SET name = ? WHERE id = ?", [name, id], (err) => {
                         if(err) throw err;
                         res.cookie('alert', 'success')
-                        res.redirect('/editProductType/'+id)
+                        res.redirect('/admin/editProductType/'+id)
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1313,7 +1313,7 @@ app.get("/admin/user_types", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1339,7 +1339,7 @@ app.post("/addUserType", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1358,7 +1358,7 @@ app.get("/admin/deleteUserType/:id", (req,res) => {
                     db.query("DELETE FROM user_types WHERE id = ?", [id], (err) => {
                         if(err) throw err;
                         res.cookie('alert', 'deleteSuccess')
-                        res.redirect('/user_types')
+                        res.redirect('/admin/user_types')
                         res.end()
                     })
                 } else {
@@ -1366,7 +1366,7 @@ app.get("/admin/deleteUserType/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1392,7 +1392,7 @@ app.get("/admin/editUserType/:id", (req,res) => {
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1413,14 +1413,14 @@ app.post("/editUserType", (req,res) => {
                     db.query("UPDATE user_types SET name = ?, permission = ? WHERE id = ?", [name, permission, id], (err) => {
                         if(err) throw err;
                         res.cookie('alert', 'success')
-                        res.redirect('/editUserType/'+id)
+                        res.redirect('/admin/editUserType/'+id)
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
                 }
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1431,7 +1431,7 @@ app.get('/admin/login', (req,res) => {
         res.render('backoffice/login')
         res.end()
     } else {
-        res.redirect('/')
+        res.redirect('/admin/admin')
         res.end()
     }
 })
@@ -1469,7 +1469,7 @@ app.post('/login', (req, res) => {
             res.cookie('access_token', Buffer.from(username+":"+password).toString('base64'));
             console.log(moment().format("DD/MM/YY HH:mm:ss")+" [+] "+username+" ได้เข้าสู่ระบบ!")
             loggingIpAddress(result[0].id, req.ip).then(() => {
-                res.redirect('/')
+                res.redirect('/admin/')
                 res.end()
             })
         } else {
@@ -1480,7 +1480,7 @@ app.post('/login', (req, res) => {
     })
 
     } else {
-        res.redirect('/')
+        res.redirect('/admin/')
         res.end()
     }
 })
@@ -1508,7 +1508,7 @@ app.get("/admin/settings", (req,res) => {
                     user_data:user_data
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1603,7 +1603,7 @@ app.post("/editUser", (req,res) => {
                 db.query("UPDATE users SET username = ?, full_name = ?, type = ?, updated_by = ?, updated_at = ? WHERE id = ?", [username, full_name, type, user_data[0].id, updated_at, id], (err) => {
                     if(err) throw err;
                     res.cookie('alert', 'success')
-                    res.redirect('/Users')
+                    res.redirect('/admin/Users')
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
@@ -1651,7 +1651,7 @@ app.post("/addUser", (req,res) => {
                 db.query("INSERT INTO users(username,password,type,full_name,created_by,created_at) VALUES(?,?,?,?,?,?)", [username,password,type,full_name,user_data[0].id,created_at], (err) => {
                     if(err) throw err;
                     res.cookie('alert', 'addSuccess')
-                    res.redirect('/Users')
+                    res.redirect('/admin/Users')
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
@@ -1673,7 +1673,7 @@ app.get("/admin/deleteUser/:id", (req,res) => {
                 db.query("DELETE FROM users WHERE id = ?", [id], (err) => {
                     if(err) throw err;
                     res.cookie('alert', 'deleteSuccess')
-                    res.redirect('/Users')
+                    res.redirect('/admin/Users')
                 })
             } else {
                 res.cookie('alert', 'permissionDenial')
@@ -1694,7 +1694,7 @@ app.get('/admin/editProfile', (req,res) => {
                     user_data:user_data
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1714,16 +1714,16 @@ app.post('/editProfile', (req,res) => {
 
                 if(user_data[0].id != id) {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect('/editProfile')
+                    res.redirect('/admin/editProfile')
                 }
 
                 db.query("UPDATE users SET username = ?, full_name = ?, color = ? WHERE id = ?", [username, full_name, color, id], (err) => {
                     if(err) throw err;
                     res.cookie('alert', 'success')
-                    res.redirect('/editProfile')
+                    res.redirect('/admin/editProfile')
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1744,7 +1744,7 @@ app.get('/admin/changePassword', (req,res) => {
                     user_data:user_data
                 })
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }
@@ -1776,7 +1776,7 @@ app.post("/changePassword", (req,res) => {
                         db.query("UPDATE users SET password = ? WHERE id = ?", [new_password, id], (err) => {
                             if(err) throw err;
                             res.cookie('alert', 'success')
-                            res.redirect('/logout')
+                            res.redirect('/admin/logout')
                         })
                     } else {
                         res.cookie('alert', 'oldPasswordNotMatch')
@@ -1785,7 +1785,7 @@ app.post("/changePassword", (req,res) => {
                 })
 
             } else {
-                res.redirect('/logout')
+                res.redirect('/admin/logout')
             }
         })
     }

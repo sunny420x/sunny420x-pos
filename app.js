@@ -548,7 +548,7 @@ app.get("/products_stock/:type/:name", (req,res) => {
     }
 })
 
-function addProductStock(name, type, price, expired_date, created_at, amount) {
+function addProductStock(name, type, price,import_price, expired_date, created_at, amount) {
     return new Promise((resolve, reject) => {
         db.query(
             "INSERT INTO transaction(name, type, value, expired_date, created_at) VALUES(?,?,?,?,?)",

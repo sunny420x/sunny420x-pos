@@ -35,6 +35,7 @@ const {
     getTotalCustomers,
     getBestSeller,
     getProfits,
+    getTotalSales,
 } = require('./model/chart')
 
 const db = require('./database')

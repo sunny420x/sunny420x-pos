@@ -15,6 +15,7 @@ const {
     getProductsStockByType,
     getProductsStockByTypeAndName,
     deleteProductsByTransaction,
+    getProductsHistoriesByType,
 } = require('./model/product')
 
 const { 

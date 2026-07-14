@@ -192,6 +192,7 @@ app.get("/", (req,res) => {
                 const total_customers = await getTotalCustomers()
                 const bestseller = await getBestSeller()
                 const profits = await getProfits()
+                const total_sales = await getTotalSales()
 
                 res.render("home", {
                     user_data:user_data,
@@ -201,7 +202,8 @@ app.get("/", (req,res) => {
                     moment:moment,
                     Helper:Helper,
                     bestseller:bestseller,
-                    profits:profits
+                    profits:profits,
+                    total_sales:total_sales
                 })
             } else {
                 res.redirect('/logout')

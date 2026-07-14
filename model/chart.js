@@ -46,7 +46,7 @@ function getProfits() {
 }
 
 
-function getTotalSale() {
+function getTotalSales() {
     return new Promise((resolve) => {
         db.query(`SELECT SUM(pd.price) AS total_sales 
             FROM transaction as t JOIN products as pd ON pd.id = t.stock_id WHERE t.value = -1 AND YEAR(t.created_at) = YEAR(CURDATE()) AND MONTH(t.created_at) = MONTH(CURDATE())`, (err,result) => {
@@ -61,5 +61,5 @@ module.exports = {
     getTotalCustomers,
     getBestSeller,
     getProfits,
-    getTotalSale
+    getTotalSales
 }

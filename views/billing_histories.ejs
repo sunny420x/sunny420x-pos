@@ -17,7 +17,9 @@
                     return res.text();
                 })
                 .then(data => {
-                    document.getElementById('billingHistoriesHTML').innerHTML = data;
+                    const container = document.getElementById('billingHistoriesHTML');
+                    if (window.replaceTableContent) replaceTableContent(container, data);
+                    else container.innerHTML = data;
                 })
                 .catch(error => {
                     console.error('Error:', error);

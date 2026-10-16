@@ -1,18 +1,8 @@
 const db = require('../database')
 
-function Pagination(page) {
-    page = parseInt(page)
-    const per_page = 10;
-    const limit_start = (page - 1) * per_page;
-    const limit_end = per_page;
-
-    return {limit_start, limit_end}
-}
-
-function getAllDiscounts(page) {
+function getAllDiscounts() {
     return new Promise((resolve) => {
-        const {limit_start, limit_end} = Pagination(page)
-        db.query(`SELECT * FROM discounts ORDER BY id DESC LIMIT ?,?`, [limit_start, limit_end], (err, result) => {
+        db.query(`SELECT * FROM discounts ORDER BY id DESC`, (err, result) => {
             if(err) throw err;
             resolve(result)
         })
@@ -36,7 +26,6 @@ function checkDiscount(code) {
 }
 
 module.exports = {
-    Pagination,
     checkDiscount,
     getAllDiscounts
 }

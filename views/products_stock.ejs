@@ -20,7 +20,9 @@
                     return res.text();
                 })
                 .then(data => {
-                    document.getElementById('productStock').innerHTML = data;
+                    const container = document.getElementById('productStock');
+                    if (window.replaceTableContent) replaceTableContent(container, data);
+                    else container.innerHTML = data;
 
                     //append _type and type in URL
                     _type = type

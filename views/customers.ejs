@@ -20,7 +20,9 @@
                     return res.text();
                 })
                 .then(data => {
-                    document.getElementById('customerHTML').innerHTML = data;
+                    const container = document.getElementById('customerHTML');
+                    if (window.replaceTableContent) replaceTableContent(container, data);
+                    else container.innerHTML = data;
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -42,7 +44,9 @@
                     return res.text();
                 })
                 .then(data => {
-                    document.getElementById('customerHTML').innerHTML = data;
+                    const container = document.getElementById('customerHTML');
+                    if (window.replaceTableContent) replaceTableContent(container, data);
+                    else container.innerHTML = data;
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -64,7 +68,9 @@
                     return res.text();
                 })
                 .then(data => {
-                    document.getElementById('customerHTML').innerHTML = data;
+                    const container = document.getElementById('customerHTML');
+                    if (window.replaceTableContent) replaceTableContent(container, data);
+                    else container.innerHTML = data;
                 })
                 .catch(error => {
                     console.error('Error:', error);

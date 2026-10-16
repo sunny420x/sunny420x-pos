@@ -16,16 +16,16 @@
                     <div class="card p-4">
                         <h2 class="mb-4"><i class="fa-solid fa-cog me-1"></i> จัดการประเภทผู้ใช้ <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserType_modal"><i class="fa-solid fa-plus me-1"></i> เพิ่มประเภทผู้ใช้</button></h2>
                         <div class="table-responsive">
-                            <table class="table">
+                            <table class="table data-table">
                                 <thead class="table-light text-center">
                                     <tr>
                                         <th>รายการ</th>
                                         <th>สิทธิ์ผู้ใช้</th>
-                                        <th>จัดการ</th>
+                                        <th class="no-sort">จัดการ</th>
                                     </tr>
                                 </thead>
+                                <tbody class="text-center">
                                 <% user_types.forEach((row) => { %>
-                                    <tbody class="text-center">
                                         <tr>
                                             <td><%=row.name%></td>
                                             <td><%=row.permission%></td>
@@ -49,8 +49,8 @@
                                                 "><i class="fa-solid fa-trash"></i></button>
                                             </td>
                                         </tr>
-                                    </tbody>
                                 <%})%>
+                                </tbody>
                             </table>
                         </div> 
                     </div>

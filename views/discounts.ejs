@@ -20,18 +20,18 @@
                         <h2 class="mb-4"><i class="fa-solid fa-percentage me-1"></i> รายการส่วนลด <button type="button" class="btn btn-primary btn-sm" onclick="openLink('/addDiscount')"><i class="fa-solid fa-plus me-1"></i> เพิ่มส่วนลด</button></h2>
                         <div class="row">
                             <div class="table-responsive col">
-                                <table class="table">
+                                <table class="table data-table">
                                     <thead class="table-light text-center">
                                         <tr>
                                             <th>#</th>
                                             <th>โค้ดส่วนลด</th>
                                             <th>(%) ส่วนลดร้อยละ</th>
                                             <th>สถานะ</th>
-                                            <th>จัดการ</th>
+                                            <th class="no-sort">จัดการ</th>
                                         </tr>
                                     </thead>
+                                    <tbody class="text-center">
                                     <% discounts.forEach((row) => { %>
-                                        <tbody class="text-center">
                                             <tr>
                                                 <td><%=row.id%></td>
                                                 <td><%=row.code%></td>
@@ -57,11 +57,10 @@
                                                     "><i class="fa-solid fa-trash"></i></button>
                                                 </td>
                                             </tr>
-                                        </tbody>
                                     <%})%>
+                                    </tbody>
                                 </table>
                             </div>
-                            <%-include('Components/pagination')%>
                         </div>
                     </div>
                 </div>

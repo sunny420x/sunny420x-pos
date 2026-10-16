@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table class="table">
+    <table class="table data-table">
         <thead class="table-light text-center">
             <tr>
                 <th>รายการ</th>
@@ -7,11 +7,11 @@
                 <th>ราคา</th>
                 <% } %>
                 <th>คงเหลือ</th>
-                <th>จัดการ</th>
+                <th class="no-sort">จัดการ</th>
             </tr>
         </thead>
+        <tbody class="text-center">
         <% products_stock.forEach((row) => { %>
-            <tbody class="text-center">
                 <tr>
                     <td><%=row.name%> (<%=row.type%>)</td>
                     <% if (stock_mode !== 'inventory_only') { %>
@@ -27,7 +27,7 @@
                         <button class="btn btn-primary" onclick="openLink('/products_stock/<%=row.type_id%>/<%=encodeURIComponent(row.name)%>')"><i class="fa-solid fa-up-right-from-square"></i></button>
                     </td>
                 </tr>
-            </tbody>
         <%})%>
+        </tbody>
     </table>
 </div>

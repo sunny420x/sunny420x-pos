@@ -16,15 +16,15 @@
                     <div class="card p-4">
                         <h2 class="mb-4"><i class="fa-solid fa-cog me-1"></i> จัดการประเภทสินค้า <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProductType_modal"><i class="fa-solid fa-plus me-1"></i> เพิ่มประเภทสินค้า</button></h2>
                         <div class="table-responsive">
-                            <table class="table">
+                            <table class="table data-table">
                                 <thead class="table-light text-center">
                                     <tr>
                                         <th>รายการ</th>
-                                        <th>จัดการ</th>
+                                        <th class="no-sort">จัดการ</th>
                                     </tr>
                                 </thead>
+                                <tbody class="text-center">
                                 <% product_types.forEach((row) => { %>
-                                    <tbody class="text-center">
                                         <tr>
                                             <td><%=row.name%></td>
                                             <td>
@@ -47,8 +47,8 @@
                                                 "><i class="fa-solid fa-trash"></i></button>
                                             </td>
                                         </tr>
-                                    </tbody>
                                 <%})%>
+                                </tbody>
                             </table>
                         </div> 
                     </div>

@@ -168,7 +168,7 @@
 
                         <h2 class="my-4"><i class="fa-solid fa-trash mx-1"></i> สินค้าหมดอายุ</h2>
                         <div class="table-responsive">
-                            <table class="table">
+                            <table class="table data-table">
                                 <thead class="table-light text-center">
                                     <tr>
                                         <th>หมายเลขนำเข้า</th>
@@ -177,9 +177,10 @@
                                         <th>จำนวน</th>
                                         <th>สถานะ</th>
                                         <th>หมดอายุเมื่อ</th>
-                                        <th>จัดการ</th>
+                                        <th class="no-sort">จัดการ</th>
                                     </tr>
                                 </thead>
+                                <tbody class="text-center">
                                 <% expired_products.forEach((row) => { %>
                                     <tr class="text-center">
                                         <td><%=row.id%></td>
@@ -187,7 +188,7 @@
                                         <td><%=row.name%></td>
                                         <td><%=row.value%></td>
                                         <td><%if(row.expired_date != null) {%><%if(moment(row.expired_date).diff(moment(), 'days') > 0) {%><span class="badge text-bg-secondary">หมดอายุในอีก <%=moment(row.expired_date).diff(moment(), 'days')%> วัน<%} else {%><span class="badge text-bg-danger">หมดอายุแล้ว</span><%}%><%} else {%>-<%}%></span></td>
-                                        <td><%=moment(row.expired_date).format('DD/MM/YYYY')%></td>
+                                        <td data-order="<%=row.expired_date ? moment(row.expired_date).valueOf() : ''%>"><%=moment(row.expired_date).format('DD/MM/YYYY')%></td>
                                         <td>
                                             <button class="btn btn-danger" onclick="
                                             Swal.fire({
@@ -208,6 +209,7 @@
                                         </td>
                                     </tr>
                                 <%})%>
+                                </tbody>
                             </table>
                         </div>
                     </div>

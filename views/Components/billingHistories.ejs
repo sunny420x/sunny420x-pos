@@ -1,19 +1,20 @@
 <div class="table-responsive">
-    <table class="table">
+    <table class="table data-table">
         <thead class="table-light text-center">
             <tr>
                 <th>วันที่</th>
                 <th>ชื่อลูกค้า</th>
                 <th>เลขบิล</th>
                 <th>จำนวนสินค้า</th>
-                <th>จัดการ</th>
+                <th class="no-sort">จัดการ</th>
             </tr>
         </thead>
+        <tbody>
         <% 
         bills.forEach((row) => {     
         %>
             <tr class="text-center">
-                <td>
+                <td data-order="<%=moment(row.created_at).valueOf()%>">
                     <%=moment(row.created_at).add(543, 'years').format("DD/MM/YYYY")%>
                 </td>
                 <td><i class="fa-solid fa-user me-1"></i> <%if(row.first_name != undefined && row.last_name != undefined) {%><%=row.first_name%> <%=row.last_name%><%} else {%>-<%}%></td>
@@ -42,5 +43,6 @@
         <%
         })
         %>
+        </tbody>
     </table>
 </div>

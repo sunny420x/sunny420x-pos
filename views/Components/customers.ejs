@@ -1,16 +1,16 @@
 <div class="table-responsive col">
-    <table class="table">
+    <table class="table data-table">
         <thead class="table-light text-center">
             <tr>
                 <th>#</th>
                 <th>ชื่อ-นามสกุล</th>
                 <th>เบอร์โทรศัพท์</th>
                 <th>ออเดอร์ทั้งหมด</th>
-                <th>จัดการ</th>
+                <th class="no-sort">จัดการ</th>
             </tr>
         </thead>
+        <tbody class="text-center">
         <% customers.forEach((row) => { %>
-            <tbody class="text-center">
                 <% if(row.id) { %>
                 <tr>
                     <td><%=row.id%></td>
@@ -41,7 +41,7 @@
                     </td>
                 </tr>
                 <%}%>
-            </tbody>
         <%})%>
+        </tbody>
     </table>
 </div>

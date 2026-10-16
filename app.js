@@ -838,14 +838,10 @@ app.get("/discounts", (req, res) => {
     if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
 
-        let page = req.query.page || 1
-        if (page < 1) { page = 1 }
-
-        getAllDiscounts(page).then(discounts => {
+        getAllDiscounts().then(discounts => {
             res.render('discounts', {
                 user_data: user_data,
                 discounts: discounts,
-                page: page,
                 Helper: Helper
             })
         })

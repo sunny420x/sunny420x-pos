@@ -16,7 +16,7 @@
                     <div class="card p-4">
                         <h2 class="mb-4"><i class="fa-solid fa-user-clock mx-1"></i> ประวัติการเข้าสู่ระบบของผู้ใช้</h2>
                         <div class="table-responsive">
-                            <table class="table">
+                            <table class="table data-table">
                                 <thead class="table-light text-center">
                                     <tr>
                                         <th>Username</th>
@@ -25,16 +25,16 @@
                                         <th>หมายเลข IP Address</th>
                                     </tr>
                                 </thead>
+                                <tbody class="text-center">
                                 <%history.forEach((row) => { %>
-                                    <tbody class="text-center">
                                         <tr>
                                             <td><%=row.username%></td>
                                             <td><%=row.full_name%></td>
-                                            <td><%=moment(row.time).add(543, 'years').format("DD/MM/YY HH:mm:ss")%></td>
+                                            <td data-order="<%=moment(row.time).valueOf()%>"><%=moment(row.time).add(543, 'years').format("DD/MM/YY HH:mm:ss")%></td>
                                             <td><%=row.ip_address%></td>
                                         </tr>
-                                    </tbody>
                                 <%})%>
+                                </tbody>
                             </table>
                         </div>
                     </div>

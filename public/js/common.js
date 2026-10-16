@@ -183,6 +183,58 @@ function initNavigatorItems() {
 
 initNavigatorItems()
 
+function initializeDataTables(container = document) {
+    if (!window.DataTable) return;
+
+    const tables = container.matches?.('table.data-table')
+        ? [container]
+        : container.querySelectorAll('table.data-table');
+
+    tables.forEach(table => {
+        if (DataTable.isDataTable(table)) return;
+
+        new DataTable(table, {
+            autoWidth: false,
+            pageLength: 10,
+            lengthMenu: [10, 25, 50, 100],
+            order: [],
+            columnDefs: [{ targets: 'no-sort', orderable: false }],
+            language: {
+                emptyTable: 'ไม่มีข้อมูลในตาราง',
+                info: 'แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ รายการ',
+                infoEmpty: 'แสดง 0 ถึง 0 จากทั้งหมด 0 รายการ',
+                infoFiltered: '(กรองจากทั้งหมด _MAX_ รายการ)',
+                lengthMenu: 'แสดง _MENU_ รายการ',
+                loadingRecords: 'กำลังโหลด...',
+                processing: 'กำลังประมวลผล...',
+                search: 'ค้นหา:',
+                zeroRecords: 'ไม่พบข้อมูลที่ตรงกัน',
+                paginate: {
+                    first: 'แรก',
+                    last: 'สุดท้าย',
+                    next: 'ถัดไป',
+                    previous: 'ก่อนหน้า'
+                }
+            }
+        });
+    });
+}
+
+function replaceTableContent(container, html) {
+    if (window.DataTable) {
+        container.querySelectorAll('table.data-table').forEach(table => {
+            if (DataTable.isDataTable(table)) {
+                new DataTable(table).destroy();
+            }
+        });
+    }
+
+    container.innerHTML = html;
+    initializeDataTables(container);
+}
+
+initializeDataTables();
+
 function generateDiscountCode() {
     return (Math.random() + 1).toString(36).substring(2).toUpperCase();
 }

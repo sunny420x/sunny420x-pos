@@ -1,5 +1,5 @@
 const express = require('express')
-const { getSellProductsByType } = require('./app')
+const { getSellProductsByType } = require('./model/product')
 const router = express.Router();
 
 router.get('/', (req,res) => {

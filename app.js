@@ -7,22 +7,22 @@ const cookieParser = require('cookie-parser')
 const path = require('path')
 const { createHash } = require('crypto')
 
-const { 
-    getSellProductsByType, 
-    getExpiredProducts, 
-    getBillingHistoriesByCustomer, 
-    getProductTypes, 
+const {
+    getSellProductsByType,
+    getExpiredProducts,
+    getBillingHistoriesByCustomer,
+    getProductTypes,
     getProductsStockByType,
     getProductsStockByTypeAndName,
     deleteProductsByTransaction,
     getProductsHistoriesByType,
 } = require('./model/product')
 
-const { 
-    searchCustomerByFullName, 
-    getCustomers, 
-    searchCustomerByCardId, 
-    searchCustomerByPhoneNumber 
+const {
+    searchCustomerByFullName,
+    getCustomers,
+    searchCustomerByCardId,
+    searchCustomerByPhoneNumber
 } = require('./model/customer')
 
 const {
@@ -53,7 +53,7 @@ app.use(express.static(path.join(__dirname, "/public")))
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 class Helper {
@@ -63,11 +63,11 @@ class Helper {
 
     ThaiPhoneNumber(str) {
         let result = []
-        for(let i = 0; i < str.length; i++) {
-            if(i == 3) {
+        for (let i = 0; i < str.length; i++) {
+            if (i == 3) {
                 result.push("-")
             }
-            if(i == 6) {
+            if (i == 6) {
                 result.push("-")
             }
             result.push(str[i])
@@ -82,25 +82,27 @@ function Pagination(page) {
     const limit_start = (page - 1) * per_page;
     const limit_end = per_page;
 
-    return {limit_start, limit_end}
+    return { limit_start, limit_end }
 }
 
-function initAccessToken(token) {
-    return new Promise((resolve) => {
-        token = Buffer.from(token, 'base64').toString('utf-8')
-
-        const username = token.split(':')[0]
-        const password = token.split(':')[1]
-
-        db.query(`SELECT u.id, u.username, u.full_name, ut.name as type, u.type as type_id, ut.permission, u.color FROM users as u JOIN user_types as ut ON ut.id = u.type 
-             WHERE u.username = ? AND u.password = ?`, [username,password], (err,result) => {
-            if(err) throw err;
-            if(result.length == 1) {
-                resolve(result)
-            }
-        })
-    })
+const { context } = require('./middleware/tenant');
+const { hashToken, hashPassword, verifyPassword } = require('./middleware/password');
+app.use(require('./middleware/auth'));
+function initAccessToken(req, res, next) {
+    const token = req.cookies.access_token;
+    if (!token) return res.redirect('/login');
+    db.auth.query(`SELECT u.id, u.company_id, u.username, u.full_name, ut.name AS type,
+ u.type AS type_id, ut.permission, u.color FROM auth_sessions s
+ JOIN users u ON u.id = s.user_id AND u.company_id = s.company_id
+ JOIN user_types ut ON ut.id = u.type AND ut.company_id = u.company_id
+ WHERE s.token_hash = ? AND s.expires_at > NOW()`, [hashToken(token)], (err, users) => {
+        if (err) return next(err);
+        if (users.length !== 1) { res.clearCookie('access_token'); return res.redirect('/login'); }
+        req.user = users[0]; req.company_id = req.user.company_id;
+        context.run({ companyId: req.company_id }, next);
+    });
 }
+app.use(initAccessToken);
 
 //Controller
 app.get("/searchCustomerByCardId", (req, res) => {
@@ -108,7 +110,7 @@ app.get("/searchCustomerByCardId", (req, res) => {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
+        Promise.resolve([req.user]).then((user_data) => {
             if (user_data.length == 1) {
                 let query = req.query.q !== undefined ? decodeURIComponent(req.query.q) : 'all';
                 searchCustomerByCardId(query).then(customers => {
@@ -130,7 +132,7 @@ app.get("/searchCustomerByFullName", (req, res) => {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
+        Promise.resolve([req.user]).then((user_data) => {
             if (user_data.length == 1) {
                 let query = req.query.q !== undefined ? decodeURIComponent(req.query.q) : 'all';
                 searchCustomerByFullName(query).then(customers => {
@@ -152,7 +154,7 @@ app.get("/searchCustomerByPhoneNumber", (req, res) => {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
+        Promise.resolve([req.user]).then((user_data) => {
             if (user_data.length == 1) {
                 let query = req.query.q !== undefined ? decodeURIComponent(req.query.q) : 'all';
                 searchCustomerByPhoneNumber(query).then(customers => {
@@ -172,22 +174,22 @@ app.get("/searchCustomerByPhoneNumber", (req, res) => {
 function getUserTypes() {
     return new Promise((resolve) => {
         db.query(`SELECT * FROM user_types ORDER BY id ASC`, (err, result) => {
-            if(err) throw err;
+            if (err) throw err;
             resolve(result)
         })
     })
 }
 
-app.get("/", (req,res) => {
-    if(!app_verified) {
+app.get("/", (req, res) => {
+    if (!app_verified) {
         checkCurrentURL(req)
     }
-    if(req.cookies.access_token == undefined) {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then(async (user_data) => {
-            if(user_data.length == 1) {
+        Promise.resolve([req.user]).then(async (user_data) => {
+            if (user_data.length == 1) {
                 const expired_products = await getExpiredProducts()
                 const productSellingChart = await getProductSellingChart()
                 const total_customers = await getTotalCustomers()
@@ -196,15 +198,15 @@ app.get("/", (req,res) => {
                 const total_sales = await getTotalSales()
 
                 res.render("home", {
-                    user_data:user_data,
+                    user_data: user_data,
                     total_customers: total_customers[0],
-                    productSellingChart:productSellingChart,
-                    expired_products:expired_products,
-                    moment:moment,
-                    Helper:Helper,
-                    bestseller:bestseller,
-                    profits:profits,
-                    total_sales:total_sales
+                    productSellingChart: productSellingChart,
+                    expired_products: expired_products,
+                    moment: moment,
+                    Helper: Helper,
+                    bestseller: bestseller,
+                    profits: profits,
+                    total_sales: total_sales
                 })
             } else {
                 res.redirect('/logout')
@@ -213,17 +215,17 @@ app.get("/", (req,res) => {
     }
 })
 
-app.get("/customers", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/customers", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('customers')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('customers')) {
                     res.render('customers', {
-                        user_data:user_data,
-                        Helper:Helper
+                        user_data: user_data,
+                        Helper: Helper
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
@@ -236,20 +238,20 @@ app.get("/customers", (req,res) => {
     }
 })
 
-app.get("/customers/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/customers/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('customers')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('customers')) {
                     const id = req.params.id
                     db.query("SELECT * FROM customers WHERE id = ?", [id], (err, customer) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.render('edit_customer', {
-                            user_data:user_data,
-                            customer:customer[0]
+                            user_data: user_data,
+                            customer: customer[0]
                         })
                     })
                 } else {
@@ -263,14 +265,14 @@ app.get("/customers/:id", (req,res) => {
     }
 })
 
-app.post("/customers", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/customers", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('customers')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('customers')) {
                     const id = req.body.id
                     const first_name = req.body.first_name
                     const last_name = req.body.last_name
@@ -288,20 +290,20 @@ app.post("/customers", (req,res) => {
                     const zip = req.body.zip
 
                     const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
-                
+
                     db.query(`UPDATE customers SET 
                         first_name = ?, last_name = ?, card_id = ?, 
                         home_id = ?, moo = ?, village = ?, soi = ?, 
                         street = ?, sub_district = ?, district = ?, 
-                        state = ?, zip = ?, phone_number = ?, updated_at = ? WHERE id = ?`, 
+                        state = ?, zip = ?, phone_number = ?, updated_at = ? WHERE id = ?`,
                         [first_name, last_name, card_id, home_id, moo, village, soi, street, sub_district, district, state, zip, phone_number, updated_at, id], (err) => {
-                        if(err) {
-                            throw err;
-                        } else {
-                            res.cookie('alert', 'success')
-                            res.redirect('/customers/'+id)
-                        }
-                    })
+                            if (err) {
+                                throw err;
+                            } else {
+                                res.cookie('alert', 'success')
+                                res.redirect('/customers/' + id)
+                            }
+                        })
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
@@ -313,16 +315,16 @@ app.post("/customers", (req,res) => {
     }
 })
 
-app.get("/addCustomer", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/addCustomer", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('customers')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('customers')) {
                     res.render("add_customer", {
-                        user_data:user_data
+                        user_data: user_data
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
@@ -335,14 +337,14 @@ app.get("/addCustomer", (req,res) => {
     }
 })
 
-app.post("/addCustomer", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/addCustomer", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('customers')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('customers')) {
                     const first_name = req.body.first_name
                     const last_name = req.body.last_name
                     const card_id = req.body.card_id
@@ -359,16 +361,16 @@ app.post("/addCustomer", (req,res) => {
 
                     const phone_number = req.body.phone_number
                     const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
-                
-                    db.query("INSERT INTO customers(first_name, last_name, card_id, home_id, moo, village, soi, street, sub_district, district, state, zip, phone_number, created_at) VALUES(?,?,?,?,?,?)", 
+
+                    db.query("INSERT INTO customers(first_name, last_name, card_id, home_id, moo, village, soi, street, sub_district, district, state, zip, phone_number, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         [first_name, last_name, card_id, home_id, moo, village, soi, street, sub_district, district, state, zip, phone_number, created_at], (err) => {
-                        if(err) {
-                            throw err;
-                        } else {
-                            res.cookie('alert', 'addSuccess')
-                            res.redirect('/addCustomer')
-                        }
-                    })
+                            if (err) {
+                                throw err;
+                            } else {
+                                res.cookie('alert', 'addSuccess')
+                                res.redirect('/addCustomer')
+                            }
+                        })
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
@@ -380,18 +382,18 @@ app.post("/addCustomer", (req,res) => {
     }
 })
 
-app.get("/deleteCustomer/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/deleteCustomer/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('customers')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('customers')) {
                     const id = req.params.id
 
                     db.query("DELETE FROM customers WHERE id = ?", [id], (err) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.cookie('alert', 'deleteSuccess')
                         res.redirect('/customers')
                         res.end()
@@ -407,25 +409,25 @@ app.get("/deleteCustomer/:id", (req,res) => {
     }
 })
 
-app.get("/products_stock", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/products_stock", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     let option = req.query.option ?? "list"
                     let type = req.query.type ?? "all"
                     getProductTypes().then(product_types => {
                         getCustomers().then(customers => {
                             res.render('products_stock', {
-                                user_data:user_data,
-                                product_types:product_types,
-                                customers:customers,
-                                Helper:Helper,
-                                option:option,
-                                type:type,
+                                user_data: user_data,
+                                product_types: product_types,
+                                customers: customers,
+                                Helper: Helper,
+                                option: option,
+                                type: type,
                             })
                             res.end()
                         })
@@ -441,17 +443,17 @@ app.get("/products_stock", (req,res) => {
     }
 })
 
-app.get("/getSellProducts", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/getSellProducts", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
                 let type = req.query.type
                 getSellProductsByType(type).then((products_stock) => {
                     res.render('Components/sellProductSelectBox', {
-                        products_stock:products_stock
+                        products_stock: products_stock
                     })
                     res.end()
                 })
@@ -462,17 +464,17 @@ app.get("/getSellProducts", (req,res) => {
     }
 })
 
-app.get("/getProductsHistoriesByType", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/getProductsHistoriesByType", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
                 let type = req.query.type
                 getProductsHistoriesByType(type).then((products_stock) => {
                     res.render('Components/ProductsHistoriesByType', {
-                        products_stock:products_stock
+                        products_stock: products_stock
                     })
                     res.end()
                 })
@@ -483,29 +485,29 @@ app.get("/getProductsHistoriesByType", (req,res) => {
     }
 })
 
-app.get("/getProductStock", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/getProductStock", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
                 let type = req.query.type !== undefined ? decodeURIComponent(req.query.type) : 'all';
                 let option = req.query.option !== undefined ? decodeURIComponent(req.query.option) : 'list';
                 getProductsStockByType(type).then((products_stock) => {
-                    if(option == "catalog") {
+                    if (option == "catalog") {
                         res.render('Components/productStockCatalogView', {
-                            products_stock:products_stock,
-                            moment:moment,
-                            type:type,
+                            products_stock: products_stock,
+                            moment: moment,
+                            type: type,
                         })
                         res.end()
                         return
                     }
                     res.render('Components/productStockListView', {
-                        products_stock:products_stock,
-                        moment:moment,
-                        type:type,
+                        products_stock: products_stock,
+                        moment: moment,
+                        type: type,
                     })
                     res.end()
                 })
@@ -516,14 +518,14 @@ app.get("/getProductStock", (req,res) => {
     }
 })
 
-app.get("/products_stock/:type/:name", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/products_stock/:type/:name", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const name = req.params.name
                     const _type = req.params.type
                     const option = req.query.option ?? "list"
@@ -531,12 +533,12 @@ app.get("/products_stock/:type/:name", (req,res) => {
                     getProductTypes().then(product_types => {
                         getProductsStockByTypeAndName(_type, name).then((products_stock) => {
                             res.render('products_stock_detail', {
-                                user_data:user_data,
-                                products_stock:products_stock,
-                                product_types:product_types,
-                                moment:moment,
-                                option:option,
-                                type:type
+                                user_data: user_data,
+                                products_stock: products_stock,
+                                product_types: product_types,
+                                moment: moment,
+                                option: option,
+                                type: type
                             })
                             res.end()
                         })
@@ -552,15 +554,16 @@ app.get("/products_stock/:type/:name", (req,res) => {
     }
 })
 
-function addProductStock(name, type, price,import_price, expired_date, created_at, amount) {
+function addProductStock(name, type, price, import_price, expired_date, created_at, amount) {
     return new Promise((resolve, reject) => {
         db.query(
             "INSERT INTO transaction(name, type, value, expired_date, created_at) VALUES(?,?,?,?,?)",
             [name, type, amount, expired_date, created_at],
-            (err) => {
+            (err, inserted) => {
                 if (err) return reject(err);
 
-                db.query(`SELECT LAST_INSERT_ID() AS id`, (err, result) => {
+                Promise.resolve().then(() => {
+                    const result = [{ id: inserted.insertId }];
                     if (err) return reject(err);
 
                     const transaction_id = result[0].id;
@@ -590,14 +593,14 @@ function addProductStock(name, type, price,import_price, expired_date, created_a
     });
 }
 
-app.post("/addProductStock", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/addProductStock", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const name = req.body.name
                     const type = req.body.type
                     const amount = req.body.amount
@@ -605,10 +608,10 @@ app.post("/addProductStock", (req,res) => {
                     const import_price = req.body.import_price
                     const expired_date = req.body.expired_date || null
                     const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
-    
-                    addProductStock(name,type,price,import_price,expired_date,created_at,amount).then((result) => {
-                        if(result == true) {
-                            res.status(200).json({ success: true, message: 'Insert products successful!' });
+
+                    addProductStock(name, type, price, import_price, expired_date, created_at, amount).then((result) => {
+                        if (result == true) {
+                            res.status(200).json({ success: true, message: 'INSERT OR IGNORE products successful!' });
                         } else {
                             res.status(500).json({ error: result.code });
                         }
@@ -624,22 +627,22 @@ app.post("/addProductStock", (req,res) => {
     }
 })
 
-app.post('/sellProduct', (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post('/sellProduct', (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const cart = req.body.cart
                     const customer = req.body.customer === "-" ? null : req.body.customer;
                     const discount_code = req.body.discount_code || null
                     const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
 
-                    if(discount_code != null) {
+                    if (discount_code != null) {
                         checkDiscount(discount_code).then(discount_result => {
-                            if(discount_result == null) {
+                            if (discount_result == null) {
                                 res.status(500).json({ error: "โค้ดส่วนลดไม่ถูกต้อง!" });
                                 return;
                             } else {
@@ -649,7 +652,7 @@ app.post('/sellProduct', (req,res) => {
                     } else {
                         processCart();
                     }
-                    
+
                     async function processCart() {
                         try {
                             // Get the last billing ID
@@ -659,16 +662,16 @@ app.post('/sellProduct', (req,res) => {
                                     (err, result) => (err ? reject(err) : resolve(result))
                                 );
                             });
-                    
+
                             let billing_id = 1; // Default to 1 if no previous billing ID exists
                             if (lastBillingResult.length > 0) {
                                 billing_id = parseInt(lastBillingResult[0].billing_id) + 1;
                             }
-                    
+
                             // First, check if enough products are available in the inventory
                             for (let i = 0; i < cart.length; i++) {
                                 const { product_type, product_name, product_price, amount } = cart[i];
-                    
+
                                 // Check the available quantity of the product
                                 const availableProductResult = await new Promise((resolve, reject) => {
                                     db.query(
@@ -677,14 +680,14 @@ app.post('/sellProduct', (req,res) => {
                                         (err, result) => (err ? reject(err) : resolve(result))
                                     );
                                 });
-                    
+
                                 const availableCount = availableProductResult[0].available_count;
-                    
+
                                 // If there aren't enough products available, throw an error
                                 if (availableCount < amount) {
                                     throw new Error(`สินค้า: ${product_name} มีไม่เพียงพอสำหรับคำสั่งซื้อนี้`);
                                 }
-                    
+
                                 // If enough stock is available, proceed with the transaction
                                 for (let j = 0; j < amount; j++) {
                                     // Select product ID
@@ -695,13 +698,13 @@ app.post('/sellProduct', (req,res) => {
                                             (err, result) => (err ? reject(err) : resolve(result))
                                         );
                                     });
-                    
+
                                     if (productResult.length === 0) {
                                         throw new Error("สินค้าหมด");
                                     }
-                    
+
                                     const product_id = productResult[0].id;
-                    
+
                                     // Mark product as sold
                                     await new Promise((resolve, reject) => {
                                         db.query(
@@ -710,8 +713,8 @@ app.post('/sellProduct', (req,res) => {
                                             (err) => (err ? reject(err) : resolve())
                                         );
                                     });
-                    
-                                    // Insert transaction
+
+                                    // INSERT OR IGNORE transaction
                                     await new Promise((resolve, reject) => {
                                         db.query(
                                             "INSERT INTO transaction(type, name, value, stock_id, customer_id, billing_id, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)",
@@ -721,9 +724,9 @@ app.post('/sellProduct', (req,res) => {
                                     });
                                 }
                             }
-                            if(discount_code != null) {
+                            if (discount_code != null) {
                                 db.query("UPDATE discounts SET billing_id = ? WHERE code = ?", [billing_id, discount_code], (err) => {
-                                    if(err) res.sendStatus(500).json({error: err.message})
+                                    if (err) res.sendStatus(500).json({ error: err.message })
                                     res.status(200).json({ success: true, bill: `/billing/${billing_id}` });
                                 })
                             } else {
@@ -733,7 +736,7 @@ app.post('/sellProduct', (req,res) => {
                             console.error(err);
                             res.status(500).json({ error: err.message });
                         }
-                    }                
+                    }
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
@@ -745,14 +748,14 @@ app.post('/sellProduct', (req,res) => {
     }
 })
 
-app.get('/deleteProductByTransction/:id', (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get('/deleteProductByTransction/:id', (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const transaction_id = req.params.id
                     deleteProductsByTransaction(transaction_id).then(() => {
                         res.redirect('/products_stock')
@@ -768,14 +771,14 @@ app.get('/deleteProductByTransction/:id', (req,res) => {
     }
 })
 
-app.get('/billing/:id', (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get('/billing/:id', (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('bills')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('bills')) {
                     const id = req.params.id
 
                     db.query(`SELECT 
@@ -818,11 +821,11 @@ app.get('/billing/:id', (req,res) => {
                     GROUP BY 
                         t.name, pd.price;
                     `, [id, id], (err, bill) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.render('billing', {
-                            user_data:user_data,
-                            bill:bill,
-                            moment:moment,
+                            user_data: user_data,
+                            bill: bill,
+                            moment: moment,
                             Helper: Helper
                         })
                     })
@@ -837,20 +840,20 @@ app.get('/billing/:id', (req,res) => {
     }
 })
 
-app.get("/billingHistories", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/billingHistories", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('bills')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('bills')) {
                     let customer_id = req.query.customer_id !== undefined ? req.query.customer_id : 'all';
                     getCustomers().then(owners => {
                         res.render('billing_histories', {
-                            user_data:user_data,
-                            owners:owners,
-                            customer_id:customer_id
+                            user_data: user_data,
+                            owners: owners,
+                            customer_id: customer_id
                         })
                     })
                 } else {
@@ -864,18 +867,18 @@ app.get("/billingHistories", (req,res) => {
     }
 })
 
-app.get("/getBillingHistoriesByCustomer", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/getBillingHistoriesByCustomer", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
                 let customer_id = req.query.customer_id !== undefined ? decodeURIComponent(req.query.customer_id) : 'all';
                 getBillingHistoriesByCustomer(customer_id).then(bills => {
                     res.render('Components/billingHistories', {
-                        bills:bills,
-                        moment:moment
+                        bills: bills,
+                        moment: moment
                     })
                 })
             } else {
@@ -885,20 +888,20 @@ app.get("/getBillingHistoriesByCustomer", (req,res) => {
     }
 })
 
-app.get("/deleteBill/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/deleteBill/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('bills')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('bills')) {
                     const id = req.params.id
 
                     db.query("UPDATE products SET is_sold = 0 WHERE id IN (SELECT stock_id FROM transaction WHERE billing_id = ?)", [id], (err) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         db.query("DELETE FROM transaction WHERE billing_id = ?", [id], (err) => {
-                            if(err) throw err;
+                            if (err) throw err;
                             res.cookie('alert', 'deleteSuccess')
                             res.redirect('/billingHistories')
                             res.end()
@@ -915,29 +918,29 @@ app.get("/deleteBill/:id", (req,res) => {
     }
 })
 
-app.get("/editProduct/:transaction", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/editProduct/:transaction", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const transaction = req.params.transaction
                     const type = req.query.type ?? "all"
                     const option = req.query.option ?? "list"
                     db.query(`SELECT pd.name, pd.type, t.expired_date, pd.price, pd.transaction_id, t.created_at, pd.updated_at, pd.import_price 
                         FROM products as pd JOIN transaction as t ON t.id = pd.transaction_id 
                         WHERE pd.transaction_id = ? GROUP BY name, type`, [transaction], (err, stock) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         getProductTypes().then((product_types) => {
                             res.render("edit_product", {
-                                user_data:user_data,
-                                stock:stock[0],
-                                product_types:product_types,
-                                moment:moment,
-                                type:type,
-                                option:option,
+                                user_data: user_data,
+                                stock: stock[0],
+                                product_types: product_types,
+                                moment: moment,
+                                type: type,
+                                option: option,
                             })
                             res.end()
                         })
@@ -953,14 +956,14 @@ app.get("/editProduct/:transaction", (req,res) => {
     }
 })
 
-app.post("/editProduct", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/editProduct", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const type = req.body.type
                     const name = req.body.name
                     const price = req.body.price
@@ -971,11 +974,11 @@ app.post("/editProduct", (req,res) => {
 
                     const _type = req.query.type ?? "catalog"
                     const option = req.query.option ?? "list"
-    
+
                     db.query("UPDATE products SET type = ?, name = ?, price = ?, import_price = ?, updated_at = ? WHERE transaction_id = ?", [type, name, price, import_price, updated_at, transaction_id], (err) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         db.query("UPDATE transaction SET type = ?, name = ?, expired_date = ? WHERE id = ?", [type, name, expired_date, transaction_id], (err) => {
-                            if(err) throw err;
+                            if (err) throw err;
                             res.cookie('alert', 'success')
                             res.redirect(`/editProduct/${transaction_id}?type=${_type}&option=${option}`)
                         })
@@ -992,24 +995,24 @@ app.post("/editProduct", (req,res) => {
 })
 
 //Discounts
-app.get("/discounts", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/discounts", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
 
                     let page = req.query.page || 1
-                    if(page < 1) { page = 1 } 
+                    if (page < 1) { page = 1 }
 
                     getAllDiscounts(page).then(discounts => {
                         res.render('discounts', {
-                            user_data:user_data,
-                            discounts:discounts,
-                            page:page,
-                            Helper:Helper
+                            user_data: user_data,
+                            discounts: discounts,
+                            page: page,
+                            Helper: Helper
                         })
                     })
                 } else {
@@ -1023,20 +1026,20 @@ app.get("/discounts", (req,res) => {
     }
 })
 
-app.get("/discounts/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/discounts/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const id = req.params.id
                     db.query("SELECT * FROM discounts WHERE id = ?", [id], (err, discount) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.render('edit_discount', {
-                            user_data:user_data,
-                            discount:discount[0]
+                            user_data: user_data,
+                            discount: discount[0]
                         })
                     })
                 } else {
@@ -1050,30 +1053,30 @@ app.get("/discounts/:id", (req,res) => {
     }
 })
 
-app.post("/discounts", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/discounts", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const id = req.body.id
                     const code = req.body.code
                     const amount = req.body.amount
                     const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
                     const updated_by = user_data[0].id
-                
+
                     db.query(`UPDATE discounts SET 
-                        code = ?, amount = ?, updated_at = ?, updated_by = ? WHERE id = ?`, 
+                        code = ?, amount = ?, updated_at = ?, updated_by = ? WHERE id = ?`,
                         [code, amount, updated_at, updated_by, id], (err) => {
-                        if(err) {
-                            throw err;
-                        } else {
-                            res.cookie('alert', 'success')
-                            res.redirect('/discounts/'+id)
-                        }
-                    })
+                            if (err) {
+                                throw err;
+                            } else {
+                                res.cookie('alert', 'success')
+                                res.redirect('/discounts/' + id)
+                            }
+                        })
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
@@ -1085,16 +1088,16 @@ app.post("/discounts", (req,res) => {
     }
 })
 
-app.get("/addDiscount", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/addDiscount", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     res.render("add_discount", {
-                        user_data:user_data
+                        user_data: user_data
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
@@ -1107,28 +1110,28 @@ app.get("/addDiscount", (req,res) => {
     }
 })
 
-app.post("/addDiscount", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/addDiscount", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const code = req.body.code
                     const amount = req.body.amount
                     const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
                     const created_by = user_data[0].id
-                
-                    db.query("INSERT INTO discounts(code,amount,created_at,created_by) VALUES(?,?,?,?)", 
+
+                    db.query("INSERT INTO discounts(code,amount,created_at,created_by) VALUES(?,?,?,?)",
                         [code, amount, created_at, created_by], (err) => {
-                        if(err) {
-                            throw err;
-                        } else {
-                            res.cookie('alert', 'addSuccess')
-                            res.redirect('/discounts')
-                        }
-                    })
+                            if (err) {
+                                throw err;
+                            } else {
+                                res.cookie('alert', 'addSuccess')
+                                res.redirect('/discounts')
+                            }
+                        })
                 } else {
                     res.cookie('alert', 'permissionDenial')
                     res.redirect(req.get("Referrer"))
@@ -1140,18 +1143,18 @@ app.post("/addDiscount", (req,res) => {
     }
 })
 
-app.get("/deleteDiscount/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/deleteDiscount/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const id = req.params.id
 
                     db.query("DELETE FROM discounts WHERE id = ?", [id], (err) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.cookie('alert', 'deleteSuccess')
                         res.redirect('/discounts')
                         res.end()
@@ -1167,18 +1170,18 @@ app.get("/deleteDiscount/:id", (req,res) => {
     }
 })
 
-app.get("/product_types", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/product_types", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     getProductTypes().then(product_types => {
                         res.render('product_types', {
-                            user_data:user_data,
-                            product_types:product_types
+                            user_data: user_data,
+                            product_types: product_types
                         })
                     })
                 } else {
@@ -1192,19 +1195,19 @@ app.get("/product_types", (req,res) => {
     }
 })
 
-app.post("/addProductType", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/addProductType", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const name = req.body.name
 
                     db.query("INSERT INTO product_types(name) VALUES(?)", [name], (err) => {
-                        if(err) res.status(500).json({ error: err.code });
-                        res.status(200).json({ success: true, message: 'Insert product type successful!' });
+                        if (err) res.status(500).json({ error: err.code });
+                        res.status(200).json({ success: true, message: 'INSERT OR IGNORE product type successful!' });
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
@@ -1217,18 +1220,18 @@ app.post("/addProductType", (req,res) => {
     }
 })
 
-app.get("/deleteProductType/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/deleteProductType/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const id = req.params.id
 
                     db.query("DELETE FROM product_types WHERE id = ?", [id], (err) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.cookie('alert', 'deleteSuccess')
                         res.redirect('/product_types')
                         res.end()
@@ -1244,19 +1247,19 @@ app.get("/deleteProductType/:id", (req,res) => {
     }
 })
 
-app.get("/editProductType/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/editProductType/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
-                    db.query("SELECT * FROM product_types WHERE id = ?", [req.params.id], (err,result) => {
-                        if(err) throw err;
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
+                    db.query("SELECT * FROM product_types WHERE id = ?", [req.params.id], (err, result) => {
+                        if (err) throw err;
                         res.render('edit_product_type', {
-                            user_data:user_data,
-                            row:result[0]
+                            user_data: user_data,
+                            row: result[0]
                         })
                     })
                 } else {
@@ -1270,21 +1273,21 @@ app.get("/editProductType/:id", (req,res) => {
     }
 })
 
-app.post("/editProductType", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/editProductType", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('products')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('products')) {
                     const id = req.body.id
                     const name = req.body.name
-    
+
                     db.query("UPDATE product_types SET name = ? WHERE id = ?", [name, id], (err) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.cookie('alert', 'success')
-                        res.redirect('/editProductType/'+id)
+                        res.redirect('/editProductType/' + id)
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
@@ -1298,18 +1301,18 @@ app.post("/editProductType", (req,res) => {
 })
 
 //UserTypes
-app.get("/user_types", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/user_types", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('users')) {
                     getUserTypes().then(user_types => {
                         res.render('user_types', {
-                            user_data:user_data,
-                            user_types:user_types
+                            user_data: user_data,
+                            user_types: user_types
                         })
                     })
                 } else {
@@ -1323,20 +1326,20 @@ app.get("/user_types", (req,res) => {
     }
 })
 
-app.post("/addUserType", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/addUserType", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('users')) {
                     const name = req.body.name
                     const permission = req.body.permission
-    
-                    db.query("INSERT INTO user_types(name,permission) VALUES(?,?)", [name,permission], (err) => {
-                        if(err) res.status(500).json({ error: err.code });
-                        res.status(200).json({ success: true, message: 'Insert user type successful!' });
+
+                    db.query("INSERT INTO user_types(name,permission) VALUES(?,?)", [name, permission], (err) => {
+                        if (err) res.status(500).json({ error: err.code });
+                        res.status(200).json({ success: true, message: 'INSERT OR IGNORE user type successful!' });
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
@@ -1349,18 +1352,18 @@ app.post("/addUserType", (req,res) => {
     }
 })
 
-app.get("/deleteUserType/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/deleteUserType/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('users')) {
                     const id = req.params.id
 
                     db.query("DELETE FROM user_types WHERE id = ?", [id], (err) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.cookie('alert', 'deleteSuccess')
                         res.redirect('/user_types')
                         res.end()
@@ -1376,19 +1379,19 @@ app.get("/deleteUserType/:id", (req,res) => {
     }
 })
 
-app.get("/editUserType/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/editUserType/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('users')) {
-                    db.query("SELECT * FROM user_types WHERE id = ?", [req.params.id], (err,result) => {
-                        if(err) throw err;
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('users')) {
+                    db.query("SELECT * FROM user_types WHERE id = ?", [req.params.id], (err, result) => {
+                        if (err) throw err;
                         res.render('edit_user_type', {
-                            user_data:user_data,
-                            row:result[0]
+                            user_data: user_data,
+                            row: result[0]
                         })
                     })
                 } else {
@@ -1402,22 +1405,22 @@ app.get("/editUserType/:id", (req,res) => {
     }
 })
 
-app.post("/editUserType", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/editUserType", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].permission.split(',').includes('users')) {
                     const id = req.body.id
                     const name = req.body.name
                     const permission = req.body.permission
-    
+
                     db.query("UPDATE user_types SET name = ?, permission = ? WHERE id = ?", [name, permission, id], (err) => {
-                        if(err) throw err;
+                        if (err) throw err;
                         res.cookie('alert', 'success')
-                        res.redirect('/editUserType/'+id)
+                        res.redirect('/editUserType/' + id)
                     })
                 } else {
                     res.cookie('alert', 'permissionDenial')
@@ -1430,86 +1433,20 @@ app.post("/editUserType", (req,res) => {
     }
 })
 
-app.get('/login', (req,res) => {
-    if(req.cookies.access_token == undefined) {
-        res.render('login')
-        res.end()
-    } else {
-        res.redirect('/')
-        res.end()
-    }
-})
-
-function loggingIpAddress(user_id, ip_address) {
-    return new Promise((resolve) => {
-        const logged_in_at = moment().format("YYYY-MM-DD HH:mm:ss")
-        db.query("INSERT INTO login_history(user_id, time, ip_address) VALUES(?,?,?)", [user_id, logged_in_at, ip_address], (err) => {
-            if(err) throw err;
-            db.query("SELECT COUNT(*) as count FROM login_history", (err, login_his) => {
-                if(err) throw err;
-                const count = login_his[0].count
-                if(count > 50) {
-                    db.query("DELETE FROM login_history ORDER BY id ASC LIMIT 1", (err) => {
-                        if(err) throw err;
-                        resolve()
-                    })
-                } else {
-                    resolve()
-                }
-            })
-        })
-    })
-}
-
-app.post('/login', (req, res) => {
-    if(req.cookies.access_token == undefined) {
-
-    const username = req.body.username
-    const password = createHash('sha256').update(req.body.password).digest('base64');
-
-    db.query("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, result) => {
-        if(err) throw err;
-        if(result.length == 1) {
-            res.cookie('access_token', Buffer.from(username+":"+password).toString('base64'));
-            console.log(moment().format("DD/MM/YY HH:mm:ss")+" [+] "+username+" ได้เข้าสู่ระบบ!")
-            loggingIpAddress(result[0].id, req.ip).then(() => {
-                res.redirect('/')
-                res.end()
-            })
-        } else {
-            res.cookie('alert', 'wrongPassword')
-            res.redirect('/login')
-            res.end()
-        }
-    })
-
-    } else {
-        res.redirect('/')
-        res.end()
-    }
-})
-
-app.get('/logout', (req,res) => {
-    res.clearCookie('access_token')
-    res.cookie('alert', 'logoutSuccess')
-    res.redirect('/login')
-    res.end()
-})
-
-app.get('/hashPassword/:password', (req,res) => {
+app.get('/hashPassword/:password', (req, res) => {
     const password = createHash('sha256').update(req.params.password).digest('base64');
     res.send(password)
 })
 
-app.get("/settings", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/settings", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
                 res.render('settings', {
-                    user_data:user_data
+                    user_data: user_data
                 })
             } else {
                 res.redirect('/logout')
@@ -1518,20 +1455,20 @@ app.get("/settings", (req,res) => {
     }
 })
 
-app.get("/loginHistories", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/loginHistories", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data[0].permission.split(',').includes('users')) {
                 const id = req.params.id
                 db.query('SELECT u.full_name, u.username, h.time, h.ip_address FROM login_history as h JOIN users as u ON u.id = h.user_id ORDER BY h.time DESC', [id], (err, history) => {
-                    if(err) throw err;
+                    if (err) throw err;
                     res.render('login_histories', {
-                        user_data:user_data,
-                        moment:moment,
-                        history:history
+                        user_data: user_data,
+                        moment: moment,
+                        history: history
                     })
                 })
             } else {
@@ -1542,18 +1479,18 @@ app.get("/loginHistories", (req,res) => {
     }
 })
 
-app.get("/Users", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/Users", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data[0].permission.split(',').includes('users')) {
-                db.query("SELECT u.id, u.username, u.full_name, ut.name as type FROM users as u JOIN user_types as ut ON ut.id = u.type ORDER BY u.type ASC", (err,users) => {
-                    if(err) throw err;
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data[0].permission.split(',').includes('users')) {
+                db.query("SELECT u.id, u.username, u.full_name, ut.name as type FROM users as u JOIN user_types as ut ON ut.id = u.type ORDER BY u.type ASC", (err, users) => {
+                    if (err) throw err;
                     res.render('Users/users', {
-                        user_data:user_data,
-                        users:users
+                        user_data: user_data,
+                        users: users
                     })
                 })
             } else {
@@ -1564,21 +1501,21 @@ app.get("/Users", (req,res) => {
     }
 })
 
-app.get("/editUser/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/editUser/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data[0].permission.split(',').includes('users')) {
                 getUserTypes().then(user_types => {
                     const id = req.params.id
-                    db.query("SELECT id, username, full_name, type FROM users WHERE id = ?", [id], (err,user) => {
-                        if(err) throw err;
+                    db.query("SELECT id, username, full_name, type FROM users WHERE id = ?", [id], (err, user) => {
+                        if (err) throw err;
                         res.render('Users/edit_user', {
-                            user_data:user_data,
-                            user_types:user_types,
-                            user:user[0]
+                            user_data: user_data,
+                            user_types: user_types,
+                            user: user[0]
                         })
                     })
                 })
@@ -1590,22 +1527,22 @@ app.get("/editUser/:id", (req,res) => {
     }
 })
 
-app.post("/editUser", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/editUser", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data[0].permission.split(',').includes('users')) {
                 const id = req.body.id
                 const username = req.body.username
                 const type = req.body.type
                 const full_name = req.body.full_name
-    
+
                 const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
-    
+
                 db.query("UPDATE users SET username = ?, full_name = ?, type = ?, updated_by = ?, updated_at = ? WHERE id = ?", [username, full_name, type, user_data[0].id, updated_at, id], (err) => {
-                    if(err) throw err;
+                    if (err) throw err;
                     res.cookie('alert', 'success')
                     res.redirect('/Users')
                 })
@@ -1617,17 +1554,17 @@ app.post("/editUser", (req,res) => {
     }
 })
 
-app.get("/addUser", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/addUser", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data[0].permission.split(',').includes('users')) {
                 getUserTypes().then(user_types => {
                     res.render('Users/add_user', {
-                        user_data:user_data,
-                        user_types:user_types
+                        user_data: user_data,
+                        user_types: user_types
                     })
                 })
             } else {
@@ -1638,13 +1575,13 @@ app.get("/addUser", (req,res) => {
     }
 })
 
-app.post("/addUser", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/addUser", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data[0].permission.split(',').includes('users')) {
                 const username = req.body.username
                 const password = createHash('sha256').update(req.body.password).digest('base64');
                 const type = req.body.type
@@ -1652,8 +1589,8 @@ app.post("/addUser", (req,res) => {
 
                 const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
 
-                db.query("INSERT INTO users(username,password,type,full_name,created_by,created_at) VALUES(?,?,?,?,?,?)", [username,password,type,full_name,user_data[0].id,created_at], (err) => {
-                    if(err) throw err;
+                db.query("INSERT INTO users(username,password,type,full_name,created_by,created_at) VALUES(?,?,?,?,?,?)", [username, password, type, full_name, user_data[0].id, created_at], (err) => {
+                    if (err) throw err;
                     res.cookie('alert', 'addSuccess')
                     res.redirect('/Users')
                 })
@@ -1665,17 +1602,17 @@ app.post("/addUser", (req,res) => {
     }
 })
 
-app.get("/deleteUser/:id", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get("/deleteUser/:id", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data[0].permission.split(',').includes('users')) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data[0].permission.split(',').includes('users')) {
                 const id = req.params.id
 
                 db.query("DELETE FROM users WHERE id = ?", [id], (err) => {
-                    if(err) throw err;
+                    if (err) throw err;
                     res.cookie('alert', 'deleteSuccess')
                     res.redirect('/Users')
                 })
@@ -1687,15 +1624,15 @@ app.get("/deleteUser/:id", (req,res) => {
     }
 })
 
-app.get('/editProfile', (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get('/editProfile', (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
                 res.render('Users/edit_profile', {
-                    user_data:user_data
+                    user_data: user_data
                 })
             } else {
                 res.redirect('/logout')
@@ -1704,25 +1641,25 @@ app.get('/editProfile', (req,res) => {
     }
 })
 
-app.post('/editProfile', (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post('/editProfile', (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
                 const id = req.body.id
                 const username = req.body.username
                 const full_name = req.body.full_name
                 const color = req.body.color
 
-                if(user_data[0].id != id) {
+                if (user_data[0].id != id) {
                     res.cookie('alert', 'permissionDenial')
-                    res.redirect('/editProfile')
+                    return res.redirect('/editProfile')
                 }
 
                 db.query("UPDATE users SET username = ?, full_name = ?, color = ? WHERE id = ?", [username, full_name, color, id], (err) => {
-                    if(err) throw err;
+                    if (err) throw err;
                     res.cookie('alert', 'success')
                     res.redirect('/editProfile')
                 })
@@ -1733,19 +1670,19 @@ app.post('/editProfile', (req,res) => {
     }
 })
 
-app.get('/changePassword', (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.get('/changePassword', (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                if(user_data[0].username == "demo") {
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                if (user_data[0].username == "demo") {
                     res.send("ไม่สามารถเปลี่ยนรหัสผ่านของผู้ใช้ทดลองได้!")
                     return;
                 }
                 res.render('Users/change_password', {
-                    user_data:user_data
+                    user_data: user_data
                 })
             } else {
                 res.redirect('/logout')
@@ -1754,31 +1691,31 @@ app.get('/changePassword', (req,res) => {
     }
 })
 
-app.post("/changePassword", (req,res) => {
-    if(req.cookies.access_token == undefined) {
+app.post("/changePassword", (req, res) => {
+    if (req.cookies.access_token == undefined) {
         res.redirect('/login')
         res.end()
     } else {
-        initAccessToken(req.cookies.access_token).then((user_data) => {
-            if(user_data.length == 1) {
-                const id = req.body.id
+        Promise.resolve([req.user]).then((user_data) => {
+            if (user_data.length == 1) {
+                const id = req.user.id
                 let old_password = req.body.old_password
                 let new_password = req.body.new_password
                 let confirm_password = req.body.confirm_password
 
-                if(new_password != confirm_password) {
+                if (new_password != confirm_password) {
                     res.cookie('alert', 'passwordNotMatch')
-                    res.redirect(req.get("Referrer"))
+                    return res.redirect(req.get("Referrer"))
                 }
 
-                old_password = createHash('sha256').update(old_password).digest('base64');
-                new_password = createHash('sha256').update(new_password).digest('base64');
+                if (typeof new_password !== 'string' || new_password.length < 8 || new_password.length > 128) return res.status(400).send('Password must be 8–128 characters');
+                const password_hash = hashPassword(new_password);
 
-                db.query("SELECT * FROM users WHERE id = ? AND password = ?", [id, old_password], (err,result) => {
-                    if(err) throw err;
-                    if(result.length == 1) {
-                        db.query("UPDATE users SET password = ? WHERE id = ?", [new_password, id], (err) => {
-                            if(err) throw err;
+                db.query("SELECT * FROM users WHERE id = ?", [id], (err, result) => {
+                    if (err) throw err;
+                    if (result.length == 1 && verifyPassword(old_password, result[0].password)) {
+                        db.query("UPDATE users SET password = ? WHERE id = ?", [password_hash, id], (err) => {
+                            if (err) throw err;
                             res.cookie('alert', 'success')
                             res.redirect('/logout')
                         })
@@ -1799,25 +1736,25 @@ function checkCurrentURL(req) {
     var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
 
     fetch(`https://softwares.sunny420x.com/LicenseVerifier/SunnyPOS/${encodeURIComponent(fullUrl)}`)
-    .then(res => {
-        if (!res.ok) {
-            return res.json().then(errorData => { throw new Error(errorData.error); });
-        }
-        return res.json();
-    })
-    .then(data => {
-        if(data.msg == 'no') {
-            console.log(`[-] ยืนยันการเป็นเจ้าของผลิตภัณฑ์ล้มเหลว สำหรับ URL: ${fullUrl} !`)
-        } else {
-            app_verified = true
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    }); 
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(errorData => { throw new Error(errorData.error); });
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.msg == 'no') {
+                console.log(`[-] ยืนยันการเป็นเจ้าของผลิตภัณฑ์ล้มเหลว สำหรับ URL: ${fullUrl} !`)
+            } else {
+                app_verified = true
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
 
-app.get('/getURL', (req,res) => {
+app.get('/getURL', (req, res) => {
     var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
 
     res.render('error', {
@@ -1831,10 +1768,10 @@ const stockRouter = require('./frontend')
 app.use('/stock', stockRouter);
 
 app.get('*', (req, res) => {
-    res.render('error', {title: "พบข้อผิดพลาด: ไม่พบข้อมูล", content: "ลิงค์นี้อาจจะถูกย้าย หรือหมดอายุแล้ว โปรดตรวจสอบลิงค์ว่าถูกต้อง"})
+    res.render('error', { title: "พบข้อผิดพลาด: ไม่พบข้อมูล", content: "ลิงค์นี้อาจจะถูกย้าย หรือหมดอายุแล้ว โปรดตรวจสอบลิงค์ว่าถูกต้อง" })
     res.end()
 })
 
-app.listen(process.env.PORT ,() => {
-    console.log(moment().format("DD/MM/YY HH:mm:ss")+" [+] Sunny420x POS System been started at http://localhost:"+process.env.PORT)
-})
+require('./schema/sync')(db.auth).then(() => app.listen(process.env.PORT || 3000, () => {
+    console.log(moment().format("DD/MM/YY HH:mm:ss") + " [+] Sunny420x POS System been started at http://localhost:" + process.env.PORT)
+})).catch(err => { console.error('Database schema update failed:', err.message); process.exitCode = 1; db.auth.end(); });

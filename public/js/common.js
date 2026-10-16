@@ -195,9 +195,24 @@ function initializeDataTables(container = document) {
 
         table.closest('.table-responsive')?.classList.add('data-table-responsive');
 
+        const responsive = table.classList.contains('stock-import-detail-table')
+            ? {
+                details: {
+                    renderer: (api, rowIndex, columns) => {
+                        const hiddenColumns = columns.filter(column => column.hidden);
+                        if (!hiddenColumns.length) return false;
+
+                        return `<ul class="list-group list-group-flush">${hiddenColumns.map(column =>
+                            `<li class="list-group-item px-0 py-2"><strong>${column.title}</strong><div>${column.data}</div></li>`
+                        ).join('')}</ul>`;
+                    }
+                }
+            }
+            : true;
+
         new DataTable(table, {
             autoWidth: false,
-            responsive: true,
+            responsive,
             pageLength: 10,
             lengthMenu: [10, 25, 50, 100],
             order: [],

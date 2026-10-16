@@ -1,54 +1,60 @@
 <html>
-    <head>
-        <title>รายการนำเข้าสินค้า | SunnyPOS</title>
-        <%-include('include/head')%>
-    </head>
-    <body>
-        <div class="d-flex app-shell">
-            <%-include('include/sidebar')%>
-            <div class="container-fluid p-0 overflow-hidden app-main">
-                <%-include('include/navigator')%>
-                <nav class="navbar">
-                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/products_stock?type=<%=type%>&option=<%=option%>"">
-                        <i class="fa-solid fa-chevron-left me-4"></i> รายการนำเข้าสินค้า</a></div>
-                </nav>
-                <div class="container-fluid px-4 app-content">
-                    <div class="card p-4">
-                        <h2 class="mb-4"><i class="fa-solid fa-boxes me-1"></i> รายการนำเข้าสินค้า</h2>
-                        <div class="table-responsive">
-                            <table class="table data-table">
-                                <thead class="table-light text-center">
-                                    <tr>
-                                        <th>หมายเลขนำเข้า</th>
-                                        <th>รายการ</th>
-                                        <th>นำเข้าเมื่อ</th>
-                                        <th>วันหมดอายุ</th>
-                                        <% if (stock_mode !== 'inventory_only') { %>
-                                        <th>ราคาซื้อ</th>
-                                        <th>ราคาขาย</th>
-                                        <% } %>
-                                        <th>นำเข้าจำนวน</th>
-                                        <th class="no-sort">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-center">
+
+<head>
+    <title>รายการนำเข้าสินค้า | SunnyPOS</title>
+    <%-include('include/head')%>
+</head>
+
+<body>
+    <div class="d-flex app-shell">
+        <%-include('include/sidebar')%>
+        <div class="container-fluid p-0 overflow-hidden app-main">
+            <%-include('include/navigator')%>
+            <nav class="navbar">
+                <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black"
+                        href="/products_stock?type=<%=type%>&option=<%=option%>"">
+                        <i class=" fa-solid fa-chevron-left me-4"></i> รายการนำเข้าสินค้า</a></div>
+            </nav>
+            <div class="container-fluid px-4 app-content">
+                <div class="card p-4">
+                    <h2 class="mb-4"><i class="fa-solid fa-boxes me-1"></i> รายการนำเข้าสินค้า</h2>
+                    <div class="table-responsive">
+                        <table class="table data-table stock-import-detail-table">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th>รายการ</th>
+                                    <th class="min-tablet">นำเข้าเมื่อ</th>
+                                    <th class="min-tablet">วันหมดอายุ</th>
+                                    <% if (stock_mode !== 'inventory_only') { %>
+                                    <th>ราคาซื้อ</th>
+                                    <th>ราคาขาย</th>
+                                    <% } %>
+                                    <th>นำเข้าจำนวน</th>
+                                    <th class="no-sort">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center">
                                 <% products_stock.forEach((row) => { %>
-                                        <tr>
-                                            <td><%=row.id%></td>
-                                            <td><%=row.name%> (<%=row.type%>)</td>
-                                            <td data-order="<%=moment(row.created_at).valueOf()%>"><%=moment(row.created_at).add(543, 'years').format("DD/MM/YYYY")%></td>
-                                            <td data-order="<%=row.expired_date ? moment(row.expired_date).valueOf() : ''%>"><%if(row.expired_date != null) {%><%if(moment(row.expired_date).diff(moment(), 'days') > 0) {%>
-                                                <span class="badge text-bg-secondary">หมดอายุในอีก <%=moment(row.expired_date).diff(moment(), 'days')%> วัน<%} else {%>
-                                                <span class="badge text-bg-danger">หมดอายุแล้ว</span><%}%><%} else {%>-<%}%></span>
+                                <tr>
+                                    <td><%=row.name%> (<%=row.type%>)</td>
+                                    <td data-order="<%=moment(row.created_at).valueOf()%>">
+                                        <%=moment(row.created_at).add(543, 'years').format("DD/MM/YYYY")%></td>
+                                    <td data-order="<%=row.expired_date ? moment(row.expired_date).valueOf() : ''%>">
+                                        <%if(row.expired_date != null) {%><%if(moment(row.expired_date).diff(moment(), 'days') > 0) {%>
+                                        <span class="badge text-bg-secondary">หมดอายุในอีก
+                                            <%=moment(row.expired_date).diff(moment(), 'days')%> วัน<%} else {%>
+                                            <span class="badge text-bg-danger">หมดอายุแล้ว</span><%}%><%} else {%>-<%}%></span>
                                             </td>
                                             <% if (stock_mode !== 'inventory_only') { %>
-                                            <td><%=row.import_price%></td>
-                                            <td><%=row.price%></td>
-                                            <% } %>
-                                            <td><%=row.value%></td>
-                                            <td>
-                                                <button class="btn btn-warning" onclick="openLink('/editProduct/<%=row.id%>?type=<%=type%>&option=<%=option%>')"><i class="fa-solid fa-pen-to-square"></i></button>
-                                                <button class="btn btn-danger" onclick="
+                                    <td><%=row.import_price%></td>
+                                    <td><%=row.price%></td>
+                                    <% } %>
+                                    <td><%=row.value%></td>
+                                    <td>
+                                        <button class="btn btn-warning"
+                                            onclick="openLink('/editProduct/<%=row.id%>?type=<%=type%>&option=<%=option%>')"><i
+                                                class="fa-solid fa-pen-to-square"></i></button>
+                                        <button class="btn btn-danger" onclick="
                                                 Swal.fire({
                                                 title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
                                                 text: 'การลบจะไม่สามารถย้อนกลับได้',
@@ -64,16 +70,17 @@
                                                 }
                                                 });
                                                 "><i class="fa-solid fa-trash"></i></button>
-                                            </td>
-                                        </tr>
+                                    </td>
+                                </tr>
                                 <%})%>
-                                </tbody>
-                            </table>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-        <%-include('include/footer')%>
-    </body>
+    </div>
+    <%-include('include/footer')%>
+</body>
+
 </html>

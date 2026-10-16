@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS `customers` (
   `zip` varchar(50) DEFAULT NULL,
  company_id int(11) UNSIGNED NOT NULL DEFAULT 1,
  PRIMARY KEY (id),
- KEY idx_customers_company (company_id, id)
+ KEY idx_customers_company (company_id, id),
+ KEY idx_customers_company_name (company_id, first_name, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `discounts` (
@@ -68,7 +69,9 @@ CREATE TABLE IF NOT EXISTS `products` (
   `import_price` int(12) DEFAULT NULL,
  company_id int(11) UNSIGNED NOT NULL DEFAULT 1,
  PRIMARY KEY (id),
- KEY idx_products_company (company_id, id)
+ KEY idx_products_company (company_id, id),
+ KEY idx_products_company_name_price (company_id, name, price),
+ KEY idx_products_company_transaction (company_id, transaction_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `product_types` (
@@ -91,7 +94,10 @@ CREATE TABLE IF NOT EXISTS `transaction` (
   `stock_id` int(11) DEFAULT NULL,
  company_id int(11) UNSIGNED NOT NULL DEFAULT 1,
  PRIMARY KEY (id),
- KEY idx_transaction_company (company_id, id)
+ KEY idx_transaction_company (company_id, id),
+ KEY idx_transaction_company_type_name (company_id, type, name),
+ KEY idx_transaction_company_customer_billing (company_id, customer_id, billing_id),
+ KEY idx_transaction_company_billing_stock (company_id, billing_id, stock_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `users` (

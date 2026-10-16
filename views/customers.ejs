@@ -8,79 +8,67 @@
         helper = new Helper()
         %>
         <script>
-            searchCustomerByFullName('all')
-    
-            function searchCustomerByCardId(query) {
-                let req_url = '/searchCustomerByCardId?q='+query
-                fetch(req_url)
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(errorData => { throw new Error(errorData.error); });
-                    }
-                    return res.text();
-                })
-                .then(data => {
-                    const container = document.getElementById('customerHTML');
-                    if (window.replaceTableContent) replaceTableContent(container, data);
-                    else container.innerHTML = data;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+            let customerSearchType = 'fullName';
+            let customerSearchQuery = 'all';
+            let customerRequest;
+
+            function loadCustomers(type, query, page = 1) {
+                customerSearchType = type;
+                customerSearchQuery = query;
+                if (customerRequest) customerRequest.abort();
+                customerRequest = new AbortController();
+
+                const endpoints = {
+                    cardId: '/searchCustomerByCardId',
+                    fullName: '/searchCustomerByFullName',
+                    phoneNumber: '/searchCustomerByPhoneNumber'
+                };
+                const params = new URLSearchParams({ q: query, page: String(page) });
+
+                fetch(`${endpoints[type]}?${params}`, { signal: customerRequest.signal })
+                    .then(async response => {
+                        if (!response.ok) throw new Error('ไม่สามารถโหลดข้อมูลลูกค้าได้');
+                        return response.text();
+                    })
+                    .then(html => {
+                        const container = document.getElementById('customerHTML');
+                        if (window.replaceTableContent) replaceTableContent(container, html);
+                        else container.innerHTML = html;
+                    })
+                    .catch(error => {
+                        if (error.name === 'AbortError') return;
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                        });
                     });
-                });  
-            }
-    
-            function searchCustomerByFullName(query) {
-                let req_url = '/searchCustomerByFullName?q='+query
-                fetch(req_url)
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(errorData => { throw new Error(errorData.error); });
-                    }
-                    return res.text();
-                })
-                .then(data => {
-                    const container = document.getElementById('customerHTML');
-                    if (window.replaceTableContent) replaceTableContent(container, data);
-                    else container.innerHTML = data;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
-                    });
-                });  
             }
 
-            function searchCustomerByPhoneNumber(phone_number) {
-                let req_url = '/searchCustomerByPhoneNumber?q='+phone_number
-                fetch(req_url)
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(errorData => { throw new Error(errorData.error); });
-                    }
-                    return res.text();
-                })
-                .then(data => {
-                    const container = document.getElementById('customerHTML');
-                    if (window.replaceTableContent) replaceTableContent(container, data);
-                    else container.innerHTML = data;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
-                    });
-                }); 
+            function searchCustomerByCardId(query, page = 1) {
+                loadCustomers('cardId', query, page);
             }
+
+            function searchCustomerByFullName(query, page = 1) {
+                loadCustomers('fullName', query, page);
+            }
+
+            function searchCustomerByPhoneNumber(query, page = 1) {
+                loadCustomers('phoneNumber', query, page);
+            }
+
+            document.addEventListener('click', event => {
+                const control = event.target.closest('#customerHTML [data-page]');
+                if (control) {
+                    event.preventDefault();
+                    if (control.getAttribute('aria-disabled') !== 'true') {
+                        loadCustomers(customerSearchType, customerSearchQuery, Number(control.dataset.page));
+                    }
+                }
+            });
+
+            searchCustomerByFullName('all');
         </script>
         <div class="d-flex app-shell">
             <%-include('include/sidebar')%>

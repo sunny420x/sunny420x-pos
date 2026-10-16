@@ -10,19 +10,17 @@ const { createHash } = require('crypto')
 const {
     getSellProductsByType,
     getExpiredProducts,
-    getBillingHistoriesByCustomer,
+    getBillingHistoriesPage,
     getProductTypes,
-    getProductsStockByType,
-    getProductsStockByTypeAndName,
+    getProductsStockPage,
+    getProductsStockByTypeAndNamePage,
     deleteProductsByTransaction,
     getProductsHistoriesByType,
 } = require('./model/product')
 
 const {
-    searchCustomerByFullName,
-    getCustomers,
-    searchCustomerByCardId,
-    searchCustomerByPhoneNumber
+    getCustomersPage,
+    getCustomerOptions,
 } = require('./model/customer')
 
 const {
@@ -77,15 +75,6 @@ class Helper {
     }
 }
 
-function Pagination(page) {
-    page = parseInt(page)
-    const per_page = 10;
-    const limit_start = (page - 1) * per_page;
-    const limit_end = per_page;
-
-    return { limit_start, limit_end }
-}
-
 const { hashPassword, verifyPassword } = require('./middleware/password');
 app.use(require('./middleware/auth'));
 const initAccessToken = require('./middleware/initAccessToken');
@@ -97,41 +86,19 @@ const isPosMode = req => (req.user.stock_mode || 'pos') === 'pos';
 const optionalText = value => typeof value === 'string' && value.trim() ? value.trim() : null;
 
 //Controller
-app.get("/searchCustomerByCardId", (req, res) => {
-    const user_data = [req.user];
-    let query = req.query.q !== undefined ? decodeURIComponent(req.query.q) : 'all';
-    searchCustomerByCardId(query).then(customers => {
-        res.render('Components/customers', {
-            customers: customers,
-            moment: moment,
-            user_data: user_data[0]
-        })
-    })
-})
+const customerSearchRoute = field => asyncRoute(async (req, res) => {
+    const query = typeof req.query.q === 'string' ? req.query.q : 'all';
+    const result = await getCustomersPage(field, query, req.query.page);
+    res.render('Components/customers', {
+        customers: result.customers,
+        pagination: { ...result.pagination, ajax: true },
+        user_data: req.user
+    });
+});
 
-app.get("/searchCustomerByFullName", (req, res) => {
-    const user_data = [req.user];
-    let query = req.query.q !== undefined ? decodeURIComponent(req.query.q) : 'all';
-    searchCustomerByFullName(query).then(customers => {
-        res.render('Components/customers', {
-            customers: customers,
-            moment: moment,
-            user_data: user_data[0]
-        })
-    })
-})
-
-app.get("/searchCustomerByPhoneNumber", (req, res) => {
-    const user_data = [req.user];
-    let query = req.query.q !== undefined ? decodeURIComponent(req.query.q) : 'all';
-    searchCustomerByPhoneNumber(query).then(customers => {
-        res.render('Components/customers', {
-            customers: customers,
-            moment: moment,
-            user_data: user_data[0]
-        })
-    })
-})
+app.get("/searchCustomerByCardId", customerSearchRoute('cardId'));
+app.get("/searchCustomerByFullName", customerSearchRoute('fullName'));
+app.get("/searchCustomerByPhoneNumber", customerSearchRoute('phoneNumber'));
 
 function getUserTypes() {
     return new Promise((resolve) => {
@@ -315,7 +282,7 @@ app.get("/products_stock", (req, res) => {
         let type = req.query.type ?? "all"
         const stock_mode = user_data[0].stock_mode || 'pos'
         getProductTypes().then(product_types => {
-            const customersPromise = stock_mode === 'pos' ? getCustomers() : Promise.resolve([])
+            const customersPromise = stock_mode === 'pos' ? getCustomerOptions() : Promise.resolve([])
             customersPromise.then(customers => {
                 res.render('products_stock', {
                     user_data: user_data,
@@ -363,57 +330,58 @@ app.get("/getProductsHistoriesByType", (req, res) => {
     })
 })
 
-app.get("/getProductStock", (req, res) => {
-    const user_data = [req.user];
-    let type = req.query.type !== undefined ? decodeURIComponent(req.query.type) : 'all';
-    let option = req.query.option !== undefined ? decodeURIComponent(req.query.option) : 'list';
-    getProductsStockByType(type).then((products_stock) => {
-        if (option == "catalog") {
-            res.render('Components/productStockCatalogView', {
-                products_stock: products_stock,
-                moment: moment,
-                type: type,
-                stock_mode: req.user.stock_mode || 'pos',
-            })
-            res.end()
-            return
-        }
-        res.render('Components/productStockListView', {
-            products_stock: products_stock,
-            moment: moment,
-            type: type,
-            stock_mode: req.user.stock_mode || 'pos',
-        })
-        res.end()
-    })
-})
+app.get("/getProductStock", asyncRoute(async (req, res) => {
+    const type = typeof req.query.type === 'string' ? req.query.type : 'all';
+    const option = req.query.option === 'catalog' ? 'catalog' : 'list';
+    const { products, pagination } = await getProductsStockPage(type, req.query.page);
+    const view = option === "catalog" ? 'Components/productStockCatalogView' : 'Components/productStockListView';
+    res.render(view, {
+        products_stock: products,
+        pagination: { ...pagination, ajax: true },
+        moment: moment,
+        type: type,
+        stock_mode: req.user.stock_mode || 'pos',
+    });
+}))
 
-app.get("/products_stock/:type/:name", (req, res) => {
+app.get("/products_stock/:type/:name", asyncRoute(async (req, res) => {
     const user_data = [req.user];
     if (user_data[0].permission.split(',').includes('products')) {
         const name = req.params.name
         const _type = req.params.type
         const option = req.query.option ?? "list"
         const type = req.query.type ?? "all"
-        getProductTypes().then(product_types => {
-            getProductsStockByTypeAndName(_type, name).then((products_stock) => {
-                res.render('products_stock_detail', {
-                    user_data: user_data,
-                    products_stock: products_stock,
-                    product_types: product_types,
-                    moment: moment,
-                    option: option,
-                    type: type,
-                    stock_mode: user_data[0].stock_mode || 'pos'
-                })
-                res.end()
-            })
+        const [product_types, result] = await Promise.all([
+            getProductTypes(),
+            getProductsStockByTypeAndNamePage(_type, name, req.query.page)
+        ]);
+        const pagination = {
+            ...result.pagination,
+            ajax: false,
+            href: page => {
+                const params = new URLSearchParams({
+                    option: String(option),
+                    type: String(type),
+                    page: String(page)
+                });
+                return `${req.path}?${params}`;
+            }
+        };
+        res.render('products_stock_detail', {
+            user_data: user_data,
+            products_stock: result.products,
+            pagination: pagination,
+            product_types: product_types,
+            moment: moment,
+            option: option,
+            type: type,
+            stock_mode: user_data[0].stock_mode || 'pos'
         })
     } else {
         res.cookie('alert', 'permissionDenial')
         res.redirect(req.get("Referrer"))
     }
-})
+}))
 
 function addProductStock(name, type, price, import_price, expired_date, created_at, amount) {
     return new Promise((resolve, reject) => {
@@ -725,7 +693,7 @@ app.get("/billingHistories", (req, res) => {
     if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('bills')) {
         let customer_id = req.query.customer_id !== undefined ? req.query.customer_id : 'all';
-        getCustomers().then(owners => {
+        getCustomerOptions().then(owners => {
             res.render('billing_histories', {
                 user_data: user_data,
                 owners: owners,
@@ -738,17 +706,17 @@ app.get("/billingHistories", (req, res) => {
     }
 })
 
-app.get("/getBillingHistoriesByCustomer", (req, res) => {
+app.get("/getBillingHistoriesByCustomer", asyncRoute(async (req, res) => {
     const user_data = [req.user];
     if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
-    let customer_id = req.query.customer_id !== undefined ? decodeURIComponent(req.query.customer_id) : 'all';
-    getBillingHistoriesByCustomer(customer_id).then(bills => {
-        res.render('Components/billingHistories', {
-            bills: bills,
-            moment: moment
-        })
-    })
-})
+    const customerId = typeof req.query.customer_id === 'string' ? req.query.customer_id : 'all';
+    const result = await getBillingHistoriesPage(customerId, req.query.page);
+    res.render('Components/billingHistories', {
+        bills: result.bills,
+        pagination: { ...result.pagination, ajax: true },
+        moment: moment
+    });
+}))
 
 app.get("/deleteBill/:id", (req, res) => {
     const user_data = [req.user];

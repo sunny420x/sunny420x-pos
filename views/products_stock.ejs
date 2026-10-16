@@ -8,27 +8,28 @@
             let cart = []
             let totals = 0
             let _type = "<%=type%>"
+            let productStockRequest;
             searchByType(_type)
 
-            function searchByType(type) {
-                let req_url = '/getProductStock?type='+encodeURIComponent(type)+'&option=<%=option%>'
-                fetch(req_url)
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(errorData => { throw new Error(errorData.error); });
-                    }
-                    return res.text();
+            function searchByType(type, page = 1) {
+                if (productStockRequest) productStockRequest.abort();
+                productStockRequest = new AbortController();
+                const params = new URLSearchParams({ type, option: '<%=option%>', page: String(page) });
+                fetch(`/getProductStock?${params}`, { signal: productStockRequest.signal })
+                .then(async response => {
+                    if (!response.ok) throw new Error('ไม่สามารถโหลดรายการสินค้าได้');
+                    return response.text();
                 })
                 .then(data => {
                     const container = document.getElementById('productStock');
                     if (window.replaceTableContent) replaceTableContent(container, data);
                     else container.innerHTML = data;
 
-                    //append _type and type in URL
                     _type = type
-                    history.pushState('', '', `?type=${_type}&option=<%=option%>`);
+                    history.pushState('', '', `?type=${encodeURIComponent(_type)}&option=<%=option%>&page=${page}`);
                 })
                 .catch(error => {
+                    if (error.name === 'AbortError') return;
                     console.error('Error:', error);
                     Swal.fire({
                         icon: 'error',
@@ -37,6 +38,16 @@
                     });
                 });  
             }
+
+            document.addEventListener('click', event => {
+                const control = event.target.closest('#productStock [data-page]');
+                if (control) {
+                    event.preventDefault();
+                    if (control.getAttribute('aria-disabled') !== 'true') {
+                        searchByType(_type, Number(control.dataset.page));
+                    }
+                }
+            });
 
             function selectOption(value) {
                 window.location.href=`/products_stock?type=${_type}&option=${value}`

@@ -1,63 +1,51 @@
 //Model
 const db = require('../database')
+const { createPagination } = require('./pagination')
 
-const customerQuery = `
-    SELECT 
-        c.id, 
-        c.first_name, 
-        c.last_name, 
-        c.phone_number, 
-        COUNT(*) as total_orders
-    FROM customers as c 
-    LEFT JOIN transaction as t ON t.customer_id = c.id `
-
-function getCustomers() {
-    return new Promise((resolve) => {
-        db.query(customerQuery+` GROUP BY c.id ORDER BY first_name DESC`, (err, result) => {
-            if(err) throw err;
-            resolve(result)
-        })
-    })
+function query(sql, values = []) {
+    return new Promise((resolve, reject) => {
+        db.query(sql, values, (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    });
 }
 
-function searchCustomerByFullName(q) {
-    return new Promise((resolve) => {
-        if(q != 'all' && q != '') {
-            db.query(customerQuery+` WHERE CONCAT(c.first_name, " ", c.last_name) LIKE ?`, [`%${q}%`], (err, result) => {
-                if (err) throw err;
-                resolve(result)
-            })
-        } else {
-            resolve(getCustomers())
-        }
-    })
+const customerFields = {
+    fullName: 'CONCAT(c.first_name, " ", c.last_name)',
+    cardId: 'c.card_id',
+    phoneNumber: 'c.phone_number',
+};
+
+async function getCustomersPage(field, value, requestedPage) {
+    if (!Object.hasOwn(customerFields, field)) throw new Error('Unsupported customer search field');
+    const filter = value && value !== 'all' ? `${customerFields[field]} LIKE ?` : '';
+    const searchValue = field === 'phoneNumber' ? value.replace('-', '') : value;
+    const where = filter ? ` WHERE ${filter}` : '';
+    const values = filter ? [`%${searchValue}%`] : [];
+    const [{ total }] = await query(`SELECT COUNT(*) AS total FROM customers AS c${where}`, values);
+    const pagination = createPagination(requestedPage, Number(total));
+    const customers = await query(`
+        SELECT
+            c.id,
+            c.first_name,
+            c.last_name,
+            c.phone_number,
+            COUNT(t.id) AS total_orders
+        FROM customers AS c
+        LEFT JOIN transaction AS t ON t.customer_id = c.id
+        ${where}
+        GROUP BY c.id
+        ORDER BY c.first_name DESC, c.id DESC
+        LIMIT ? OFFSET ?`, [...values, pagination.pageSize, pagination.offset]);
+
+    return { customers, pagination };
 }
 
-function searchCustomerByPhoneNumber(phone_number) {
-    return new Promise((resolve) => {
-        if(phone_number != 'all' && phone_number != '') {
-            phone_number = phone_number.replace('-','')
-            db.query(customerQuery+` WHERE c.phone_number LIKE ?`, [`%${phone_number}%`], (err, result) => {
-                if (err) throw err;
-                resolve(result)
-            })
-        } else {
-            resolve(getCustomers())
-        }
-    })
+function getCustomerOptions() {
+    return query(`SELECT id, first_name, last_name
+        FROM customers
+        ORDER BY first_name DESC, id DESC`);
 }
 
-function searchCustomerByCardId(card_id) {
-    return new Promise((resolve) => {
-        if(card_id != 'all' && card_id != '') {
-            db.query(customerQuery+` WHERE c.card_id LIKE ?`, [`%${card_id}%`], (err, result) => {
-                if (err) throw err;
-                resolve(result)
-            })
-        } else {
-            resolve(getCustomers())
-        }
-    })
-}
-
-module.exports = { searchCustomerByFullName, searchCustomerByCardId, searchCustomerByPhoneNumber, getCustomers}
+module.exports = { getCustomersPage, getCustomerOptions }

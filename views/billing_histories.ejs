@@ -5,31 +5,43 @@
     </head>
     <body>
         <script>
+            let billingRequest;
             searchByCustomer('<%=customer_id%>')
 
-            function searchByCustomer(owner) {
-                let req_url = '/getBillingHistoriesByCustomer?customer_id='+encodeURIComponent(owner)
-                fetch(req_url)
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(errorData => { throw new Error(errorData.error); });
-                    }
-                    return res.text();
-                })
-                .then(data => {
-                    const container = document.getElementById('billingHistoriesHTML');
-                    if (window.replaceTableContent) replaceTableContent(container, data);
-                    else container.innerHTML = data;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+            function searchByCustomer(owner, page = 1) {
+                if (billingRequest) billingRequest.abort();
+                billingRequest = new AbortController();
+                const params = new URLSearchParams({ customer_id: owner, page: String(page) });
+                fetch(`/getBillingHistoriesByCustomer?${params}`, { signal: billingRequest.signal })
+                    .then(async response => {
+                        if (!response.ok) throw new Error('ไม่สามารถโหลดประวัติบิลได้');
+                        return response.text();
+                    })
+                    .then(html => {
+                        const container = document.getElementById('billingHistoriesHTML');
+                        if (window.replaceTableContent) replaceTableContent(container, html);
+                        else container.innerHTML = html;
+                    })
+                    .catch(error => {
+                        if (error.name === 'AbortError') return;
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                        });
                     });
-                });  
             }
+
+            document.addEventListener('click', event => {
+                const control = event.target.closest('#billingHistoriesHTML [data-page]');
+                if (control) {
+                    event.preventDefault();
+                    if (control.getAttribute('aria-disabled') !== 'true') {
+                        searchByCustomer(document.getElementById('search_by_owner').value, Number(control.dataset.page));
+                    }
+                }
+            });
         </script>
         <div class="d-flex app-shell">
             <%-include('include/sidebar')%>

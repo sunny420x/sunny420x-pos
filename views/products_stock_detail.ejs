@@ -19,7 +19,7 @@
                 <div class="card p-4">
                     <h2 class="mb-4"><i class="fa-solid fa-boxes me-1"></i> รายการนำเข้าสินค้า</h2>
                     <div class="table-responsive">
-                        <table class="table data-table stock-import-detail-table">
+                        <table class="table stock-import-detail-table">
                             <thead class="table-light text-center">
                                 <tr>
                                     <th>รายการ</th>
@@ -76,6 +76,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <%-include('Components/pagination', { pagination: pagination })%>
                 </div>
             </div>
         </div>

@@ -493,6 +493,18 @@
                         if (control.dataset.cartAction === 'remove') removeCartItem(index);
                     });
 
+                    function showCartToast(icon, title) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon,
+                            title,
+                            showConfirmButton: false,
+                            timer: 1800,
+                            timerProgressBar: true
+                        });
+                    }
+
                     function addToCart(product_type, product_name, product_price, amount, available_count) {
                         product_price = Number(product_price);
                         amount = Number(amount);
@@ -503,7 +515,7 @@
                             !Number.isSafeInteger(amount) || amount < 1 ||
                             !Number.isSafeInteger(available) || available < 0) return;
                         if (available === 0) {
-                            Swal.fire({ icon: 'info', title: 'สินค้าหมด' });
+                            showCartToast('info', 'สินค้าหมด');
                             return;
                         }
 
@@ -515,14 +527,14 @@
                         if (existingIndex >= 0) {
                             const maxAvailable = Math.min(cart[existingIndex].available_count, available);
                             if (cart[existingIndex].amount + amount > maxAvailable) {
-                                Swal.fire({ icon: 'info', title: 'สินค้าในสต๊อกมีไม่เพียงพอ' });
+                                showCartToast('info', 'สินค้าในสต๊อกมีไม่เพียงพอ');
                                 return;
                             }
                             cart[existingIndex].available_count = maxAvailable;
                             cart[existingIndex].amount += amount;
                         } else {
                             if (amount > available) {
-                                Swal.fire({ icon: 'info', title: 'สินค้าในสต๊อกมีไม่เพียงพอ' });
+                                showCartToast('info', 'สินค้าในสต๊อกมีไม่เพียงพอ');
                                 return;
                             }
                             cart.push({
@@ -534,6 +546,7 @@
                             });
                         }
                         renderCart();
+                        showCartToast('success', `เพิ่ม ${product_name} ลงตะกร้าแล้ว`);
                     }
 
                     function updateCartQuantity(index, change) {
@@ -542,7 +555,7 @@
                         const nextAmount = item.amount + change;
                         if (nextAmount < 1) return removeCartItem(index);
                         if (nextAmount > item.available_count) {
-                            Swal.fire({ icon: 'info', title: 'สินค้าในสต๊อกมีไม่เพียงพอ' });
+                            showCartToast('info', 'สินค้าในสต๊อกมีไม่เพียงพอ');
                             return;
                         }
                         item.amount = nextAmount;

@@ -56,6 +56,9 @@ test('products stock page renders the split cart modal with valid inline scripts
     assert.match(html, /ยืนยันการขาย/);
     assert.ok(html.indexOf('id="sell_modal"') < html.indexOf("getElementById('sell_modal').addEventListener"));
     assert.match(html, /new Intl\.NumberFormat\('en-US'\)/);
+    assert.match(html, /toast: true/);
+    assert.match(html, /เพิ่ม \$\{product_name\} ลงตะกร้าแล้ว/);
+    assert.equal((html.match(/showCartToast\('info', 'สินค้าในสต๊อกมีไม่เพียงพอ'\)/g) || []).length, 3);
 
     const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
     for (const [, script] of scripts) {

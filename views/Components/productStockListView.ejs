@@ -1,6 +1,6 @@
 <div class="table-responsive">
     <table class="table">
-        <thead class="table-light text-center">
+        <thead class="table-light">
             <tr>
                 <th>รายการ</th>
                 <% if (stock_mode !== 'inventory_only') { %>
@@ -10,7 +10,7 @@
                 <th class="no-sort">จัดการ</th>
             </tr>
         </thead>
-        <tbody class="text-center">
+        <tbody>
         <% products_stock.forEach((row) => { %>
                 <tr>
                     <td><%=row.name%> (<%=row.type%>)</td>

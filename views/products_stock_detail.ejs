@@ -20,7 +20,7 @@
                     <h2 class="mb-4"><i class="fa-solid fa-boxes me-1"></i> รายการนำเข้าสินค้า</h2>
                     <div class="table-responsive">
                         <table class="table stock-import-detail-table">
-                            <thead class="table-light text-center">
+                            <thead class="table-light">
                                 <tr>
                                     <th>รายการ</th>
                                     <th class="min-tablet">นำเข้าเมื่อ</th>
@@ -33,7 +33,7 @@
                                     <th class="no-sort">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-center">
+                            <tbody>
                                 <% products_stock.forEach((row) => { %>
                                 <tr>
                                     <td><%=row.name%> (<%=row.type%>)</td>

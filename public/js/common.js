@@ -193,8 +193,11 @@ function initializeDataTables(container = document) {
     tables.forEach(table => {
         if (DataTable.isDataTable(table)) return;
 
+        table.closest('.table-responsive')?.classList.add('data-table-responsive');
+
         new DataTable(table, {
             autoWidth: false,
+            responsive: true,
             pageLength: 10,
             lengthMenu: [10, 25, 50, 100],
             order: [],

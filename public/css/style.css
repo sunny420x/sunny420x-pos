@@ -491,6 +491,10 @@ input[type=checkbox][readonly] {
     font-size: .85rem;
 }
 
+.table.data-table {
+    min-width: 0;
+}
+
 .table> :not(caption)>*>* {
     padding: 14px 16px;
 }
@@ -716,7 +720,119 @@ input[type=checkbox][readonly] {
     }
 
     .table> :not(caption)>*>* {
-        padding: 12px;
+        padding: 10px 8px;
+    }
+
+    .table-responsive.data-table-responsive {
+        overflow: visible;
+    }
+
+    .data-table {
+        width: 100% !important;
+        table-layout: auto;
+        font-size: .8rem;
+    }
+
+    .data-table th {
+        white-space: normal;
+        line-height: 1.35;
+    }
+
+    .data-table td {
+        overflow-wrap: anywhere;
+    }
+
+    .data-table .btn {
+        min-width: 34px;
+        min-height: 34px;
+        padding: 6px 8px;
+    }
+
+    .dt-container {
+        width: 100%;
+    }
+
+    .dt-container .dt-layout-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+        margin: 10px 0;
+    }
+
+    .dt-container .dt-layout-cell {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .dt-container .dt-search {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    .dt-container .dt-search input {
+        width: min(58vw, 230px);
+        margin: 0;
+    }
+
+    .dt-container .dt-length select {
+        min-height: 36px;
+    }
+
+    .dt-container .dt-info {
+        padding-top: 4px;
+        font-size: .75rem;
+        line-height: 1.5;
+    }
+
+    .dt-container .dt-paging .pagination {
+        flex-wrap: wrap;
+        gap: 2px;
+    }
+
+    .dt-container .dt-paging .page-link {
+        min-width: 36px;
+        min-height: 36px;
+        display: grid;
+        place-items: center;
+        padding: 6px;
+    }
+
+    table.dataTable>tbody>tr.child>td {
+        padding: 10px 12px;
+        background: var(--pos-subtle);
+    }
+
+    table.dataTable>tbody>tr.child ul.dtr-details {
+        display: grid;
+        gap: 6px;
+        width: 100%;
+    }
+
+    table.dataTable>tbody>tr.child ul.dtr-details>li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--pos-border);
+    }
+
+    table.dataTable>tbody>tr.child ul.dtr-details>li:last-child {
+        border-bottom: 0;
+    }
+
+    table.dataTable>tbody>tr.child span.dtr-title {
+        flex: 0 0 38%;
+        color: var(--pos-muted);
+        font-weight: 600;
+    }
+
+    table.dataTable>tbody>tr.child span.dtr-data {
+        min-width: 0;
+        text-align: right;
+        overflow-wrap: anywhere;
     }
 }
 

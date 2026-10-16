@@ -43,6 +43,22 @@
                             </div>
                         </form>
                     </div>
+                    <div class="card my-4 p-4">
+                        <h3><i class="fa-solid fa-receipt me-2"></i> ขนาดใบเสร็จ</h3>
+                        <p>การตั้งค่านี้มีผลกับใบเสร็จของผู้ใช้ทุกคนในบริษัท</p>
+                        <form action="/settings/receipt-size" method="post" class="row g-3 align-items-end">
+                            <div class="col-md-8">
+                                <label for="receipt_size" class="form-label">เลือกรูปแบบใบเสร็จ</label>
+                                <select class="form-select" name="receipt_size" id="receipt_size" required>
+                                    <option value="80x80" <%=user_data[0].receipt_size === '80x80' ? 'selected' : ''%>>80 × 80 มม.</option>
+                                    <option value="a5_landscape" <%=user_data[0].receipt_size !== '80x80' ? 'selected' : ''%>>A5 แนวนอน</option>
+                                </select>
+                            </div>
+                            <div class="col-md-auto">
+                                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save me-1"></i> บันทึกขนาดใบเสร็จ</button>
+                            </div>
+                        </form>
+                    </div>
                     <% } %>
                     <div class="row card my-4 p-4 g-0">
                         <h3><i class="fa-solid fa-cog m-4 mx-2 mt-2"></i> ข้อมูลในระบบ</h3>

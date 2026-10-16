@@ -5,7 +5,7 @@ const { hashToken } = require('./password');
 function initAccessToken(req, res, next) {
     const token = req.cookies.access_token;
     if (!token) return res.redirect('/login');
-    db.auth.query(`SELECT u.id, u.company_id, c.name AS company_name, c.stock_mode, u.username, u.full_name, ut.name AS type,
+    db.auth.query(`SELECT u.id, u.company_id, c.name AS company_name, c.stock_mode, c.receipt_size, u.username, u.full_name, ut.name AS type,
  u.type AS type_id, ut.permission, u.color FROM auth_sessions s
  JOIN users u ON u.id = s.user_id AND u.company_id = s.company_id
  JOIN companies c ON c.id = u.company_id

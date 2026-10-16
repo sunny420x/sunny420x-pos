@@ -708,8 +708,10 @@ app.get('/billing/:id', (req, res) => {
             res.render('billing', {
                 user_data: user_data,
                 bill: bill,
+                billing_id: id,
                 moment: moment,
-                Helper: Helper
+                Helper: Helper,
+                receipt_size: req.user.receipt_size || 'a5_landscape'
             })
         })
     } else {
@@ -1138,6 +1140,24 @@ app.post('/settings/stock-mode', (req, res, next) => {
     }
 
     db.auth.query('UPDATE companies SET stock_mode = ? WHERE id = ?', [stock_mode, req.company_id], err => {
+        if (err) return next(err);
+        res.redirect('/settings');
+    });
+})
+
+app.post('/settings/receipt-size', (req, res, next) => {
+    const user = req.user;
+    if (!user.permission.split(',').includes('users')) {
+        res.cookie('alert', 'permissionDenial');
+        return res.redirect('/settings');
+    }
+
+    const receipt_size = req.body.receipt_size;
+    if (!['a5_landscape', '80x80'].includes(receipt_size)) {
+        return res.status(400).send('ขนาดใบเสร็จไม่ถูกต้อง');
+    }
+
+    db.auth.query('UPDATE companies SET receipt_size = ? WHERE id = ?', [receipt_size, req.company_id], err => {
         if (err) return next(err);
         res.redirect('/settings');
     });

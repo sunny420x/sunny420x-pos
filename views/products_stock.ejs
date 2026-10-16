@@ -280,14 +280,14 @@
         </div>
         <% if (stock_mode === 'pos') { %>
         <div class="modal fade" id="sell_modal" tabindex="-1" aria-labelledby="sell_modal" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
               <div class="modal-content">
                 <div class="modal-header">
                   <h1 class="modal-title fs-5" id="modal_title"><i class="fa-solid fa-shopping-cart"></i> รถเข็น</h1>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <table class="table">
+                    <table class="table cart-table">
                         <thead>
                             <tr>
                                 <th>รายการ</th>
@@ -368,17 +368,39 @@
                         });   
                     }
                     function addProductToCart() {
-                        if(!document.getElementById('customer').value) {
+                        const customerSelect = document.getElementById('customer');
+                        const productSelect = document.getElementById('sell_product_id');
+                        const selectedProduct = productSelect?.selectedOptions[0];
+
+                        if(!customerSelect.value) {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'โปรดเลือกลูกค้า'
                             });
                             return;
                         }
-                        let amount = document.getElementById('buy_amount').value
-                        let product_type = document.getElementById('sell_product_type').value
-                        let product_name = document.getElementById('sell_product_id').value.split(",")[0]
-                        let product_price = document.getElementById('sell_product_id').value.split(",")[1]
+
+                        if (!selectedProduct || !productSelect.value) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'โปรดเลือกสินค้า'
+                            });
+                            return;
+                        }
+
+                        const amount = Number(document.getElementById('buy_amount').value);
+                        const product_type = document.getElementById('sell_product_type').value;
+                        const product_name = selectedProduct.dataset.name;
+                        const product_price = Number(selectedProduct.dataset.price);
+
+                        if (!Number.isSafeInteger(amount) || amount < 1 || !Number.isSafeInteger(product_price) || product_price < 0) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'ข้อมูลสินค้าไม่ถูกต้อง',
+                                text: 'กรุณาเลือกสินค้าและระบุจำนวนอีกครั้ง'
+                            });
+                            return;
+                        }
 
                         cart.push({
                             product_type: product_type,
@@ -394,13 +416,17 @@
                     }
 
                     function addToCart(product_type, product_name, product_price, amount) {
+                        product_price = Number(product_price);
+                        amount = Number(amount);
+                        if (!Number.isSafeInteger(product_price) || product_price < 0 || !Number.isSafeInteger(amount) || amount < 1) return;
+
                         cart.push({
                             product_type: product_type,
                             product_name: product_name,
                             product_price: product_price,
                             amount: amount
                         })
-                        totals += parseInt(product_price) * parseInt(amount)
+                        totals += product_price * amount
                         initTotal()
                         Swal.fire({
                             position: "top-end",
@@ -426,9 +452,9 @@
                         var product_amount_cell = row.insertCell(1);
                         var product_price_cell = row.insertCell(2);
 
-                        product_name_cell.innerHTML = product_name;
-                        product_amount_cell.innerHTML = amount;
-                        product_price_cell.innerHTML = numberWithCommas(parseInt(product_price) * parseInt(amount));
+                        product_name_cell.textContent = product_name;
+                        product_amount_cell.textContent = amount;
+                        product_price_cell.textContent = numberWithCommas(Number(product_price) * Number(amount));
 
                         if(document.getElementById('sell_product_type').value != '' && document.getElementById('sell_product_id').value != '') {
                             document.getElementById('sell_product_type').value = ""
@@ -439,11 +465,12 @@
                     }
 
                     function initTotal(product_price) {
-                        if(product_price) {
-                            totals = numberWithCommas(parseInt(totals) + parseInt(product_price))
+                        if (product_price !== undefined) {
+                            const additionalTotal = Number(product_price);
+                            if (Number.isFinite(additionalTotal)) totals += additionalTotal;
                         }
 
-                        totals_text.innerHTML = totals
+                        totals_text.textContent = numberWithCommas(totals);
                     }
                     function resetCart() {
                         cart = []

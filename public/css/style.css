@@ -506,6 +506,34 @@ input[type=checkbox][readonly] {
     font-size: .8rem;
 }
 
+#sell_modal .cart-table {
+    min-width: 0;
+    width: 100%;
+    table-layout: fixed;
+}
+
+#sell_modal .cart-table th:first-child,
+#sell_modal .cart-table td:first-child {
+    width: 56%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+#sell_modal .cart-table th:nth-child(2),
+#sell_modal .cart-table td:nth-child(2) {
+    width: 16%;
+}
+
+#sell_modal .cart-table th:last-child,
+#sell_modal .cart-table td:last-child {
+    width: 28%;
+}
+
+#sell_modal .cart-table td:not(:first-child) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 .table tbody tr:last-child>* {
     border-bottom: 0;
 }

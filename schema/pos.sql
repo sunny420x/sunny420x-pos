@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS companies (
  name varchar(100) NOT NULL,
  code varchar(100) NOT NULL,
  stock_mode enum('pos','inventory_only') NOT NULL DEFAULT 'pos',
+ receipt_size enum('a5_landscape','80x80') NOT NULL DEFAULT 'a5_landscape',
  PRIMARY KEY (id),
  UNIQUE KEY uq_company_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

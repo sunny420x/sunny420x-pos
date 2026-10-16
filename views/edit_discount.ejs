@@ -22,17 +22,39 @@
                         </h2>
                         <form action="/discounts" method="post">
                             <input type="hidden" name="id" value="<%=discount.id%>">
-                            <div class="row">
-                                <div class="mb-2 col">
+                            <div class="">
+                                <div class="mb-2">
                                     <div class="form-floating">
                                         <input type="text" class="form-control" placeholder="กรอกโค้ดส่วนลด" id="code" name="code" value="<%=discount.code%>" required>
-                                        <label for="address">Code *</label>
+                                        <label for="code">Code *</label>
                                     </div>
                                 </div>
-                                <div class="mb-2 col">
+                                <div class="mb-2">
                                     <div class="form-floating">
-                                        <input type="number" class="form-control" placeholder="กรอก % ส่วนลด" id="amount" name="amount" value="<%=discount.amount%>" min="0" max="100" required>
-                                        <label for="address">ลดร้อยละ (%) *</label>
+                                        <select class="form-select" id="discount_type" name="discount_type" required>
+                                            <option value="percentage" <%=discount.discount_type === 'fixed' ? '' : 'selected'%>>ลดเป็นเปอร์เซ็นต์ (%)</option>
+                                            <option value="fixed" <%=discount.discount_type === 'fixed' ? 'selected' : ''%>>ลดเป็นจำนวนเงิน (บาท)</option>
+                                        </select>
+                                        <label for="discount_type">รูปแบบส่วนลด *</label>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" placeholder="จำนวนส่วนลด" id="amount" name="amount" value="<%=discount.amount%>" min="1" <%=discount.discount_type === 'fixed' ? '' : 'max="100"'%> step="1" required>
+                                        <label for="amount"><%=discount.discount_type === 'fixed' ? 'ลดเป็นจำนวนเงิน (บาท) *' : 'ลดร้อยละ (%) *'%></label>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" placeholder="ยอดซื้อขั้นต่ำ" id="minimum_purchase" name="minimum_purchase" value="<%=discount.minimum_purchase || 0%>" min="0" step="1" required>
+                                        <label for="minimum_purchase">ยอดซื้อขั้นต่ำ (บาท)</label>
+                                    </div>
+                                    <div class="form-text">คำนวณจากยอดรวมสินค้าก่อนหักส่วนลด ส่วนลดแบบจำนวนเงินจะไม่เกินยอดรวม</div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" placeholder="จำนวนครั้งสูงสุด" id="max_uses" name="max_uses" value="<%=discount.max_uses ?? ''%>" min="1" max="4294967295" step="1">
+                                        <label for="max_uses">จำนวนครั้งสูงสุด (เว้นว่าง = ไม่จำกัด)</label>
                                     </div>
                                 </div>
                             </div>
@@ -48,6 +70,16 @@
         <%-include('include/footer')%>
         <script>
             toggleEdit()
+            const discountType = document.getElementById('discount_type');
+            const discountAmount = document.getElementById('amount');
+            const discountAmountLabel = document.querySelector('label[for="amount"]');
+
+            discountType.addEventListener('change', () => {
+                const isPercentage = discountType.value === 'percentage';
+                discountAmount.max = isPercentage ? '100' : '';
+                discountAmount.placeholder = isPercentage ? 'กรอก % ส่วนลด' : 'กรอกจำนวนเงินส่วนลด';
+                discountAmountLabel.textContent = isPercentage ? 'ลดร้อยละ (%) *' : 'ลดเป็นจำนวนเงิน (บาท) *';
+            });
         </script>
     </body>
 </html>

@@ -41,6 +41,7 @@ module.exports = async function syncSchema(pool) {
  await conn.query(`ALTER TABLE ${quote(name)} ${drop}ADD ${key==='PRIMARY'?'PRIMARY KEY':(desired[0].Non_unique?'INDEX ':'UNIQUE INDEX ')+quote(key)} (${desired.map(i=>quote(i.Column_name)).join(',')})`);
  }
  await conn.query(`DROP TEMPORARY TABLE ${quote(expected)}`);
+ if(name==='discounts') await conn.query("UPDATE discounts SET usage_count = 1 WHERE status = 1 AND usage_count = 0 AND max_uses = 1");
  if(name==='companies') await conn.query("INSERT INTO companies(id,name,code) VALUES(1,'บริษัทเดิม','default') ON DUPLICATE KEY UPDATE id=id");
  }
  console.log('[schema] Database structure synchronized');

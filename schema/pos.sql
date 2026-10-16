@@ -35,7 +35,11 @@ CREATE TABLE IF NOT EXISTS `customers` (
 CREATE TABLE IF NOT EXISTS `discounts` (
   `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `code` varchar(100) NOT NULL,
-  `amount` int(3) NOT NULL,
+  `amount` bigint(20) UNSIGNED NOT NULL,
+  `discount_type` enum('percentage','fixed') NOT NULL DEFAULT 'percentage',
+  `minimum_purchase` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `max_uses` int(10) UNSIGNED DEFAULT 1,
+  `usage_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `status` int(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` int(11) NOT NULL,

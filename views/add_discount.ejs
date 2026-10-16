@@ -17,29 +17,49 @@
                         <h2 class="mb-4"><i class="fa-solid fa-percentage me-1"></i> เพิ่มส่วนลด</h2>
                         <form action="/addDiscount" method="post">
                             <div class="">
-                                <div class="row">
-                                    <div class="mb-2 col">
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="form-floating">
-                                                    <input type="text" class="form-control" placeholder="กรอกโค้ดส่วนลด" id="code" name="code" required>
-                                                    <label for="address">Code *</label>
-                                                </div>
+                                <div class="mb-2">
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control" placeholder="กรอกโค้ดส่วนลด" id="code" name="code" required>
+                                                <label for="code">Code *</label>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="mb-2 col">
-                                        <div class="form-floating">
-                                            <input type="number" class="form-control" placeholder="กรอก % ส่วนลด" id="amount" name="amount" min="0" max="100" required>
-                                            <label for="address">ลดร้อยละ (%) *</label>
-                                        </div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="discount_type" name="discount_type" required>
+                                            <option value="percentage">ลดเป็นเปอร์เซ็นต์ (%)</option>
+                                            <option value="fixed">ลดเป็นจำนวนเงิน (บาท)</option>
+                                        </select>
+                                        <label for="discount_type">รูปแบบส่วนลด *</label>
                                     </div>
                                 </div>
-                                <div class="mt-3">
-                                    <span class="btn btn-warning" onclick="document.getElementById('code').value = generateDiscountCode()"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> สร้างโค้ดส่วนลด</span>
-                                    <button class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> เพิ่มส่วนลด</button>
-                                    <button class="btn btn-secondary" type="reset"><i class="fa-solid fa-history me-1"></i> ล้างข้อมูล</button>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" placeholder="จำนวนส่วนลด" id="amount" name="amount" min="1" max="100" step="1" required>
+                                        <label for="amount">จำนวนส่วนลด *</label>
+                                    </div>
                                 </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" placeholder="ยอดซื้อขั้นต่ำ" id="minimum_purchase" name="minimum_purchase" min="0" step="1" value="0" required>
+                                        <label for="minimum_purchase">ยอดซื้อขั้นต่ำ (บาท)</label>
+                                    </div>
+                                    <div class="form-text">คำนวณจากยอดรวมสินค้าก่อนหักส่วนลด ส่วนลดแบบจำนวนเงินจะไม่เกินยอดรวม</div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" placeholder="จำนวนครั้งสูงสุด" id="max_uses" name="max_uses" min="1" max="4294967295" step="1">
+                                        <label for="max_uses">จำนวนครั้งสูงสุด (เว้นว่าง = ไม่จำกัด)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <span class="btn btn-warning" onclick="document.getElementById('code').value = generateDiscountCode()"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> สร้างโค้ดส่วนลด</span>
+                                <button class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> เพิ่มส่วนลด</button>
+                                <button class="btn btn-secondary" type="reset"><i class="fa-solid fa-history me-1"></i> ล้างข้อมูล</button>
                             </div>
                         </form>
                     </div>
@@ -47,5 +67,17 @@
             </div>
         </div>
         <%-include('include/footer')%>
+        <script>
+            const discountType = document.getElementById('discount_type');
+            const discountAmount = document.getElementById('amount');
+            const discountAmountLabel = document.querySelector('label[for="amount"]');
+
+            discountType.addEventListener('change', () => {
+                const isPercentage = discountType.value === 'percentage';
+                discountAmount.max = isPercentage ? '100' : '';
+                discountAmount.placeholder = isPercentage ? 'กรอก % ส่วนลด' : 'กรอกจำนวนเงินส่วนลด';
+                discountAmountLabel.textContent = isPercentage ? 'ลดร้อยละ (%) *' : 'ลดเป็นจำนวนเงิน (บาท) *';
+            });
+        </script>
     </body>
 </html>

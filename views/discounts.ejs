@@ -25,7 +25,9 @@
                                         <tr>
                                             <th class="text-center">#</th>
                                             <th>โค้ดส่วนลด</th>
-                                            <th class="text-center">(%) ส่วนลดร้อยละ</th>
+                                            <th class="text-center">รูปแบบส่วนลด</th>
+                                            <th class="text-center">ยอดซื้อขั้นต่ำ</th>
+                                            <th class="text-center">การใช้งาน</th>
                                             <th class="text-center">สถานะ</th>
                                             <th class="no-sort">จัดการ</th>
                                         </tr>
@@ -35,8 +37,10 @@
                                             <tr>
                                                 <td class="text-center"><%=row.id%></td>
                                                 <td><%=row.code%></td>
-                                                <td class="text-center"><%=row.amount%> %</td>
-                                                <td class="text-center"><%if(row.status == 0) {%><span class="badge bg-success">ยังไม่ถูกใช้งาน</span><%} else {%><span class="badge bg-danger">ใช้งานแล้ว</span><%}%></td>
+                                                <td class="text-center"><%=row.discount_type === 'fixed' ? helper.numberWithCommas(row.amount) + ' บาท' : row.amount + '%'%></td>
+                                                <td class="text-center"><%=helper.numberWithCommas(row.minimum_purchase || 0)%> บาท</td>
+                                                <td class="text-center"><%=helper.numberWithCommas(row.usage_count || 0)%> / <%=row.max_uses == null ? 'ไม่จำกัด' : helper.numberWithCommas(row.max_uses)%></td>
+                                                <td class="text-center"><%if(row.status == 0) {%><span class="badge bg-success">พร้อมใช้งาน</span><%} else {%><span class="badge bg-danger">ครบจำนวนครั้งแล้ว</span><%}%></td>
                                                 <td>
                                                     <button class="btn btn-primary" onclick="openLink('/discounts/<%=row.id%>')"><i class="fa-solid fa-folder"></i></button>
                                                     <button class="btn btn-danger" onclick="

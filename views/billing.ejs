@@ -7,6 +7,7 @@
         helper = new Helper()
         sum = 0
         discount = bill[0].discount_amount || 0
+        discountType = bill[0].discount_type || 'percentage'
         %>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -176,14 +177,20 @@
                     <%})%>
                 </tbody>
             </table>
+            <%
+                const thermalDiscountAmount = discountType === 'fixed'
+                    ? Math.min(sum, Number(discount))
+                    : sum * Number(discount) / 100;
+                const thermalTotal = sum - thermalDiscountAmount;
+            %>
             <section class="receipt-totals">
                 <div class="receipt-total-line"><span>รวม</span><span><%=helper.numberWithCommas(sum)%> บาท</span></div>
                 <%if(discount != 0) {%>
-                <div class="receipt-total-line"><span>ส่วนลด (<%=discount%>%)</span><span>-<%=helper.numberWithCommas((sum * discount) / 100)%> บาท</span></div>
+                <div class="receipt-total-line"><span>ส่วนลด (<%=discountType === 'fixed' ? helper.numberWithCommas(discount) + ' บาท' : discount + '%'%>)</span><span>-<%=helper.numberWithCommas(thermalDiscountAmount)%> บาท</span></div>
                 <%}%>
                 <div class="receipt-total-line receipt-net">
                     <span>ชำระสุทธิ</span>
-                    <span><%=helper.numberWithCommas(discount == 0 ? sum : sum - (sum * discount) / 100)%> บาท</span>
+                    <span><%=helper.numberWithCommas(thermalTotal)%> บาท</span>
                 </div>
             </section>
             <p class="receipt-thanks">ขอบคุณที่ใช้บริการ</p>
@@ -459,7 +466,9 @@
         </style>
         <%
             const a5Subtotal = bill.reduce((total, row) => total + Number(row.total_price || 0), 0);
-            const a5DiscountAmount = a5Subtotal * Number(discount) / 100;
+            const a5DiscountAmount = discountType === 'fixed'
+                ? Math.min(a5Subtotal, Number(discount))
+                : a5Subtotal * Number(discount) / 100;
             const a5Total = a5Subtotal - a5DiscountAmount;
             const a5CustomerName = bill[0].first_name && bill[0].last_name
                 ? `${bill[0].first_name} ${bill[0].last_name}`
@@ -545,7 +554,7 @@
                     </div>
                     <% if (Number(discount) !== 0) { %>
                     <div class="a5-receipt-total-line">
-                        <span>ส่วนลด (<%=discount%>%)</span>
+                        <span>ส่วนลด (<%=discountType === 'fixed' ? helper.numberWithCommas(discount) + ' บาท' : discount + '%'%>)</span>
                         <span>-<%=helper.numberWithCommas(a5DiscountAmount)%> บาท</span>
                     </div>
                     <% } %>

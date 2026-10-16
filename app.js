@@ -458,21 +458,14 @@ app.post('/sellProduct', (req, res) => {
         const discount_code = req.body.discount_code || null
         const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
 
-        if (discount_code != null) {
-            checkDiscount(discount_code).then(discount_result => {
-                if (discount_result == null) {
-                    res.status(500).json({ error: "โค้ดส่วนลดไม่ถูกต้อง!" });
-                    return;
-                } else {
-                    processCart();
-                }
-            })
-        } else {
-            processCart();
-        }
+        processCart();
 
         async function processCart() {
             try {
+                if (!Array.isArray(cart) || cart.length === 0) {
+                    return res.status(400).json({ error: 'กรุณาเพิ่มสินค้าในตะกร้าก่อนขาย' });
+                }
+
                 // Get the last billing ID
                 const lastBillingResult = await new Promise((resolve, reject) => {
                     db.query(
@@ -486,9 +479,13 @@ app.post('/sellProduct', (req, res) => {
                     billing_id = parseInt(lastBillingResult[0].billing_id) + 1;
                 }
 
-                // First, check if enough products are available in the inventory
+                let subtotal = 0;
                 for (let i = 0; i < cart.length; i++) {
                     const { product_type, product_name, product_price, amount } = cart[i];
+                    if (!Number.isSafeInteger(Number(product_price)) || Number(product_price) < 0 ||
+                        !Number.isSafeInteger(Number(amount)) || Number(amount) < 1) {
+                        return res.status(400).json({ error: 'ข้อมูลสินค้าในตะกร้าไม่ถูกต้อง' });
+                    }
 
                     // Check the available quantity of the product
                     const availableProductResult = await new Promise((resolve, reject) => {
@@ -505,7 +502,27 @@ app.post('/sellProduct', (req, res) => {
                     if (availableCount < amount) {
                         throw new Error(`สินค้า: ${product_name} มีไม่เพียงพอสำหรับคำสั่งซื้อนี้`);
                     }
+                    subtotal += Number(product_price) * Number(amount);
+                    if (!Number.isSafeInteger(subtotal)) {
+                        return res.status(400).json({ error: 'ยอดรวมสินค้าเกินขอบเขตที่รองรับ' });
+                    }
+                }
 
+                if (discount_code != null) {
+                    const discountResult = await checkDiscount(discount_code, subtotal);
+                    if (!discountResult.valid) {
+                        if (discountResult.minimumPurchase !== undefined) {
+                            return res.status(400).json({
+                                error: `ยอดซื้อขั้นต่ำสำหรับโค้ดนี้คือ ${discountResult.minimumPurchase} บาท`
+                            });
+                        }
+                        return res.status(400).json({ error: 'โค้ดส่วนลดไม่ถูกต้องหรือถูกใช้งานแล้ว' });
+                    }
+                }
+
+                // Recheck and sell each requested unit after validating the complete cart.
+                for (let i = 0; i < cart.length; i++) {
+                    const { product_type, product_name, product_price, amount } = cart[i];
                     // If enough stock is available, proceed with the transaction
                     for (let j = 0; j < amount; j++) {
                         // Select product ID
@@ -642,7 +659,9 @@ app.get('/billing/:id', (req, res) => {
             c.id,
             t.created_at,
             c.phone_number,
-            dc.amount as discount_amount
+            dc.amount as discount_amount,
+            dc.discount_type,
+            dc.minimum_purchase
         FROM 
             (
                 SELECT 
@@ -845,14 +864,26 @@ app.post("/discounts", (req, res) => {
     if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
         const id = req.body.id
-        const code = req.body.code
-        const amount = req.body.amount
+        const code = typeof req.body.code === 'string' ? req.body.code.trim() : ''
+        const discountType = req.body.discount_type
+        const amount = Number(req.body.amount)
+        const minimumPurchase = Number(req.body.minimum_purchase)
+        const maxUses = req.body.max_uses === '' || req.body.max_uses === undefined
+            ? null
+            : Number(req.body.max_uses)
+        if (!code || !['percentage', 'fixed'].includes(discountType) ||
+            !Number.isSafeInteger(amount) || amount < 1 ||
+            (discountType === 'percentage' && amount > 100) ||
+            !Number.isSafeInteger(minimumPurchase) || minimumPurchase < 0 ||
+            (maxUses !== null && (!Number.isSafeInteger(maxUses) || maxUses < 1 || maxUses > 4294967295))) {
+            return res.status(400).send('ข้อมูลส่วนลดไม่ถูกต้อง');
+        }
         const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
         const updated_by = user_data[0].id
 
         db.query(`UPDATE discounts SET 
-            code = ?, amount = ?, updated_at = ?, updated_by = ? WHERE id = ?`,
-            [code, amount, updated_at, updated_by, id], (err) => {
+            code = ?, amount = ?, discount_type = ?, minimum_purchase = ?, max_uses = ?, updated_at = ?, updated_by = ? WHERE id = ?`,
+            [code, amount, discountType, minimumPurchase, maxUses, updated_at, updated_by, id], (err) => {
                 if (err) {
                     throw err;
                 } else {
@@ -883,13 +914,25 @@ app.post("/addDiscount", (req, res) => {
     const user_data = [req.user];
     if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
-        const code = req.body.code
-        const amount = req.body.amount
+        const code = typeof req.body.code === 'string' ? req.body.code.trim() : ''
+        const discountType = req.body.discount_type
+        const amount = Number(req.body.amount)
+        const minimumPurchase = Number(req.body.minimum_purchase)
+        const maxUses = req.body.max_uses === '' || req.body.max_uses === undefined
+            ? null
+            : Number(req.body.max_uses)
+        if (!code || !['percentage', 'fixed'].includes(discountType) ||
+            !Number.isSafeInteger(amount) || amount < 1 ||
+            (discountType === 'percentage' && amount > 100) ||
+            !Number.isSafeInteger(minimumPurchase) || minimumPurchase < 0 ||
+            (maxUses !== null && (!Number.isSafeInteger(maxUses) || maxUses < 1 || maxUses > 4294967295))) {
+            return res.status(400).send('ข้อมูลส่วนลดไม่ถูกต้อง');
+        }
         const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
         const created_by = user_data[0].id
 
-        db.query("INSERT INTO discounts(code,amount,created_at,created_by) VALUES(?,?,?,?)",
-            [code, amount, created_at, created_by], (err) => {
+        db.query("INSERT INTO discounts(code,amount,discount_type,minimum_purchase,max_uses,created_at,created_by) VALUES(?,?,?,?,?,?,?)",
+            [code, amount, discountType, minimumPurchase, maxUses, created_at, created_by], (err) => {
                 if (err) {
                     throw err;
                 } else {

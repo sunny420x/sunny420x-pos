@@ -1,0 +1,23 @@
+<% if (products_stock.length) { %>
+<div class="row row-cols-1 row-cols-sm-2 g-2 sell-product-grid">
+    <% products_stock.forEach(product => { %>
+    <div class="col sell-product-item" data-search="<%=product.name.toLocaleLowerCase()%>">
+        <button type="button" class="sell-product-card" data-cart-product
+            data-type="<%=product.type_id%>"
+            data-name="<%=product.name%>"
+            data-price="<%=product.price%>"
+            data-available="<%=product.available_count%>">
+            <span class="sell-product-card-name"><%=product.name%></span>
+            <span class="sell-product-card-price"><%=Number(product.price).toLocaleString('en-US')%> บาท</span>
+            <span class="sell-product-card-stock">เหลือ <%=product.available_count%> ชิ้น</span>
+            <span class="sell-product-card-action"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i>เพิ่มลงรถเข็น</span>
+        </button>
+    </div>
+    <% }) %>
+</div>
+<% } else { %>
+<div class="sell-empty-state">
+    <i class="fa-solid fa-box-open" aria-hidden="true"></i>
+    <p class="mb-0">ไม่พบสินค้าคงเหลือในหมวดนี้</p>
+</div>
+<% } %>

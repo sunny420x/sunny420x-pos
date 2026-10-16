@@ -312,7 +312,7 @@ app.get("/getSellProducts", (req, res) => {
     }
     let type = req.query.type
     getSellProductsByType(type).then((products_stock) => {
-        res.render('Components/sellProductSelectBox', {
+        res.render('Components/sellProductCatalog', {
             products_stock: products_stock
         })
         res.end()

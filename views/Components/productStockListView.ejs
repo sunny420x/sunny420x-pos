@@ -22,7 +22,7 @@
                         <% if (stock_mode === 'inventory_only') { %>
                         <button class="btn btn-warning" data-type="<%=row.type_id%>" data-name="<%=row.name%>" onclick="deductStockFromButton(this)" aria-label="ตัดสต๊อก <%=row.name%>" title="ตัดสต๊อกสินค้า" <%=row.value <= 0 ? 'disabled' : ''%>><i class="fa-solid fa-minus"></i></button>
                         <% } else { %>
-                        <button class="btn btn-warning" onclick="addToCart('<%=row.type_id%>', '<%=row.name%>', '<%=row.price%>', 1)"><i class="fa-solid fa-shopping-cart"></i></button>
+                        <button class="btn btn-warning" onclick="addToCart('<%=row.type_id%>', '<%=row.name%>', '<%=row.price%>', 1, '<%=row.value%>')" <%=row.value <= 0 ? 'disabled' : ''%>><i class="fa-solid fa-shopping-cart"></i></button>
                         <% } %>
                         <button class="btn btn-primary" onclick="openLink('/products_stock/<%=row.type_id%>/<%=encodeURIComponent(row.name)%>')"><i class="fa-solid fa-up-right-from-square"></i></button>
                     </td>

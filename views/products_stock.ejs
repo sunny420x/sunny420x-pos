@@ -290,214 +290,312 @@
             </div>
         </div>
         <% if (stock_mode === 'pos') { %>
-        <div class="modal fade" id="sell_modal" tabindex="-1" aria-labelledby="sell_modal" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+        <div class="modal fade" id="sell_modal" tabindex="-1" aria-labelledby="sell_modal_title" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable sell-modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h1 class="modal-title fs-5" id="modal_title"><i class="fa-solid fa-shopping-cart"></i> รถเข็น</h1>
+                  <div>
+                    <h1 class="modal-title fs-5" id="sell_modal_title"><i class="fa-solid fa-cash-register me-2"></i>ขายสินค้า</h1>
+                    <p class="text-secondary small mb-0">เลือกสินค้าจากแคตตาล็อก แล้วตรวจสอบรายการก่อนยืนยัน</p>
+                  </div>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <table class="table cart-table">
-                        <thead>
-                            <tr>
-                                <th>รายการ</th>
-                                <th>จำนวน</th>
-                                <th>ราคา</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cart">
-
-                        </tbody>
-                    </table>
-                    <p class="mt-2">
-                        ยอดที่ต้องชำระ <span id="totals_text"></span> บาท
-                    </p>
-                    <hr>
-                    <div class="mb-3">
-                        <div class="form-floating">
-                            <select class="form-select" id="sell_product_type" onchange="initProductType(this.value)">
-                                <option value="">โปรดเลือกประเภทสินค้า</option>
-                                <% product_types.forEach(row => {
-                                %>
-                                <option value="<%=row.id%>"><%=row.name%></option>
-                                <%
-                                }) 
-                                %>
-                            </select>
-                            <label for="type">เลือกประเภทสินค้า *</label>
-                        </div>
+                <div class="modal-body sell-modal-body">
+                    <div class="row g-4">
+                        <section class="col-lg-7 sell-catalog-panel" aria-labelledby="sell_catalog_heading">
+                            <div class="sell-panel-heading">
+                                <div>
+                                    <h2 id="sell_catalog_heading" class="h5 mb-1">แคตตาล็อกสินค้า</h2>
+                                    <p class="text-secondary small mb-0">กดการ์ดสินค้าเพื่อเพิ่มลงในรายการ</p>
+                                </div>
+                                <span class="sell-step-badge">1</span>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-5">
+                                    <label class="form-label small" for="sell_product_type">หมวดหมู่สินค้า</label>
+                                    <select class="form-select" id="sell_product_type" onchange="initProductType(this.value)">
+                                        <% if (!product_types.length) { %>
+                                        <option value="">ไม่มีหมวดหมู่สินค้า</option>
+                                        <% } else { %>
+                                        <% product_types.forEach((row, index) => { %>
+                                        <option value="<%=row.id%>" <%=index === 0 ? 'selected' : ''%>><%=row.name%></option>
+                                        <% }) %>
+                                        <% } %>
+                                    </select>
+                                </div>
+                                <div class="col-sm-7">
+                                    <label class="form-label small" for="sell_product_search">ค้นหาสินค้า</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></span>
+                                        <input type="search" class="form-control" id="sell_product_search" placeholder="พิมพ์ชื่อสินค้า..." autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="productSelectBox" class="sell-catalog-results" aria-live="polite">
+                                <div class="sell-empty-state">
+                                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                                    <p class="mb-0">เลือกหมวดหมู่เพื่อดูสินค้า</p>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="col-lg-5 sell-cart-panel" aria-labelledby="sell_cart_heading">
+                            <div class="sell-panel-heading">
+                                <div>
+                                    <h2 id="sell_cart_heading" class="h5 mb-1">รายการสินค้า</h2>
+                                    <p class="text-secondary small mb-0"><span id="cart_item_count">0</span> ชิ้นในรถเข็น</p>
+                                </div>
+                                <span class="sell-step-badge">2</span>
+                            </div>
+                            <div class="table-responsive sell-cart-table-wrap" id="cart_table_wrap" hidden>
+                                <table class="table cart-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">สินค้า</th>
+                                            <th scope="col">จำนวน</th>
+                                            <th scope="col" class="text-end">รวม</th>
+                                            <th scope="col"><span class="visually-hidden">ลบรายการ</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cart"></tbody>
+                                </table>
+                            </div>
+                            <div class="sell-cart-empty" id="cart_empty">
+                                <i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>
+                                <p class="mb-0">ยังไม่มีสินค้าในรถเข็น</p>
+                            </div>
+                            <div class="sell-order-fields">
+                                <div class="form-floating">
+                                    <select name="customer" id="customer" class="form-select" required>
+                                        <option value="-">ลูกค้าทั่วไป</option>
+                                        <% customers.forEach(row => { %>
+                                        <option value="<%=row.id%>"><%=row.first_name%> <%=row.last_name%></option>
+                                        <% }) %>
+                                    </select>
+                                    <label for="customer">ลูกค้า (ไม่บังคับ)</label>
+                                </div>
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" name="discount_code" id="discount_code" value="" placeholder="โค้ดส่วนลด">
+                                    <label for="discount_code">โค้ดส่วนลด</label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-link text-secondary p-0 sell-clear-cart" onclick="resetCart()">
+                                <i class="fa-regular fa-trash-can me-1" aria-hidden="true"></i>ล้างรายการ
+                            </button>
+                        </section>
                     </div>
-                    <div id="productSelectBox"></div>
-                    <div class="mb-3">
-                        <div class="form-floating">
-                            <input type="number" class="form-control" name="buy_amount" id="buy_amount" value="1">
-                            <label for="amount">จำนวน *</label>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-floating">
-                            <select name="customer" id="customer" class="form-select" required>
-                                <option value="-">เลือกลูกค้า (หากเป็นสมัครชิก)</option>
-                                <% customers.forEach((row) => {%>
-                                    <option value="<%=row.id%>"><%=row.first_name%> <%=row.last_name%></option>
-                                <%})%>
-                            </select>
-                            <label for="customer">ลูกค้า *</label>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-floating">
-                            <input type="text" class="form-control" name="discount_code" id="discount_code" value="">
-                            <label for="amount">โค้ดส่วนลด</label>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" onclick="addProductToCart()"><i class="fa-solid fa-plus"></i> เพิ่มสินค้าชิ้นนี้</button>
-                    <button class="btn btn-secondary" onclick="resetCart()"><i class="fa-solid fa-refresh"></i>  ล้างข้อมูล</button>
                 </div>
                 <script>
-                    initTotal()
+                    let sellCatalogRequest;
+                    let sellCatalogLoaded = false;
+                    const formatCartNumber = value => new Intl.NumberFormat('en-US').format(value);
 
                     function initProductType(type) {
-                        fetch("/getSellProducts?type="+type)
-                        .then(res => {
-                            if (!res.ok) {
-                                return res.json().then(errorData => { throw new Error(errorData.error); });
+                        const catalog = document.getElementById('productSelectBox');
+                        const search = document.getElementById('sell_product_search');
+                        search.value = '';
+                        if (sellCatalogRequest) sellCatalogRequest.abort();
+                        if (!type) {
+                            sellCatalogLoaded = false;
+                            catalog.innerHTML = '<div class="sell-empty-state"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><p class="mb-0">เลือกหมวดหมู่เพื่อดูสินค้า</p></div>';
+                            return;
+                        }
+                        sellCatalogLoaded = false;
+                        catalog.innerHTML = '<div class="sell-empty-state"><span class="spinner-border spinner-border-sm" role="status"></span><p class="mb-0 mt-2">กำลังโหลดสินค้า...</p></div>';
+                        sellCatalogRequest = new AbortController();
+                        fetch(`/getSellProducts?type=${encodeURIComponent(type)}`, { signal: sellCatalogRequest.signal })
+                            .then(async response => {
+                                if (!response.ok) throw new Error('ไม่สามารถโหลดสินค้าได้');
+                                return response.text();
+                            })
+                            .then(html => {
+                                sellCatalogLoaded = true;
+                                catalog.innerHTML = html;
+                                filterSellProducts(search.value);
+                            })
+                            .catch(error => {
+                                if (error.name === 'AbortError') return;
+                                console.error('Error:', error);
+                                catalog.innerHTML = '<div class="sell-empty-state text-danger"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><p class="mb-0">โหลดสินค้าไม่สำเร็จ กรุณาลองใหม่</p></div>';
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'เกิดข้อผิดพลาด',
+                                    text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
+                                });
+                            });
+                    }
+
+                    function filterSellProducts(query) {
+                        const normalizedQuery = query.trim().toLocaleLowerCase();
+                        const items = [...document.querySelectorAll('#productSelectBox .sell-product-item')];
+                        let visibleItems = 0;
+                        items.forEach(item => {
+                            const visible = item.dataset.search.includes(normalizedQuery);
+                            item.hidden = !visible;
+                            if (visible) visibleItems++;
+                        });
+                        let emptyState = document.querySelector('#productSelectBox .sell-search-empty');
+                        if (items.length && visibleItems === 0) {
+                            if (!emptyState) {
+                                emptyState = document.createElement('div');
+                                emptyState.className = 'sell-empty-state sell-search-empty';
+                                emptyState.textContent = 'ไม่พบสินค้าที่ค้นหา';
+                                document.getElementById('productSelectBox').append(emptyState);
                             }
-                            return res.text();
-                        })
-                        .then(data => {
-                            document.getElementById('productSelectBox').innerHTML = data;
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'เกิดข้อผิดพลาด',
-                                text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
-                            });
-                        });   
-                    }
-                    function addProductToCart() {
-                        const customerSelect = document.getElementById('customer');
-                        const productSelect = document.getElementById('sell_product_id');
-                        const selectedProduct = productSelect?.selectedOptions[0];
-
-                        if(!customerSelect.value) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'โปรดเลือกลูกค้า'
-                            });
-                            return;
+                            emptyState.hidden = false;
+                        } else if (emptyState) {
+                            emptyState.hidden = true;
                         }
-
-                        if (!selectedProduct || !productSelect.value) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'โปรดเลือกสินค้า'
-                            });
-                            return;
-                        }
-
-                        const amount = Number(document.getElementById('buy_amount').value);
-                        const product_type = document.getElementById('sell_product_type').value;
-                        const product_name = selectedProduct.dataset.name;
-                        const product_price = Number(selectedProduct.dataset.price);
-
-                        if (!Number.isSafeInteger(amount) || amount < 1 || !Number.isSafeInteger(product_price) || product_price < 0) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'ข้อมูลสินค้าไม่ถูกต้อง',
-                                text: 'กรุณาเลือกสินค้าและระบุจำนวนอีกครั้ง'
-                            });
-                            return;
-                        }
-
-                        cart.push({
-                            product_type: product_type,
-                            product_name: product_name,
-                            product_price: product_price,
-                            amount: amount
-                        })
-
-                        initCart(product_name, amount, product_price)
-
-                        initTotal(parseInt(product_price) * parseInt(amount))
-                        initProductType('')
                     }
 
-                    function addToCart(product_type, product_name, product_price, amount) {
+                    document.getElementById('sell_product_search').addEventListener('input', event => {
+                        filterSellProducts(event.target.value);
+                    });
+
+                    document.getElementById('sell_modal').addEventListener('shown.bs.modal', () => {
+                        const selectedType = document.getElementById('sell_product_type').value;
+                        if (selectedType && !sellCatalogLoaded) initProductType(selectedType);
+                    });
+
+                    document.getElementById('productSelectBox').addEventListener('click', event => {
+                        const product = event.target.closest('[data-cart-product]');
+                        if (!product) return;
+                        addToCart(product.dataset.type, product.dataset.name, product.dataset.price, 1, product.dataset.available);
+                    });
+
+                    document.getElementById('cart').addEventListener('click', event => {
+                        const control = event.target.closest('[data-cart-action]');
+                        if (!control) return;
+                        const index = Number(control.dataset.index);
+                        if (control.dataset.cartAction === 'increase') updateCartQuantity(index, 1);
+                        if (control.dataset.cartAction === 'decrease') updateCartQuantity(index, -1);
+                        if (control.dataset.cartAction === 'remove') removeCartItem(index);
+                    });
+
+                    function addToCart(product_type, product_name, product_price, amount, available_count) {
                         product_price = Number(product_price);
                         amount = Number(amount);
-                        if (!Number.isSafeInteger(product_price) || product_price < 0 || !Number.isSafeInteger(amount) || amount < 1) return;
+                        const available = available_count === undefined
+                            ? Number.MAX_SAFE_INTEGER
+                            : Number(available_count);
+                        if (!Number.isSafeInteger(product_price) || product_price < 0 ||
+                            !Number.isSafeInteger(amount) || amount < 1 ||
+                            !Number.isSafeInteger(available) || available < 0) return;
+                        if (available === 0) {
+                            Swal.fire({ icon: 'info', title: 'สินค้าหมด' });
+                            return;
+                        }
 
-                        cart.push({
-                            product_type: product_type,
-                            product_name: product_name,
-                            product_price: product_price,
-                            amount: amount
-                        })
-                        totals += product_price * amount
-                        initTotal()
-                        Swal.fire({
-                            position: "top-end",
-                            title: "<i class='fa-solid fa-circle-check text-success'></i> เพิ่มสินค้าลงในรถเข็นแล้ว !",
-                            showConfirmButton: false,
-                            timer: 1000,
-                            backdrop: false
-                        })
-                        initCart(product_name, amount, product_price)
-                        if(document.getElementById('customer').value == '-') {
-                            document.getElementById('customer').disabled = false
+                        const existingIndex = cart.findIndex(item =>
+                            String(item.product_type) === String(product_type) &&
+                            item.product_name === product_name &&
+                            Number(item.product_price) === product_price
+                        );
+                        if (existingIndex >= 0) {
+                            const maxAvailable = Math.min(cart[existingIndex].available_count, available);
+                            if (cart[existingIndex].amount + amount > maxAvailable) {
+                                Swal.fire({ icon: 'info', title: 'สินค้าในสต๊อกมีไม่เพียงพอ' });
+                                return;
+                            }
+                            cart[existingIndex].available_count = maxAvailable;
+                            cart[existingIndex].amount += amount;
                         } else {
-                            document.getElementById('customer').disabled = true
+                            if (amount > available) {
+                                Swal.fire({ icon: 'info', title: 'สินค้าในสต๊อกมีไม่เพียงพอ' });
+                                return;
+                            }
+                            cart.push({
+                                product_type: product_type,
+                                product_name: product_name,
+                                product_price: product_price,
+                                amount: amount,
+                                available_count: available
+                            });
                         }
+                        renderCart();
                     }
 
-                    function initCart(product_name, amount, product_price) {
-                        var table = document.getElementById("cart");
-
-                        var row = table.insertRow(-1);
-
-                        var product_name_cell = row.insertCell(0);
-                        var product_amount_cell = row.insertCell(1);
-                        var product_price_cell = row.insertCell(2);
-
-                        product_name_cell.textContent = product_name;
-                        product_amount_cell.textContent = amount;
-                        product_price_cell.textContent = numberWithCommas(Number(product_price) * Number(amount));
-
-                        if(document.getElementById('sell_product_type').value != '' && document.getElementById('sell_product_id').value != '') {
-                            document.getElementById('sell_product_type').value = ""
-                            document.getElementById('sell_product_id').value = ""
+                    function updateCartQuantity(index, change) {
+                        const item = cart[index];
+                        if (!item) return;
+                        const nextAmount = item.amount + change;
+                        if (nextAmount < 1) return removeCartItem(index);
+                        if (nextAmount > item.available_count) {
+                            Swal.fire({ icon: 'info', title: 'สินค้าในสต๊อกมีไม่เพียงพอ' });
+                            return;
                         }
-                        document.getElementById('customer').disabled = true
-                        document.getElementById('buy_amount').value = 1
+                        item.amount = nextAmount;
+                        renderCart();
                     }
 
-                    function initTotal(product_price) {
-                        if (product_price !== undefined) {
-                            const additionalTotal = Number(product_price);
-                            if (Number.isFinite(additionalTotal)) totals += additionalTotal;
-                        }
+                    function removeCartItem(index) {
+                        if (!cart[index]) return;
+                        cart.splice(index, 1);
+                        renderCart();
+                    }
 
-                        totals_text.textContent = numberWithCommas(totals);
+                    function renderCart() {
+                        const table = document.getElementById('cart');
+                        const emptyState = document.getElementById('cart_empty');
+                        table.replaceChildren();
+                        emptyState.hidden = cart.length > 0;
+                        document.getElementById('cart_table_wrap').hidden = cart.length === 0;
+                        if (cart.length) {
+                            cart.forEach((item, index) => {
+                                const row = table.insertRow();
+                                const productCell = row.insertCell();
+                                productCell.className = 'sell-cart-product';
+                                productCell.textContent = item.product_name;
+
+                                const quantityCell = row.insertCell();
+                                quantityCell.append(
+                                    createCartControl('decrease', index, 'ลดจำนวน'),
+                                    Object.assign(document.createElement('span'), {
+                                        className: 'sell-cart-quantity',
+                                        textContent: item.amount
+                                    }),
+                                    createCartControl('increase', index, 'เพิ่มจำนวน')
+                                );
+
+                                const totalCell = row.insertCell();
+                                totalCell.className = 'text-end text-nowrap';
+                                totalCell.textContent = formatCartNumber(item.product_price * item.amount);
+
+                                const removeCell = row.insertCell();
+                                removeCell.append(createCartControl('remove', index, 'นำสินค้าออก'));
+                            });
+                        }
+                        totals = cart.reduce((sum, item) => sum + item.product_price * item.amount, 0);
+                        document.getElementById('cart_item_count').textContent = cart.reduce((sum, item) => sum + item.amount, 0);
+                        initTotal();
+                    }
+
+                    function createCartControl(action, index, label) {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = `btn btn-sm sell-cart-control${action === 'remove' ? ' sell-cart-remove' : ''}`;
+                        button.dataset.cartAction = action;
+                        button.dataset.index = index;
+                        button.setAttribute('aria-label', label);
+                        const icon = document.createElement('i');
+                        icon.className = action === 'increase' ? 'fa-solid fa-plus' :
+                            action === 'decrease' ? 'fa-solid fa-minus' : 'fa-solid fa-trash-can';
+                        icon.setAttribute('aria-hidden', 'true');
+                        button.append(icon);
+                        return button;
+                    }
+
+                    function initTotal() {
+                        const totalElement = document.getElementById('totals_text');
+                        if (totalElement) totalElement.textContent = formatCartNumber(totals);
                     }
                     function resetCart() {
                         cart = []
                         totals = 0
                         initTotal()
-                        document.getElementById("cart").innerHTML = ""
-                        document.getElementById('sell_product_type').value = ""
-                        document.getElementById('sell_product_id').value = ""
-                        document.getElementById('buy_amount').value = 1
-                        resetCustomer()
-                    }
-                    function resetCustomer() {
-                        if(document.getElementById('customer').value != "-") {
-                            document.getElementById('customer').value = '-'
-                            document.getElementById('customer').disabled = false
-                        }
+                        renderCart()
+                        document.getElementById('sell_product_search').value = ''
+                        document.getElementById('discount_code').value = ''
+                        filterSellProducts('')
                     }
                     function sellProducts() {
                         let customer = document.getElementById('customer').value
@@ -509,7 +607,12 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            cart: cart,
+                            cart: cart.map(({ product_type, product_name, product_price, amount }) => ({
+                                product_type,
+                                product_name,
+                                product_price,
+                                amount
+                            })),
                             customer:customer,
                             discount_code:discount_code
                         })
@@ -548,10 +651,17 @@
                         });  
                     }
 
+                    document.addEventListener('DOMContentLoaded', initTotal, { once: true });
                 </script>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetCart()"><i class="fa-solid fa-cancel me-1"></i> ยกเลิก</button>
-                  <button type="button" class="btn btn-primary" onclick="sellProducts()"><i class="fa-solid fa-shopping-cart me-1"></i> เพิ่มข้อมูลการขายสินค้า</button>
+                <div class="modal-footer sell-modal-footer">
+                  <div class="sell-total">
+                    <span class="text-secondary small">ยอดที่ต้องชำระ</span>
+                    <strong><span id="totals_text"></span> <span class="small fw-normal">บาท</span></strong>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetCart()">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" onclick="sellProducts()"><i class="fa-solid fa-circle-check me-1"></i> ยืนยันการขาย</button>
+                  </div>
                 </div>
               </div>
             </div>

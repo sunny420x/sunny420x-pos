@@ -12,10 +12,17 @@ function query(sql, values = []) {
 
 function getSellProductsByType(type) {
     return new Promise((resolve) => {
-        db.query(`SELECT pd.id, pd.name, pt.name as type, pd.type as type_id, pd.price 
-            FROM products as pd  
-            JOIN product_types as pt ON pt.id = pd.type 
-            WHERE pd.type = ? AND is_sold = 0 GROUP BY pd.name ORDER BY pd.name DESC`, [type], (err, result) => {
+        db.query(`SELECT
+                pd.name,
+                pt.name AS type,
+                pd.type AS type_id,
+                pd.price,
+                COUNT(*) AS available_count
+            FROM products AS pd
+            JOIN product_types AS pt ON pt.id = pd.type
+            WHERE pd.type = ? AND pd.is_sold = 0
+            GROUP BY pd.name, pt.name, pd.type, pd.price
+            ORDER BY pd.name ASC, pd.price ASC`, [type], (err, result) => {
             if(err) throw err;
             resolve(result)
         })

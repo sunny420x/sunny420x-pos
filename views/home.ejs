@@ -5,13 +5,13 @@
     </head>
     <body>
         <% helper = new Helper() %>
-        <div class="d-flex">
+        <div class="d-flex app-shell">
             <%-include('include/sidebar')%>
-            <div class="container-fluid p-0 overflow-hidden">
+            <div class="container-fluid p-0 overflow-hidden app-main">
                 <%-include('include/navigator')%>
-                <div class="container-fluid p-4">
+                <div class="container-fluid p-4 app-content">
                     <div class="card p-4">
-                        <div class="row grid-4 gap-4 mb-4 mx-2">
+                        <div class="stats-grid">
                             <div class="col-lg card text-bg-light p-4">
                                 <h3><i class="fa-solid fa-star me-1"></i> สินค้าขายดี</h3>
                                 <% if(bestseller) { %>
@@ -22,19 +22,19 @@
                             </div>
                             <div class="col-lg card text-bg-light p-4">
                                 <h3><i class="fa-solid fa-box-open me-1"></i> ขายได้เดือนนี้</h3>
-                                <span class="fs-4 text-secondary""><%=helper.numberWithCommas(productSellingChart.length)%> รายการ</span>
+                                <span class="fs-4 text-secondary"><%=helper.numberWithCommas(productSellingChart.length)%> รายการ</span>
                             </div>
                             <div class="col-lg card text-bg-light p-4">
                                 <h3><i class="fa-solid fa-coins me-1"></i> ยอดขายเดือนนี้</h3>
-                                <span class="fs-4 text-secondary""><%=helper.numberWithCommas(total_sales)%> บาท</span>
+                                <span class="fs-4 text-secondary"><%=helper.numberWithCommas(total_sales)%> บาท</span>
                             </div>
                             <div class="col-lg card text-bg-light p-4">
                                 <h3><i class="fa-solid fa-coins me-1"></i> กำไรเดือนนี้</h3>
-                                <span class="fs-4 text-secondary""><%=helper.numberWithCommas(profits)%> บาท</span>
+                                <span class="fs-4 text-secondary"><%=helper.numberWithCommas(profits)%> บาท</span>
                             </div>
                             <div class="col-lg card text-bg-light p-4">
                                 <h3><i class="fa-solid fa-users me-1"></i> ลูกค้าในระบบ</h3>
-                                <span class="fs-4 text-secondary""><%=helper.numberWithCommas(total_customers.amounts)%> คน</span>
+                                <span class="fs-4 text-secondary"><%=helper.numberWithCommas(total_customers.amounts)%> คน</span>
                             </div>
                         </div>
 
@@ -54,7 +54,7 @@
                             labels: [<%- productSellingChart.map(item => `"${moment(item.days).format('DD/MM/YY')}"`).join(", ") %>],
                             datasets: [{
                                 label: 'จำนวนชิ้น',
-                                data: [<%- productSellingChart.map(item => item.amounts).join(", ") %>],
+                                data: [<%- productSellingChart.map(item => item.amounts).join(", ") %>],                                tension: 0.3,
                                 borderWidth: 2
                             }]
                             },

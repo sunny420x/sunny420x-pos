@@ -171,14 +171,14 @@ function getRoute(route) {
 }
 
 function initNavigatorItems() {
-    let navItems = document.getElementsByClassName('list-group-item-action')
-
-    for(i = 0; i < navItems.length; i++) {
-        if(getRoute(navItems[i].href)[1] == getRoute()[1]) {
-            navItems[i].classList.add('active')
-            return;
-        }
-    }
+    const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+    document.querySelectorAll('.app-menu a.list-group-item-action[href]').forEach(item => {
+        const itemPath = new URL(item.href, window.location.origin).pathname.replace(/\/$/, '') || '/';
+        const active = itemPath === currentPath;
+        item.classList.toggle('active', active);
+        if (active) item.setAttribute('aria-current', 'page');
+        else item.removeAttribute('aria-current');
+    });
 }
 
 initNavigatorItems()

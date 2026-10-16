@@ -606,14 +606,16 @@ input[type=checkbox][readonly] {
 
 /* Reusable content patterns. */
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 16px;
     margin: 0 0 28px;
 }
 
 .stats-grid>.card {
+    flex: 1 1 190px;
     width: auto;
+    min-width: min(100%, 190px);
     padding: 20px !important;
 }
 

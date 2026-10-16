@@ -567,29 +567,55 @@
         </div>
         <% } %>
         <script>
-            function exportToPDF() {
-              const { jsPDF } = window.jspdf;
-              const isThermalReceipt = <%-JSON.stringify(receipt_size === '80x80')%>;
-              const pdf = isThermalReceipt
-                ? new jsPDF('p', 'mm', [80, 80])
-                : new jsPDF('l', 'mm', 'a5');
-          
-              const content = document.getElementById('billing_content');
-              
-              html2canvas(content).then((canvas) => {
+            async function exportToPDF() {
+              try {
+                const { jsPDF } = window.jspdf;
+                const isThermalReceipt = <%-JSON.stringify(receipt_size === '80x80')%>;
+                const pdf = isThermalReceipt
+                  ? new jsPDF('p', 'mm', [80, 80])
+                  : new jsPDF('l', 'mm', 'a5');
+
+                const content = document.getElementById('billing_content');
+                const canvas = await html2canvas(content, {
+                  backgroundColor: '#ffffff',
+                  scale: 2,
+                  useCORS: true,
+                  windowWidth: Math.max(document.documentElement.clientWidth, 1100),
+                  onclone: clonedDocument => {
+                    clonedDocument.documentElement.style.backgroundColor = '#ffffff';
+                    clonedDocument.body.style.backgroundColor = '#ffffff';
+                    const receipt = clonedDocument.getElementById('billing_content');
+                    if (!receipt || isThermalReceipt) return;
+                    receipt.style.width = '210mm';
+                    receipt.style.minHeight = '148mm';
+                    receipt.style.margin = '0';
+                    receipt.style.boxShadow = 'none';
+                    receipt.style.backgroundColor = '#ffffff';
+                  }
+                });
                 const imgData = canvas.toDataURL('image/png');
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 const imgWidth = canvas.width;
                 const imgHeight = canvas.height;
                 const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
-                
+
                 const renderedWidth = imgWidth * ratio;
                 const renderedHeight = imgHeight * ratio;
-                const x = isThermalReceipt ? (pageWidth - renderedWidth) / 2 : 0;
-                pdf.addImage(imgData, 'PNG', x, 0, renderedWidth, renderedHeight);
+                const x = (pageWidth - renderedWidth) / 2;
+                const y = isThermalReceipt ? 0 : (pageHeight - renderedHeight) / 2;
+                pdf.addImage(imgData, 'PNG', x, y, renderedWidth, renderedHeight);
                 pdf.save(isThermalReceipt ? 'ใบเสร็จรับเงิน-80x80.pdf' : 'ใบเสร็จรับเงิน.pdf');
-              });
+              } catch (error) {
+                console.error('Receipt PDF export failed:', error);
+                if (window.Swal) {
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'บันทึก PDF ไม่สำเร็จ',
+                    text: 'กรุณาลองอีกครั้ง หรือตรวจสอบการเชื่อมต่ออินเทอร์เน็ต'
+                  });
+                }
+              }
             }
           </script>
     </body>

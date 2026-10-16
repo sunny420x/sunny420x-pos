@@ -105,3 +105,41 @@ test('billing history cards show the bill, customer, date, quantity, and actions
     assert.match(html, /href="\/billing\/123"/);
     assert.match(html, /data-delete-bill="123"/);
 });
+
+test('receipt PDF export uses a white A5 canvas without the screen shadow', async () => {
+    const html = await ejs.renderFile(path.join(viewsPath, 'billing.ejs'), {
+        user_data: [{ company_name: 'ร้านทดสอบ' }],
+        bill: [{
+            name: 'ชาสมุนไพร',
+            price: 100,
+            total_price: 100,
+            amount: 1,
+            first_name: null,
+            last_name: null,
+            phone_number: null,
+            created_at: '2026-10-16 12:30:00',
+            discount_amount: null,
+        }],
+        billing_id: 125,
+        moment,
+        Helper: class {
+            numberWithCommas(value) {
+                return Number(value).toLocaleString('en-US');
+            }
+            ThaiPhoneNumber(value) {
+                return value;
+            }
+        },
+        receipt_size: 'a5_landscape',
+    });
+
+    const script = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
+        .map(match => match[1])
+        .find(source => source.includes('async function exportToPDF'));
+    assert.ok(script);
+    new vm.Script(script);
+    assert.match(script, /backgroundColor: '#ffffff'/);
+    assert.match(script, /windowWidth: Math\.max\(document\.documentElement\.clientWidth, 1100\)/);
+    assert.match(script, /receipt\.style\.boxShadow = 'none'/);
+    assert.match(script, /receipt\.style\.width = '210mm'/);
+});

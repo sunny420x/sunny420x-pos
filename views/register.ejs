@@ -7,25 +7,39 @@
     <link rel="stylesheet" href="/css/auth.css">
 </head>
 <body class="auth-page">
-    <main class="auth-layout auth-layout-register">
-        <%- include('include/auth_brand') %>
-        <section class="card auth-card" aria-labelledby="auth-title">
-            <div class="auth-card-heading"><span class="auth-icon"><i class="fa-solid fa-building" aria-hidden="true"></i></span><div><h1 id="auth-title">สมัครบริษัทใหม่</h1><p>สร้างพื้นที่ร้านค้าและบัญชีผู้ดูแลของคุณ</p></div></div>
-            <% if(error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
-            <form method="post" action="/register">
-                <h2 class="auth-section-title"><span>01</span> ข้อมูลบริษัท</h2>
-                <div class="mb-4"><label for="company_name" class="form-label">ชื่อบริษัท / ร้านค้า</label><input id="company_name" name="company_name" class="form-control" autocomplete="organization" placeholder="ชื่อบริษัทหรือร้านค้าของคุณ" required maxlength="100"><div class="form-text">ชื่อนี้จะแสดงในรายการเลือกบริษัทตอนเข้าสู่ระบบ</div></div>
-                <h2 class="auth-section-title"><span>02</span> บัญชีผู้ดูแลระบบ</h2>
-                <div class="mb-3"><label for="full_name" class="form-label">ชื่อ-นามสกุล</label><input id="full_name" name="full_name" class="form-control" autocomplete="name" placeholder="ชื่อผู้ดูแลระบบ" required maxlength="100"></div>
-                <div class="row g-3 mb-4">
-                    <div class="col-sm-6"><label for="username" class="form-label">ชื่อผู้ใช้</label><input id="username" name="username" class="form-control" autocomplete="username" placeholder="ตั้งชื่อผู้ใช้" required maxlength="100"></div>
-                    <div class="col-sm-6"><label for="password" class="form-label">รหัสผ่าน</label><input id="password" name="password" type="password" class="form-control" autocomplete="new-password" placeholder="อย่างน้อย 8 ตัวอักษร" required minlength="8" maxlength="128"></div>
-                </div>
-                <button class="btn btn-primary auth-submit w-100"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>สร้างบริษัทและบัญชีผู้ดูแล</button>
-            </form>
-            <p class="auth-switch">มีบัญชีอยู่แล้ว? <a href="/login">เข้าสู่ระบบ <i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a></p>
-        </section>
-        <p class="auth-footer">SunnyPOS · ระบบจัดการร้านค้า</p>
+    <main class="auth-layout">
+        <aside class="auth-showcase">
+            <%- include('include/auth_brand') %>
+            <div class="auth-showcase-copy">
+                <p class="auth-eyebrow">SUNNYPOS · SMART RETAIL</p>
+                <h2>เริ่มต้นจัดการร้าน<br>ในแบบของคุณ</h2>
+                <p class="auth-showcase-description">สร้างพื้นที่สำหรับร้านค้า พร้อมเครื่องมือดูแลสินค้าและติดตามการขายในระบบเดียว</p>
+                <ul class="auth-feature-list">
+                    <li><span class="auth-feature-icon"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i></span><span><strong>จัดการสินค้าและสต๊อก</strong><small>ดูแลสินค้าและจำนวนคงเหลือได้สะดวก</small></span></li>
+                    <li><span class="auth-feature-icon"><i class="fa-solid fa-cash-register" aria-hidden="true"></i></span><span><strong>บันทึกรายการขาย</strong><small>เก็บประวัติการขายไว้ในที่เดียว</small></span></li>
+                    <li><span class="auth-feature-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span><span><strong>เห็นภาพรวมร้าน</strong><small>ติดตามยอดขายและข้อมูลสำคัญ</small></span></li>
+                </ul>
+            </div>
+            <p class="auth-showcase-note"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> พร้อมเริ่มต้นเมื่อคุณพร้อม</p>
+        </aside>
+        <div class="auth-main">
+            <section class="card auth-card" aria-labelledby="auth-title">
+                <div class="auth-card-heading"><span class="auth-icon"><i class="fa-solid fa-building" aria-hidden="true"></i></span><div><h1 id="auth-title">สมัครบริษัทใหม่</h1><p>สร้างพื้นที่ร้านค้าและบัญชีผู้ดูแลของคุณ</p></div></div>
+                <% if(error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+                <form method="post" action="/register">
+                    <h2 class="auth-section-title"><span>01</span> ข้อมูลบริษัท</h2>
+                    <div class="mb-4"><label for="company_name" class="form-label">ชื่อบริษัท / ร้านค้า</label><input id="company_name" name="company_name" class="form-control" autocomplete="organization" placeholder="ชื่อบริษัทหรือร้านค้าของคุณ" required maxlength="100"><div class="form-text">ชื่อนี้จะแสดงในรายการเลือกบริษัทตอนเข้าสู่ระบบ</div></div>
+                    <h2 class="auth-section-title"><span>02</span> บัญชีผู้ดูแลระบบ</h2>
+                    <div class="mb-3"><label for="full_name" class="form-label">ชื่อ-นามสกุล</label><input id="full_name" name="full_name" class="form-control" autocomplete="name" placeholder="ชื่อผู้ดูแลระบบ" required maxlength="100"></div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6"><label for="username" class="form-label">ชื่อผู้ใช้</label><input id="username" name="username" class="form-control" autocomplete="username" placeholder="ตั้งชื่อผู้ใช้" required maxlength="100"></div>
+                        <div class="col-sm-6"><label for="password" class="form-label">รหัสผ่าน</label><input id="password" name="password" type="password" class="form-control" autocomplete="new-password" placeholder="อย่างน้อย 8 ตัวอักษร" required minlength="8" maxlength="128"></div>
+                    </div>
+                    <button class="btn btn-primary auth-submit w-100"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>สร้างบริษัทและบัญชีผู้ดูแล</button>
+                </form>
+                <p class="auth-switch">มีบัญชีอยู่แล้ว? <a href="/login">เข้าสู่ระบบ <i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a></p>
+            </section>
+        </div>
     </main>
 </body>
 </html>

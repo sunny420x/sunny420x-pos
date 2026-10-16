@@ -3,7 +3,9 @@
         <thead class="table-light text-center">
             <tr>
                 <th>รายการ</th>
+                <% if (stock_mode !== 'inventory_only') { %>
                 <th>ราคา</th>
+                <% } %>
                 <th>คงเหลือ</th>
                 <th>จัดการ</th>
             </tr>
@@ -12,7 +14,9 @@
             <tbody class="text-center">
                 <tr>
                     <td><%=row.name%> (<%=row.type%>)</td>
+                    <% if (stock_mode !== 'inventory_only') { %>
                     <td><%=row.price%></td>
+                    <% } %>
                     <td><%if(row.value != 0) {%><%=row.value%><%} else {%><span class="badge bg-danger">สินค้าหมด</span><%}%></td>
                     <td>
                         <% if (stock_mode === 'inventory_only') { %>

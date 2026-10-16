@@ -51,6 +51,7 @@
                                     <label for="type">เลือกประเภทสินค้า: </label>
                                 </div>
                             </div>
+                            <% if (stock_mode !== 'inventory_only') { %>
                             <div class="mb-3">
                                 <div class="form-floating">
                                     <input type="text" class="form-control" placeholder="กรอกราคา" id="import_price" name="import_price" value="<%=stock.import_price%>" required>
@@ -63,6 +64,7 @@
                                     <label for="price">ราคาขาย (ต่อหน่วย) *</label>
                                 </div>
                             </div>
+                            <% } %>
                             <div class="mb-3">
                                 <div class="form-floating">
                                     <input type="date" class="form-control" placeholder="กรอกวันหมดอายุ" id="expired_date" name="expired_date" value="<%=moment(stock.expired_date).format('YYYY-MM-DD')%>">

@@ -35,6 +35,12 @@ const query = con.query.bind(con);
 module.exports = {
   auth: con, query(sql, values, callback) {
     if (typeof values === 'function') { callback = values; values = []; }
-    return query(scopeSql(sql, context.getStore()?.companyId), values || [], callback);
+    const tenantContext = context.getStore();
+    const scopedSql = scopeSql(sql, tenantContext?.companyId);
+    if (typeof callback !== 'function') return query(scopedSql, values || []);
+
+    return query(scopedSql, values || [], function (...args) {
+      return context.run(tenantContext, () => callback.apply(this, args));
+    });
   }
 };

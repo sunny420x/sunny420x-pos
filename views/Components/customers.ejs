@@ -19,7 +19,9 @@
                     <td><%=row.total_orders ?? 0%></td>
                     <td>
                         <button class="btn btn-primary" onclick="openLink('/customers/<%=row.id%>')"><i class="fa-solid fa-folder"></i></button>
+                        <% if (user_data.stock_mode !== 'inventory_only') { %>
                         <button class="btn btn-warning" onclick="openLink('/billingHistories/?customer_id=<%=row.id%>')"><i class="fa-solid fa-box-open"></i></button>
+                        <% } %>
                         <button class="btn btn-danger" onclick="
                         Swal.fire({
                         title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',

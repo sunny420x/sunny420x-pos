@@ -2,7 +2,9 @@
     <% products_stock.forEach((row) => { %>
         <div class="col px-2"><div class="product-tile">
             <h5><%=row.name%> (<%=row.type%>)</h5>
+            <% if (stock_mode !== 'inventory_only') { %>
             <p class="mb-1">ราคา: <%=row.price%></p>
+            <% } %>
             <p class="mb-2">คงเหลือ: <%if(row.value != 0) {%><%=row.value%><%} else {%><span class="badge bg-danger">สินค้าหมด</span><%}%></p>
             <% if (stock_mode === 'inventory_only') { %>
             <button class="btn btn-warning" data-type="<%=row.type_id%>" data-name="<%=row.name%>" onclick="deductStockFromButton(this)" aria-label="ตัดสต๊อก <%=row.name%>" title="ตัดสต๊อกสินค้า" <%=row.value <= 0 ? 'disabled' : ''%>><i class="fa-solid fa-minus"></i></button>

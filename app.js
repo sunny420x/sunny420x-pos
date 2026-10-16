@@ -93,6 +93,7 @@ app.use(initAccessToken);
 
 // Forward async route failures to Express error handlers.
 const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
+const isPosMode = req => (req.user.stock_mode || 'pos') === 'pos';
 
 //Controller
 app.get("/searchCustomerByCardId", (req, res) => {
@@ -335,6 +336,12 @@ app.get("/products_stock", (req, res) => {
 
 app.get("/getSellProducts", (req, res) => {
     const user_data = [req.user];
+    if (!user_data[0].permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    if ((user_data[0].stock_mode || 'pos') !== 'pos') {
+        return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    }
     let type = req.query.type
     getSellProductsByType(type).then((products_stock) => {
         res.render('Components/sellProductSelectBox', {
@@ -395,7 +402,8 @@ app.get("/products_stock/:type/:name", (req, res) => {
                     product_types: product_types,
                     moment: moment,
                     option: option,
-                    type: type
+                    type: type,
+                    stock_mode: user_data[0].stock_mode || 'pos'
                 })
                 res.end()
             })
@@ -651,6 +659,7 @@ app.get('/deleteProductByTransction/:id', (req, res) => {
 
 app.get('/billing/:id', (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('bills')) {
         const id = req.params.id
 
@@ -710,6 +719,7 @@ app.get('/billing/:id', (req, res) => {
 
 app.get("/billingHistories", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('bills')) {
         let customer_id = req.query.customer_id !== undefined ? req.query.customer_id : 'all';
         getCustomers().then(owners => {
@@ -727,6 +737,7 @@ app.get("/billingHistories", (req, res) => {
 
 app.get("/getBillingHistoriesByCustomer", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
     let customer_id = req.query.customer_id !== undefined ? decodeURIComponent(req.query.customer_id) : 'all';
     getBillingHistoriesByCustomer(customer_id).then(bills => {
         res.render('Components/billingHistories', {
@@ -738,6 +749,7 @@ app.get("/getBillingHistoriesByCustomer", (req, res) => {
 
 app.get("/deleteBill/:id", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('bills')) {
         const id = req.params.id
 
@@ -774,6 +786,7 @@ app.get("/editProduct/:transaction", (req, res) => {
                     moment: moment,
                     type: type,
                     option: option,
+                    stock_mode: user_data[0].stock_mode || 'pos',
                 })
                 res.end()
             })
@@ -789,8 +802,7 @@ app.post("/editProduct", (req, res) => {
     if (user_data[0].permission.split(',').includes('products')) {
         const type = req.body.type
         const name = req.body.name
-        const price = req.body.price
-        const import_price = req.body.import_price
+        const stock_mode = user_data[0].stock_mode || 'pos'
         const expired_date = req.body.expired_date || null
         const transaction_id = req.body.transaction_id
         const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
@@ -798,7 +810,14 @@ app.post("/editProduct", (req, res) => {
         const _type = req.query.type ?? "catalog"
         const option = req.query.option ?? "list"
 
-        db.query("UPDATE products SET type = ?, name = ?, price = ?, import_price = ?, updated_at = ? WHERE transaction_id = ?", [type, name, price, import_price, updated_at, transaction_id], (err) => {
+        const updateProductsSql = stock_mode === 'inventory_only'
+            ? "UPDATE products SET type = ?, name = ?, updated_at = ? WHERE transaction_id = ?"
+            : "UPDATE products SET type = ?, name = ?, price = ?, import_price = ?, updated_at = ? WHERE transaction_id = ?"
+        const updateProductsValues = stock_mode === 'inventory_only'
+            ? [type, name, updated_at, transaction_id]
+            : [type, name, req.body.price, req.body.import_price, updated_at, transaction_id]
+
+        db.query(updateProductsSql, updateProductsValues, (err) => {
             if (err) throw err;
             db.query("UPDATE transaction SET type = ?, name = ?, expired_date = ? WHERE id = ?", [type, name, expired_date, transaction_id], (err) => {
                 if (err) throw err;
@@ -815,6 +834,7 @@ app.post("/editProduct", (req, res) => {
 //Discounts
 app.get("/discounts", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
 
         let page = req.query.page || 1
@@ -836,6 +856,7 @@ app.get("/discounts", (req, res) => {
 
 app.get("/discounts/:id", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
         const id = req.params.id
         db.query("SELECT * FROM discounts WHERE id = ?", [id], (err, discount) => {
@@ -853,6 +874,7 @@ app.get("/discounts/:id", (req, res) => {
 
 app.post("/discounts", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
         const id = req.body.id
         const code = req.body.code
@@ -878,6 +900,7 @@ app.post("/discounts", (req, res) => {
 
 app.get("/addDiscount", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
         res.render("add_discount", {
             user_data: user_data
@@ -890,6 +913,7 @@ app.get("/addDiscount", (req, res) => {
 
 app.post("/addDiscount", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
         const code = req.body.code
         const amount = req.body.amount
@@ -913,6 +937,7 @@ app.post("/addDiscount", (req, res) => {
 
 app.get("/deleteDiscount/:id", (req, res) => {
     const user_data = [req.user];
+    if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
         const id = req.params.id
 

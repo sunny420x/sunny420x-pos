@@ -725,16 +725,6 @@ input[type=checkbox][readonly] {
     }
 }
 
-/* Shared back navigation on add/edit/detail pages. */
-.app-main>.navbar {
-    padding: 16px 4px 0;
-}
-
-.app-main>.navbar .navbar-brand {
-    font-size: .875rem;
-    white-space: normal;
-}
-
 .app-main>.navbar a {
     color: var(--pos-muted) !important;
 }
@@ -745,4 +735,82 @@ input[type=checkbox][readonly] {
 /* Semantic alerts and profile colors retain their original colors. */
 .swal2-popup .swal2-styled.swal2-cancel {
     border-radius: var(--pos-control-radius);
+}
+
+.app-sidebar {
+    overflow-x: hidden;
+    transition: width .2s ease, flex-basis .2s ease;
+}
+
+.app-sidebar-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    color: var(--pos-text);
+    border-color: var(--pos-border);
+}
+
+.app-sidebar-toggle:hover {
+    color: var(--pos-primary);
+}
+
+.app-shell.sidebar-collapsed .app-sidebar {
+    width: 76px;
+    flex-basis: 76px;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar .sidebar {
+    padding: 24px 8px !important;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar .app-menu > .row {
+    justify-content: center !important;
+    padding-inline: 0 !important;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar .app-menu > .row .col-auto {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar .app-menu > .row .col-lg,
+.app-shell.sidebar-collapsed .app-sidebar .app-menu .menu-label,
+.app-shell.sidebar-collapsed .app-sidebar .app-menu .menu-section-label {
+    display: none;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar .app-menu .nav {
+    align-items: center;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar .app-menu .nav-item {
+    width: 100%;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar .app-menu .nav-item > a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 0 !important;
+}
+
+.app-shell.sidebar-collapsed .app-sidebar .app-menu .nav-item > a i {
+    width: 1.25rem;
+    margin-right: 0 !important;
+    text-align: center;
+}
+
+.dashboard-chart {
+    position: relative;
+    height: 320px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar {
+        transition: none;
+    }
 }

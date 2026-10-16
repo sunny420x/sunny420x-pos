@@ -36,6 +36,9 @@ const {
     getBestSeller,
     getProfits,
     getTotalSales,
+    getStockByProductType,
+    getStockMovementChart,
+    getExpiryStatusChart,
 } = require('./model/chart')
 
 const db = require('./database')
@@ -139,15 +142,22 @@ function getUserTypes() {
 
 app.get("/", asyncRoute(async (req, res) => {
     const user_data = [req.user];
-    const expired_products = await getExpiredProducts()
-    const productSellingChart = await getProductSellingChart()
-    const total_customers = await getTotalCustomers()
-    const bestseller = await getBestSeller()
-    const profits = await getProfits()
-    const total_sales = await getTotalSales()
+    const stock_mode = req.user.stock_mode || 'pos'
+    const [expired_products, productSellingChart, total_customers, bestseller, profits, total_sales, stockByProductType, stockMovementChart, expiryStatusChart] = await Promise.all([
+        getExpiredProducts(),
+        getProductSellingChart(),
+        getTotalCustomers(),
+        getBestSeller(),
+        getProfits(),
+        getTotalSales(),
+        getStockByProductType(),
+        getStockMovementChart(),
+        getExpiryStatusChart(),
+    ])
 
     res.render("home", {
         user_data: user_data,
+        stock_mode: stock_mode,
         total_customers: total_customers[0],
         productSellingChart: productSellingChart,
         expired_products: expired_products,
@@ -155,7 +165,10 @@ app.get("/", asyncRoute(async (req, res) => {
         Helper: Helper,
         bestseller: bestseller,
         profits: profits,
-        total_sales: total_sales
+        total_sales: total_sales,
+        stockByProductType: stockByProductType,
+        stockMovementChart: stockMovementChart,
+        expiryStatusChart: expiryStatusChart,
     })
 }))
 
@@ -298,8 +311,10 @@ app.get("/products_stock", (req, res) => {
     if (user_data[0].permission.split(',').includes('products')) {
         let option = req.query.option ?? "list"
         let type = req.query.type ?? "all"
+        const stock_mode = user_data[0].stock_mode || 'pos'
         getProductTypes().then(product_types => {
-            getCustomers().then(customers => {
+            const customersPromise = stock_mode === 'pos' ? getCustomers() : Promise.resolve([])
+            customersPromise.then(customers => {
                 res.render('products_stock', {
                     user_data: user_data,
                     product_types: product_types,
@@ -307,6 +322,7 @@ app.get("/products_stock", (req, res) => {
                     Helper: Helper,
                     option: option,
                     type: type,
+                    stock_mode: stock_mode,
                 })
                 res.end()
             })
@@ -349,6 +365,7 @@ app.get("/getProductStock", (req, res) => {
                 products_stock: products_stock,
                 moment: moment,
                 type: type,
+                stock_mode: req.user.stock_mode || 'pos',
             })
             res.end()
             return
@@ -357,6 +374,7 @@ app.get("/getProductStock", (req, res) => {
             products_stock: products_stock,
             moment: moment,
             type: type,
+            stock_mode: req.user.stock_mode || 'pos',
         })
         res.end()
     })
@@ -433,8 +451,9 @@ app.post("/addProductStock", (req, res) => {
         const name = req.body.name
         const type = req.body.type
         const amount = req.body.amount
-        const price = req.body.price
-        const import_price = req.body.import_price
+        const stock_mode = user_data[0].stock_mode || 'pos'
+        const price = stock_mode === 'inventory_only' ? 0 : req.body.price
+        const import_price = stock_mode === 'inventory_only' ? null : (req.body.import_price || null)
         const expired_date = req.body.expired_date || null
         const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
 
@@ -454,6 +473,9 @@ app.post("/addProductStock", (req, res) => {
 app.post('/sellProduct', (req, res) => {
     const user_data = [req.user];
     if (user_data[0].permission.split(',').includes('products')) {
+        if ((user_data[0].stock_mode || 'pos') !== 'pos') {
+            return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+        }
         const cart = req.body.cart
         const customer = req.body.customer === "-" ? null : req.body.customer;
         const discount_code = req.body.discount_code || null
@@ -561,6 +583,58 @@ app.post('/sellProduct', (req, res) => {
         res.redirect(req.get("Referrer"))
     }
 })
+
+app.post('/deductStock', asyncRoute(async (req, res) => {
+    const user = req.user;
+    if (!user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    if (user.stock_mode !== 'inventory_only') {
+        return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดขายหน้าร้าน' });
+    }
+
+    const product_type = Number(req.body.product_type);
+    const product_name = req.body.product_name;
+    const amount = Number(req.body.amount);
+    if (!Number.isSafeInteger(product_type) || product_type < 1 ||
+        typeof product_name !== 'string' || product_name.trim().length === 0 || product_name.length > 200 ||
+        !Number.isSafeInteger(amount) || amount < 1 || amount > 1000) {
+        return res.status(400).json({ error: 'กรุณาเลือกสินค้าและระบุจำนวน 1–1000 ชิ้น' });
+    }
+
+    const company_id = user.company_id;
+    const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
+    const connection = await db.auth.promise().getConnection();
+    try {
+        await connection.beginTransaction();
+        const [products] = await connection.query(
+            'SELECT id FROM products WHERE company_id = ? AND is_sold = 0 AND type = ? AND name = ? ORDER BY id LIMIT ? FOR UPDATE',
+            [company_id, product_type, product_name.trim(), amount]
+        );
+        if (products.length < amount) {
+            await connection.rollback();
+            return res.status(409).json({ error: `สินค้า ${product_name} มีไม่เพียงพอ` });
+        }
+
+        for (const product of products) {
+            await connection.query(
+                'UPDATE products SET is_sold = 1 WHERE company_id = ? AND id = ? AND is_sold = 0',
+                [company_id, product.id]
+            );
+            await connection.query(
+                'INSERT INTO `transaction` (type, name, value, stock_id, customer_id, billing_id, created_at, company_id) VALUES (?, ?, -1, ?, NULL, NULL, ?, ?)',
+                [product_type, product_name.trim(), product.id, created_at, company_id]
+            );
+        }
+        await connection.commit();
+        return res.status(200).json({ success: true, amount: products.length });
+    } catch (err) {
+        await connection.rollback();
+        throw err;
+    } finally {
+        connection.release();
+    }
+}));
 
 app.get('/deleteProductByTransction/:id', (req, res) => {
     const user_data = [req.user];
@@ -1027,6 +1101,24 @@ app.get("/settings", (req, res) => {
     res.render('settings', {
         user_data: user_data
     })
+})
+
+app.post('/settings/stock-mode', (req, res, next) => {
+    const user = req.user;
+    if (!user.permission.split(',').includes('users')) {
+        res.cookie('alert', 'permissionDenial');
+        return res.redirect('/settings');
+    }
+
+    const stock_mode = req.body.stock_mode;
+    if (!['pos', 'inventory_only'].includes(stock_mode)) {
+        return res.status(400).send('โหมดการจัดการสต๊อกไม่ถูกต้อง');
+    }
+
+    db.auth.query('UPDATE companies SET stock_mode = ? WHERE id = ?', [stock_mode, req.company_id], err => {
+        if (err) return next(err);
+        res.redirect('/settings');
+    });
 })
 
 app.get("/loginHistories", (req, res) => {

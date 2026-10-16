@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS companies (
  id int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
  name varchar(100) NOT NULL,
  code varchar(100) NOT NULL,
+ stock_mode enum('pos','inventory_only') NOT NULL DEFAULT 'pos',
  PRIMARY KEY (id),
  UNIQUE KEY uq_company_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -11,68 +11,68 @@
         </script>
     </div>
     <div class="col-lg">
-        <h5 class="mb-2" style="text-transform: capitalize;"><%=user_data[0].username%></h5>
-        <p class="mb-2" style="text-transform: capitalize;"><%=user_data[0].type%></p>
+        <h5 class="mb-2 menu-label" style="text-transform: capitalize;"><%=user_data[0].username%></h5>
+        <p class="mb-2 menu-label" style="text-transform: capitalize;"><%=user_data[0].type%></p>
     </div>
 </div>
 <ul class="nav flex-column">
     <li class="nav-item">
-        <h5 class="ms-2 py-2 border-bottom border-2"></h5>
+        <h5 class="ms-2 py-2 border-bottom border-2 menu-section-label"></h5>
     </li>
     <li class="nav-item">
-        <a href="/" class="list-group-item list-group-item-action border-0 p-2">
-            <i class="fa-solid fa-home me-1"></i> หน้าหลัก
+        <a href="/" class="list-group-item list-group-item-action border-0 p-2" title="หน้าหลัก" aria-label="หน้าหลัก">
+            <i class="fa-solid fa-home me-1" aria-hidden="true"></i><span class="menu-label">หน้าหลัก</span>
         </a>
     </li>
 </ul>
-<%if(user_data[0].permission.split(',').includes('customers')) {%>
-<ul class="nav flex-column">
-    <li class="nav-item">
-        <h5 class="ms-2 py-2 border-bottom border-2">ลูกค้า</h5>
-    </li>
-    <li class="nav-item">
-        <a href="/customers" class="list-group-item list-group-item-action border-0 p-2">
-            <i class="fa-solid fa-users me-1"></i> รายชื่อลูกค้า
-        </a>
-    </li>
-</ul>
-<% } %>
 <%if(user_data[0].permission.split(',').includes('products')) {%>
 <ul class="nav flex-column">
     <li class="nav-item">
-        <h5 class="ms-2 py-2 border-bottom border-2">สินค้า</h5>
+        <h5 class="ms-2 py-2 border-bottom border-2 menu-section-label">สินค้า</h5>
     </li>
     <li class="nav-item">
-        <a href="/products_stock" class="list-group-item list-group-item-action border-0 p-2">
-            <i class="fa-solid fa-boxes me-1"></i> รายการสินค้า
+        <a href="/products_stock" class="list-group-item list-group-item-action border-0 p-2" title="รายการสินค้า" aria-label="รายการสินค้า">
+            <i class="fa-solid fa-boxes me-1" aria-hidden="true"></i><span class="menu-label">รายการสินค้า</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a href="/discounts" class="list-group-item list-group-item-action border-0 p-2">
-            <i class="fa-solid fa-percentage me-1"></i> ส่วนลด
+    <% if (user_data[0].stock_mode !== 'inventory_only') { %><li class="nav-item">
+        <a href="/discounts" class="list-group-item list-group-item-action border-0 p-2" title="ส่วนลด" aria-label="ส่วนลด">
+            <i class="fa-solid fa-percentage me-1" aria-hidden="true"></i><span class="menu-label">ส่วนลด</span>
         </a>
-    </li>
-    <%if(user_data[0].permission.split(',').includes('bills')) {%>
+    </li><% } %>
+    <%if(user_data[0].permission.split(',').includes('bills') && user_data[0].stock_mode !== 'inventory_only') {%>
     <li class="nav-item">
-        <a href="/billingHistories" class="list-group-item list-group-item-action border-0 p-2">
-            <i class="fa-solid fa-file-invoice-dollar me-1"></i> ประวัติการขายสินค้า
+        <a href="/billingHistories" class="list-group-item list-group-item-action border-0 p-2" title="ประวัติการขายสินค้า" aria-label="ประวัติการขายสินค้า">
+            <i class="fa-solid fa-file-invoice-dollar me-1" aria-hidden="true"></i><span class="menu-label">ประวัติการขายสินค้า</span>
         </a>
     </li>
     <% } %>
 </ul>
 <% } %>
+<%if(user_data[0].permission.split(',').includes('customers')) {%>
 <ul class="nav flex-column">
     <li class="nav-item">
-        <h5 class="ms-2 py-2 border-bottom border-2">บัญชี</h5>
+        <h5 class="ms-2 py-2 border-bottom border-2 menu-section-label">ลูกค้า</h5>
     </li>
     <li class="nav-item">
-        <a href="/settings" class="list-group-item list-group-item-action border-0 p-2">
-            <i class="fa-solid fa-cog"></i> ตั้งค่า
+        <a href="/customers" class="list-group-item list-group-item-action border-0 p-2" title="รายชื่อลูกค้า" aria-label="รายชื่อลูกค้า">
+            <i class="fa-solid fa-users me-1" aria-hidden="true"></i><span class="menu-label">รายชื่อลูกค้า</span>
+        </a>
+    </li>
+</ul>
+<% } %>
+<ul class="nav flex-column">
+    <li class="nav-item">
+        <h5 class="ms-2 py-2 border-bottom border-2 menu-section-label">บัญชี</h5>
+    </li>
+    <li class="nav-item">
+        <a href="/settings" class="list-group-item list-group-item-action border-0 p-2" title="ตั้งค่า" aria-label="ตั้งค่า">
+            <i class="fa-solid fa-cog" aria-hidden="true"></i><span class="menu-label">ตั้งค่า</span>
         </a>
     </li>
     <li class="nav-item">
-        <a href="/logout" class="list-group-item list-group-item-action border-0 p-2">
-            <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+        <a href="/logout" class="list-group-item list-group-item-action border-0 p-2" title="ออกจากระบบ" aria-label="ออกจากระบบ">
+            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span class="menu-label">ออกจากระบบ</span>
         </a>
     </li>
 </ul>

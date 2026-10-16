@@ -41,7 +41,7 @@ function getAllBilling() {
         db.query(`SELECT t.id, t.billing_id, c.first_name, c.last_name, COUNT(*) as amount, t.created_at 
             FROM transaction as t 
             LEFT JOIN customers as c ON t.customer_id = c.id 
-            WHERE t.stock_id IS NOT NULL 
+            WHERE t.stock_id IS NOT NULL AND t.billing_id IS NOT NULL
             GROUP BY t.billing_id, c.first_name, c.last_name ORDER BY t.id DESC`, (err, result) => {
             if(err) throw err;
             resolve(result)

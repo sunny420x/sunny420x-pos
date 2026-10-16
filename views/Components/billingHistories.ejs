@@ -1,49 +1,43 @@
-<div class="table-responsive">
-    <table class="table">
-        <thead class="table-light text-center">
-            <tr>
-                <th>วันที่</th>
-                <th>ชื่อลูกค้า</th>
-                <th>เลขบิล</th>
-                <th>จำนวนสินค้า</th>
-                <th class="no-sort">จัดการ</th>
-            </tr>
-        </thead>
-        <tbody>
-        <% 
-        bills.forEach((row) => {     
-        %>
-            <tr class="text-center">
-                <td data-order="<%=moment(row.created_at).valueOf()%>">
-                    <%=moment(row.created_at).add(543, 'years').format("DD/MM/YYYY")%>
-                </td>
-                <td><i class="fa-solid fa-user me-1"></i> <%if(row.first_name != undefined && row.last_name != undefined) {%><%=row.first_name%> <%=row.last_name%><%} else {%>-<%}%></td>
-                <td># <%=row.billing_id%></td>
-                <td><i class="fa-solid fa-box me-1"></i> <%=row.amount%></td>
-                <td>
-                    <button class="btn btn-primary" onclick="openLink('/billing/<%=row.billing_id%>')"><i class="fa-solid fa-folder"></i></button>
-                    <button class="btn btn-danger" onclick="
-                    Swal.fire({
-                    title: 'คุณต้องการลบข้อมูลนี้หรือไม่?',
-                    text: 'การลบจะไม่สามารถย้อนกลับได้',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'ยืนยัน',
-                    cancelButtonText: 'ย้อนกลับ',
-                    }).then((result) => {
-                    if (result.isConfirmed) {
-                        openLink('/deleteBill/<%=row.billing_id%>')
-                    }
-                    });
-                    "><i class="fa-solid fa-trash"></i></button>
-                </td>
-            </tr>
-        <%
-        })
-        %>
-        </tbody>
-    </table>
+<% if (bills.length) { %>
+<div class="billing-history-list">
+    <% bills.forEach(row => { %>
+    <article class="billing-history-card">
+        <div class="billing-history-card-main">
+            <div class="billing-history-card-topline">
+                <span class="billing-history-bill-number">บิล #<%=row.billing_id%></span>
+                <span class="billing-history-status"><i class="fa-solid fa-circle-check me-1" aria-hidden="true"></i>ขายแล้ว</span>
+            </div>
+            <div class="billing-history-card-details">
+                <div class="billing-history-detail">
+                    <span class="billing-history-detail-label">ลูกค้า</span>
+                    <span class="billing-history-detail-value"><i class="fa-regular fa-user me-1" aria-hidden="true"></i><%=row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : 'ลูกค้าทั่วไป'%></span>
+                </div>
+                <div class="billing-history-detail">
+                    <span class="billing-history-detail-label">วันที่ขาย</span>
+                    <span class="billing-history-detail-value"><i class="fa-regular fa-calendar me-1" aria-hidden="true"></i><%=moment(row.created_at).add(543, 'years').format('DD/MM/YYYY HH:mm')%></span>
+                </div>
+                <div class="billing-history-detail">
+                    <span class="billing-history-detail-label">จำนวนสินค้า</span>
+                    <span class="billing-history-detail-value"><i class="fa-solid fa-box me-1" aria-hidden="true"></i><%=row.amount%> ชิ้น</span>
+                </div>
+            </div>
+        </div>
+        <div class="billing-history-card-actions">
+            <a class="btn btn-primary" href="/billing/<%=row.billing_id%>">
+                <i class="fa-solid fa-receipt me-1" aria-hidden="true"></i>ดูบิล
+            </a>
+            <button class="btn btn-outline-danger" type="button" data-delete-bill="<%=row.billing_id%>" aria-label="ลบบิล <%=row.billing_id%>">
+                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+            </button>
+        </div>
+    </article>
+    <% }) %>
 </div>
+<% } else { %>
+<div class="billing-history-empty">
+    <span class="billing-history-empty-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></span>
+    <h3>ไม่พบประวัติการขาย</h3>
+    <p class="text-secondary mb-0">ลองตรวจสอบเลขที่บิลหรือชื่อที่ใช้ค้นหาอีกครั้ง</p>
+</div>
+<% } %>
 <%-include('pagination', { pagination: pagination })%>

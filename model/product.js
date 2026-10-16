@@ -29,13 +29,22 @@ function getSellProductsByType(type) {
     })
 }
 
-async function getBillingHistoriesPage(owner, requestedPage) {
-    const hasOwnerFilter = owner !== 'all';
-    const where = `WHERE t.stock_id IS NOT NULL AND t.billing_id IS NOT NULL${hasOwnerFilter ? ' AND t.customer_id = ?' : ''}`;
-    const values = hasOwnerFilter ? [owner] : [];
+async function getBillingHistoriesPage(filters, requestedPage) {
+    const conditions = ['t.stock_id IS NOT NULL', 't.billing_id IS NOT NULL'];
+    const values = [];
+    if (filters.billingId) {
+        conditions.push('t.billing_id = ?');
+        values.push(filters.billingId);
+    }
+    if (filters.customerName) {
+        conditions.push('CONCAT_WS(" ", c.first_name, c.last_name) LIKE ?');
+        values.push(`%${filters.customerName}%`);
+    }
+    const where = `WHERE ${conditions.join(' AND ')}`;
     const countRows = await query(`
         SELECT COUNT(DISTINCT t.billing_id) AS total
         FROM transaction AS t
+        LEFT JOIN customers AS c ON c.id = t.customer_id
         ${where}`, values);
     const pagination = createPagination(requestedPage, Number(countRows[0].total));
     const bills = await query(`

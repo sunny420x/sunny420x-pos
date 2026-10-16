@@ -11,7 +11,10 @@
             <button class="btn btn-light app-sidebar-toggle" id="appSidebarToggle" type="button" aria-controls="app-sidebar" aria-expanded="true" aria-pressed="false" aria-label="พับเมนูด้านข้าง" title="พับเมนูด้านข้าง">
                 <i class="fa-solid fa-bars" aria-hidden="true"></i>
             </button>
-            <div><p class="app-topbar-title">ระบบจัดการร้านค้า</p><p class="app-topbar-caption">จัดการสินค้า ลูกค้า และยอดขายในที่เดียว</p></div>
+            <div>
+                <p class="app-topbar-title"><%=user_data[0].stock_mode === 'inventory_only' ? 'โหมดจัดการสต๊อก' : 'โหมดขายหน้าร้าน'%></p>
+                <p class="app-topbar-caption"><%=user_data[0].stock_mode === 'inventory_only' ? 'ติดตามสินค้าและจำนวนคงเหลือ' : 'จัดการสินค้าและบันทึกรายการขาย'%></p>
+            </div>
         </div>
         <div class="dropdown">
             <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><span class="profile-avatar" id="profileCircleHeader"><%= user_data[0].username[0].toUpperCase() %></span><span class="me-2"><%= user_data[0].username %></span></button>

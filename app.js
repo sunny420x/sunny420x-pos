@@ -692,13 +692,10 @@ app.get("/billingHistories", (req, res) => {
     const user_data = [req.user];
     if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('bills')) {
-        let customer_id = req.query.customer_id !== undefined ? req.query.customer_id : 'all';
-        getCustomerOptions().then(owners => {
-            res.render('billing_histories', {
-                user_data: user_data,
-                owners: owners,
-                customer_id: customer_id
-            })
+        res.render('billing_histories', {
+            user_data: user_data,
+            billing_id: typeof req.query.billing_id === 'string' ? req.query.billing_id.trim() : '',
+            customer_name: typeof req.query.customer_name === 'string' ? req.query.customer_name.trim().slice(0, 100) : ''
         })
     } else {
         res.cookie('alert', 'permissionDenial')
@@ -707,13 +704,17 @@ app.get("/billingHistories", (req, res) => {
 })
 
 app.get("/getBillingHistoriesByCustomer", asyncRoute(async (req, res) => {
-    const user_data = [req.user];
     if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
-    const customerId = typeof req.query.customer_id === 'string' ? req.query.customer_id : 'all';
-    const result = await getBillingHistoriesPage(customerId, req.query.page);
+    const billingId = typeof req.query.billing_id === 'string' ? req.query.billing_id.trim() : '';
+    const customerName = typeof req.query.customer_name === 'string' ? req.query.customer_name.trim().slice(0, 100) : '';
+    const result = await getBillingHistoriesPage({ billingId, customerName }, req.query.page);
     res.render('Components/billingHistories', {
         bills: result.bills,
-        pagination: { ...result.pagination, ajax: true },
+        pagination: {
+            ...result.pagination,
+            ajax: true,
+            filters: { billingId, customerName }
+        },
         moment: moment
     });
 }))

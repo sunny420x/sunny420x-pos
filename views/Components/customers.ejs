@@ -20,7 +20,7 @@
                     <td>
                         <button class="btn btn-primary" onclick="openLink('/customers/<%=row.id%>')"><i class="fa-solid fa-folder"></i></button>
                         <% if (user_data.stock_mode !== 'inventory_only') { %>
-                        <button class="btn btn-warning" onclick="openLink('/billingHistories/?customer_id=<%=row.id%>')"><i class="fa-solid fa-box-open"></i></button>
+                        <a class="btn btn-warning" href="/billingHistories/?customer_name=<%=encodeURIComponent(row.first_name + ' ' + row.last_name)%>" aria-label="ประวัติการขายของ <%=row.first_name%> <%=row.last_name%>"><i class="fa-solid fa-box-open"></i></a>
                         <% } %>
                         <button class="btn btn-danger" onclick="
                         Swal.fire({

@@ -9,21 +9,23 @@ async function renderLogin(req, res, error = null, status = 200) {
     return res.status(status).render('login', { error, companies, company_code: req.body?.company_code || '', username: req.body?.username || '' });
 }
 router.get('/login', (req, res, next) => renderLogin(req, res).catch(next));
-router.get('/register', (req, res) => res.render('register', { error: null }));
+router.get('/register', (req, res) => res.render('register', { error: null, stock_mode: 'pos' }));
 router.post('/register', async (req, res, next) => {
-    const { company_name, username, password, full_name } = req.body;
+    const { company_name, username, password, full_name, stock_mode } = req.body;
     const company_code = 'company-' + randomBytes(12).toString('hex');
     if (![company_name, username, full_name].every(x => typeof x === 'string' && x.trim().length && x.length <= 100) || typeof password !== 'string' || password.length < 8 || password.length > 128)
-        return res.status(400).render('register', { error: 'กรุณากรอกข้อมูลให้ครบ และใช้รหัสผ่าน 8–128 ตัวอักษร' });
+        return res.status(400).render('register', { error: 'กรุณากรอกข้อมูลให้ครบ และใช้รหัสผ่าน 8–128 ตัวอักษร', stock_mode: ['pos', 'inventory_only'].includes(stock_mode) ? stock_mode : 'pos' });
+    if (!['pos', 'inventory_only'].includes(stock_mode))
+        return res.status(400).render('register', { error: 'กรุณาเลือกโหมดการทำงานของร้าน', stock_mode: 'pos' });
     let conn;
     try {
         conn = await pool.promise().getConnection(); await conn.beginTransaction();
-        const [company] = await conn.query('INSERT INTO companies(name, code) VALUES (?, ?)', [company_name.trim(), company_code.toLowerCase()]);
+        const [company] = await conn.query('INSERT INTO companies(name, code, stock_mode) VALUES (?, ?, ?)', [company_name.trim(), company_code.toLowerCase(), stock_mode]);
         const id = company.insertId;
         const [role] = await conn.query('INSERT INTO user_types(name, permission, company_id) VALUES (?, ?, ?)', ['ผู้ดูแลระบบ', 'customers,products,bills,users', id]);
         await conn.query('INSERT INTO users(username,password,type,full_name,created_by,created_at,company_id) VALUES(?,?,?,?,0,NOW(),?)', [username.trim(), hashPassword(password), role.insertId, full_name.trim(), id]);
         await conn.commit(); res.redirect('/login');
-    } catch (err) { if (conn) await conn.rollback(); if (err.code === 'ER_DUP_ENTRY') return res.status(409).render('register', { error: 'ไม่สามารถสร้างบริษัทได้ กรุณาลองอีกครั้ง' }); next(err); }
+    } catch (err) { if (conn) await conn.rollback(); if (err.code === 'ER_DUP_ENTRY') return res.status(409).render('register', { error: 'ไม่สามารถสร้างบริษัทได้ กรุณาลองอีกครั้ง', stock_mode }); next(err); }
     finally { if (conn) conn.release(); }
 });
 router.post('/login', async (req, res, next) => {
@@ -42,4 +44,3 @@ router.get('/logout', async (req, res, next) => {
     try { if (req.cookies.access_token) await pool.promise().query('DELETE FROM auth_sessions WHERE token_hash=?', [hashToken(req.cookies.access_token)]); res.clearCookie('access_token', options); res.redirect('/login'); } catch (err) { next(err); }
 });
 module.exports = router;
-

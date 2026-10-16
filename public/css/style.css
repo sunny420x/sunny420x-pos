@@ -940,6 +940,164 @@ input[type=checkbox][readonly] {
     font-size: .85rem;
 }
 
+.billing-history-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.billing-history-search {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding: 18px;
+    border: 1px solid var(--pos-border);
+    border-radius: 14px;
+    background: var(--pos-subtle);
+}
+
+.billing-history-search-field {
+    flex: 0 1 250px;
+    min-width: 0;
+}
+
+.billing-history-customer-field {
+    flex: 1 1 360px;
+}
+
+.billing-history-search .form-label {
+    margin-bottom: 6px;
+    color: var(--pos-muted);
+    font-size: .8rem;
+}
+
+.billing-history-search .input-group-text {
+    min-width: 42px;
+    justify-content: center;
+}
+
+.billing-history-clear {
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+.billing-history-list {
+    display: grid;
+    gap: 12px;
+}
+
+.billing-history-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 20px;
+    border: 1px solid var(--pos-border);
+    border-radius: 14px;
+    background: var(--pos-surface);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.billing-history-card:hover {
+    border-color: #c7c7c7;
+    box-shadow: var(--pos-shadow);
+}
+
+.billing-history-card-main {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.billing-history-card-topline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.billing-history-bill-number {
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.billing-history-status {
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #ecfdf3;
+    color: #067647;
+    font-size: .72rem;
+    white-space: nowrap;
+}
+
+.billing-history-card-details {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(170px, 1fr) minmax(130px, .7fr);
+    gap: 12px 20px;
+}
+
+.billing-history-detail {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.billing-history-detail-label {
+    color: var(--pos-muted);
+    font-size: .73rem;
+}
+
+.billing-history-detail-value {
+    overflow-wrap: anywhere;
+    font-size: .86rem;
+}
+
+.billing-history-card-actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 8px;
+}
+
+.billing-history-card-actions .btn {
+    min-height: 40px;
+}
+
+.billing-history-empty,
+.billing-history-loading {
+    display: flex;
+    min-height: 230px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--pos-muted);
+    text-align: center;
+}
+
+.billing-history-empty h3 {
+    margin: 4px 0 0;
+    color: var(--pos-text);
+    font-size: 1rem;
+}
+
+.billing-history-empty-icon {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    border-radius: 16px;
+    background: var(--pos-subtle);
+    color: var(--pos-muted);
+    font-size: 1.2rem;
+}
+
+#billingHistoriesHTML[aria-busy="true"] {
+    opacity: .68;
+}
+
 @media (max-width: 991.98px) {
     .app-sidebar {
         width: 220px;
@@ -979,6 +1137,40 @@ input[type=checkbox][readonly] {
 
     .card h2 .btn {
         margin-top: 8px;
+    }
+
+    .billing-history-search {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .billing-history-search-field,
+    .billing-history-customer-field {
+        flex: 1 1 auto;
+    }
+
+    .billing-history-clear {
+        align-self: flex-start;
+    }
+
+    .billing-history-card {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .billing-history-card-details {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .billing-history-card-actions {
+        justify-content: flex-end;
+        padding-top: 12px;
+        border-top: 1px solid var(--pos-border);
     }
 
     .table> :not(caption)>*>* {

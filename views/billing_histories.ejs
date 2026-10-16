@@ -6,19 +6,25 @@
     <body>
         <script>
             let billingRequest;
-            searchByCustomer('<%=customer_id%>')
+            let billingSearchTimer;
 
-            function searchByCustomer(owner, page = 1) {
+            function searchBillingHistory(page = 1) {
                 if (billingRequest) billingRequest.abort();
-                billingRequest = new AbortController();
-                const params = new URLSearchParams({ customer_id: owner, page: String(page) });
-                fetch(`/getBillingHistoriesByCustomer?${params}`, { signal: billingRequest.signal })
+                const request = new AbortController();
+                billingRequest = request;
+                const params = new URLSearchParams({
+                    billing_id: document.getElementById('search_by_bill').value.trim(),
+                    customer_name: document.getElementById('search_by_customer').value.trim(),
+                    page: String(page)
+                });
+                const container = document.getElementById('billingHistoriesHTML');
+                container.setAttribute('aria-busy', 'true');
+                fetch(`/getBillingHistoriesByCustomer?${params}`, { signal: request.signal })
                     .then(async response => {
                         if (!response.ok) throw new Error('ไม่สามารถโหลดประวัติบิลได้');
                         return response.text();
                     })
                     .then(html => {
-                        const container = document.getElementById('billingHistoriesHTML');
                         if (window.replaceTableContent) replaceTableContent(container, html);
                         else container.innerHTML = html;
                     })
@@ -30,17 +36,53 @@
                             title: 'เกิดข้อผิดพลาด',
                             text: error.message || 'โปรดลองอีกครั้งในภายหลัง',
                         });
+                    })
+                    .finally(() => {
+                        if (billingRequest === request) container.removeAttribute('aria-busy');
                     });
             }
 
-            document.addEventListener('click', event => {
-                const control = event.target.closest('#billingHistoriesHTML [data-page]');
-                if (control) {
-                    event.preventDefault();
-                    if (control.getAttribute('aria-disabled') !== 'true') {
-                        searchByCustomer(document.getElementById('search_by_owner').value, Number(control.dataset.page));
+            document.addEventListener('DOMContentLoaded', () => {
+                const billSearch = document.getElementById('search_by_bill');
+                const customerSearch = document.getElementById('search_by_customer');
+                const search = () => {
+                    window.clearTimeout(billingSearchTimer);
+                    billingSearchTimer = window.setTimeout(() => searchBillingHistory(1), 250);
+                };
+                billSearch.addEventListener('input', search);
+                customerSearch.addEventListener('input', search);
+                document.getElementById('clear_billing_search').addEventListener('click', () => {
+                    billSearch.value = '';
+                    customerSearch.value = '';
+                    searchBillingHistory(1);
+                });
+                document.getElementById('billingHistoriesHTML').addEventListener('click', event => {
+                    const pageControl = event.target.closest('[data-page]');
+                    if (pageControl) {
+                        event.preventDefault();
+                        if (pageControl.getAttribute('aria-disabled') !== 'true') {
+                            searchBillingHistory(Number(pageControl.dataset.page));
+                        }
+                        return;
                     }
-                }
+
+                    const deleteControl = event.target.closest('[data-delete-bill]');
+                    if (!deleteControl) return;
+                    Swal.fire({
+                        title: 'คุณต้องการลบบิลนี้หรือไม่?',
+                        text: 'การลบจะไม่สามารถย้อนกลับได้',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'ยืนยัน',
+                        cancelButtonText: 'ย้อนกลับ'
+                    }).then(result => {
+                        if (result.isConfirmed) openLink(`/deleteBill/${deleteControl.dataset.deleteBill}`);
+                    });
+                });
+
+                searchBillingHistory(1);
             });
         </script>
         <div class="d-flex app-shell">
@@ -53,21 +95,34 @@
                 <%-include('include/navigator')%>
                 <div class="container-fluid p-4 app-content">
                     <div class="card p-4">
-                        <h2 class="mb-4"><i class="fa-solid fa-file-invoice-dollar me-1"></i> ประวัติการขายสินค้า</h2>
-                        <div class="row mb-4">
-                            <div class="col">
-                                <select class="form-select" id="search_by_owner" onchange="searchByCustomer(this.value)">
-                                    <option value="all">เลือกลูกค้าทั้งหมด</option>
-                                    <% owners.forEach(row => {
-                                    %>
-                                    <option value="<%=row.id%>" <%if(row.id == customer_id) {%>selected<%}%>><%=row.first_name%> <%=row.last_name%></option>
-                                    <%
-                                    }) 
-                                    %>
-                                </select>
+                        <div class="billing-history-heading">
+                            <div>
+                                <h2 class="mb-1"><i class="fa-solid fa-file-invoice-dollar me-1"></i> ประวัติการขายสินค้า</h2>
+                                <p class="text-secondary mb-0">ค้นหาและตรวจสอบบิลย้อนหลังได้จากเลขที่บิลหรือลูกค้า</p>
                             </div>
                         </div>
-                        <div id="billingHistoriesHTML"></div>
+                        <div class="billing-history-search">
+                            <div class="billing-history-search-field">
+                                <label class="form-label" for="search_by_bill">เลขที่บิล</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">#</span>
+                                    <input type="search" class="form-control" id="search_by_bill" inputmode="numeric" placeholder="พิมพ์เลขที่บิล" value="<%=billing_id%>">
+                                </div>
+                            </div>
+                            <div class="billing-history-search-field billing-history-customer-field">
+                                <label class="form-label" for="search_by_customer">ชื่อลูกค้า</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-user" aria-hidden="true"></i></span>
+                                    <input type="search" class="form-control" id="search_by_customer" placeholder="ค้นหาจากชื่อหรือนามสกุล" autocomplete="off" value="<%=customer_name%>">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary billing-history-clear" id="clear_billing_search">
+                                <i class="fa-solid fa-rotate-left me-1" aria-hidden="true"></i>ล้างตัวกรอง
+                            </button>
+                        </div>
+                        <div id="billingHistoriesHTML" aria-live="polite" aria-busy="true">
+                            <div class="billing-history-loading"><span class="spinner-border spinner-border-sm" role="status"></span> กำลังโหลดประวัติการขาย...</div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,14 +1,6 @@
 <html>
     <head>
         <%-include('include/head')%>
-        <style>
-            td {
-                padding: 0 10px;
-            }
-            table {
-                font-size: 14px;
-            }
-        </style>
     </head>
     <body class="<%= receipt_size === '80x80' ? 'thermal-receipt-page' : 'a5-receipt-page' %>">
         <%
@@ -201,99 +193,377 @@
             <button class="btn btn-secondary" onclick="exportToPDF()">ส่งออก PDF 80 × 80 มม.</button>
         </div>
         <% } else { %>
-        <nav class="navbar navbar-light bg-white">
-            <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" onclick="window.location=document.referrer">
-                <i class="fa-solid fa-chevron-left me-2"></i> ย้อนกลับ</a></div>
+        <style>
+            .a5-receipt-page {
+                min-height: 100vh;
+                background: #eef0f3;
+                color: #20252d;
+            }
+            .a5-receipt-toolbar {
+                max-width: 1120px;
+                margin: 0 auto;
+                padding: 12px 20px;
+            }
+            .a5-receipt-toolbar .navbar-brand {
+                margin: 0;
+            }
+            .a5-receipt-toolbar a {
+                color: #525b67 !important;
+                text-decoration: none;
+            }
+            .a5-receipt-sheet {
+                box-sizing: border-box;
+                width: 210mm;
+                min-height: 148mm;
+                margin: 24px auto;
+                padding: 13mm 15mm 11mm;
+                background: #fff;
+                color: #20252d;
+                box-shadow: 0 10px 36px #1822301c;
+                font-family: 'Prompt', sans-serif;
+                font-size: 10pt;
+                line-height: 1.5;
+            }
+            .a5-receipt-sheet * {
+                box-sizing: border-box;
+            }
+            .a5-receipt-sheet p,
+            .a5-receipt-sheet h1,
+            .a5-receipt-sheet h2 {
+                margin: 0;
+            }
+            .a5-receipt-header {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 16px;
+                padding-bottom: 7mm;
+                border-bottom: 2px solid #20252d;
+            }
+            .a5-receipt-brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 0;
+            }
+            .a5-receipt-mark {
+                display: grid;
+                width: 44px;
+                height: 44px;
+                flex: 0 0 44px;
+                place-items: center;
+                border-radius: 12px;
+                background: #20252d;
+                color: #fff;
+                font-size: 17pt;
+                font-weight: 600;
+            }
+            .a5-receipt-company {
+                overflow-wrap: anywhere;
+                font-size: 17pt;
+                font-weight: 600;
+                line-height: 1.25;
+            }
+            .a5-receipt-subtitle {
+                margin-top: 3px !important;
+                color: #707987;
+                font-size: 8.5pt;
+            }
+            .a5-receipt-title {
+                flex: 0 0 auto;
+                text-align: right;
+            }
+            .a5-receipt-title h2 {
+                font-size: 19pt;
+                font-weight: 600;
+                line-height: 1.2;
+            }
+            .a5-receipt-title p {
+                margin-top: 5px;
+                color: #707987;
+                font-size: 9pt;
+            }
+            .a5-receipt-info {
+                display: grid;
+                grid-template-columns: 1.25fr 1fr;
+                gap: 7mm;
+                padding: 6mm 0;
+                border-bottom: 1px solid #dfe3e8;
+            }
+            .a5-receipt-info-label {
+                margin-bottom: 2mm !important;
+                color: #7a8491;
+                font-size: 8pt;
+            }
+            .a5-receipt-info-value {
+                font-size: 10pt;
+                font-weight: 500;
+            }
+            .a5-receipt-meta {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4mm 8mm;
+                align-content: start;
+            }
+            .a5-receipt-meta .a5-receipt-info-label {
+                margin-bottom: 1mm !important;
+            }
+            .a5-receipt-meta .a5-receipt-info-value {
+                font-size: 9pt;
+                font-variant-numeric: tabular-nums;
+            }
+            .a5-receipt-table {
+                width: 100%;
+                margin: 6mm 0 5mm;
+                border-collapse: collapse;
+                table-layout: fixed;
+                font-size: 9pt;
+            }
+            .a5-receipt-table th {
+                padding: 3mm 2mm;
+                border-bottom: 1px solid #20252d;
+                color: #626c78;
+                font-size: 8pt;
+                font-weight: 500;
+                text-align: left;
+            }
+            .a5-receipt-table td {
+                padding: 3mm 2mm;
+                border-bottom: 1px solid #edf0f3;
+                vertical-align: top;
+            }
+            .a5-receipt-table .a5-receipt-item {
+                overflow-wrap: anywhere;
+                font-weight: 500;
+            }
+            .a5-receipt-table .a5-receipt-item-price {
+                display: block;
+                margin-top: 1px;
+                color: #7a8491;
+                font-size: 8pt;
+                font-weight: 400;
+            }
+            .a5-receipt-number {
+                text-align: right !important;
+                font-variant-numeric: tabular-nums;
+                white-space: nowrap;
+            }
+            .a5-receipt-bottom {
+                display: grid;
+                grid-template-columns: 1fr minmax(220px, .72fr);
+                gap: 10mm;
+                align-items: end;
+                padding-top: 2mm;
+            }
+            .a5-receipt-thanks {
+                align-self: end;
+                padding-bottom: 2mm;
+                color: #626c78;
+                font-size: 9pt;
+            }
+            .a5-receipt-totals {
+                padding: 4mm 5mm;
+                border: 1px solid #dfe3e8;
+                border-radius: 10px;
+            }
+            .a5-receipt-total-line {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 1.5mm 0;
+                color: #626c78;
+                font-size: 9pt;
+            }
+            .a5-receipt-net {
+                margin-top: 2mm;
+                padding-top: 3mm;
+                border-top: 1px solid #dfe3e8;
+                color: #20252d;
+                font-size: 11pt;
+                font-weight: 600;
+            }
+            .a5-receipt-footer {
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+                margin-top: 7mm;
+                padding-top: 3mm;
+                border-top: 1px solid #edf0f3;
+                color: #8a929d;
+                font-size: 7.5pt;
+            }
+            .a5-receipt-actions {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                max-width: 1120px;
+                margin: 0 auto 24px;
+            }
+            @media (max-width: 767.98px) {
+                .a5-receipt-sheet {
+                    width: calc(100% - 24px);
+                    min-height: 0;
+                    margin: 12px auto;
+                    padding: 24px 20px;
+                }
+                .a5-receipt-header {
+                    gap: 12px;
+                }
+                .a5-receipt-company {
+                    font-size: 13pt;
+                }
+                .a5-receipt-title h2 {
+                    font-size: 15pt;
+                }
+                .a5-receipt-info {
+                    grid-template-columns: 1fr;
+                    gap: 5mm;
+                }
+                .a5-receipt-bottom {
+                    grid-template-columns: 1fr;
+                    gap: 5mm;
+                }
+            }
+            @page {
+                size: A5 landscape;
+                margin: 0;
+            }
+            @media print {
+                html,
+                body.a5-receipt-page {
+                    width: 210mm;
+                    min-height: 148mm;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #fff !important;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+                .a5-receipt-toolbar,
+                .a5-receipt-actions {
+                    display: none !important;
+                }
+                .a5-receipt-sheet {
+                    width: 210mm;
+                    min-height: 148mm;
+                    margin: 0;
+                    padding: 12mm 14mm 10mm;
+                    box-shadow: none;
+                }
+                .a5-receipt-table tr,
+                .a5-receipt-totals,
+                .a5-receipt-info {
+                    break-inside: avoid;
+                }
+            }
+        </style>
+        <%
+            const a5Subtotal = bill.reduce((total, row) => total + Number(row.total_price || 0), 0);
+            const a5DiscountAmount = a5Subtotal * Number(discount) / 100;
+            const a5Total = a5Subtotal - a5DiscountAmount;
+            const a5CustomerName = bill[0].first_name && bill[0].last_name
+                ? `${bill[0].first_name} ${bill[0].last_name}`
+                : 'ลูกค้าทั่วไป';
+        %>
+        <nav class="navbar a5-receipt-toolbar">
+            <div class="navbar-brand"><a href="/billingHistories">
+                <i class="fa-solid fa-chevron-left me-2"></i> กลับไปประวัติการขาย</a></div>
         </nav>
-        <div class="container bg-white px-5 pb-4" style="width: 1200px" id="billing_content">
-            <div class="row text-center mx-2">
-                <div class="col-5">
-                    <img src="/banner.jpg" alt="" class="img-fluid">
+        <main class="a5-receipt-sheet" id="billing_content">
+            <header class="a5-receipt-header">
+                <div class="a5-receipt-brand">
+                    <span class="a5-receipt-mark" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>
+                    <div>
+                        <h1 class="a5-receipt-company"><%=user_data[0].company_name%></h1>
+                        <p class="a5-receipt-subtitle">เอกสารรับชำระเงิน</p>
+                    </div>
                 </div>
-                <div class="col-7 pt-5 text-end">
-                    <p>ที่อยู่</p>
+                <div class="a5-receipt-title">
+                    <h2>ใบเสร็จรับเงิน</h2>
+                    <p>ต้นฉบับสำหรับลูกค้า</p>
                 </div>
-            </div>
-            <h5 class="bg-dark text-center text-white p-2 mb-3">ใบเสร็จรับเงิน</h5>
-            <div class="d-flex flex-row px-2 my-2 gx-2" style="border: 1px solid #000; border-radius: 10px;">
-                <div class="col-9 p-2">
-                    <p>ชื่อลูกค้า: <%if(bill[0].first_name != null && bill[0].last_name != null) { %><%=bill[0].first_name%> <%=bill[0].last_name%><% } else {%>-<%}%></p>
-                    <p>โทรศัพท์: <%if(bill[0].phone_number != undefined) {%><%=helper.ThaiPhoneNumber(bill[0].phone_number)%><% } else {%>-<%}%></p>
+            </header>
+            <section class="a5-receipt-info" aria-label="ข้อมูลใบเสร็จและลูกค้า">
+                <div>
+                    <p class="a5-receipt-info-label">เรียกเก็บจาก</p>
+                    <p class="a5-receipt-info-value"><%=a5CustomerName%></p>
+                    <% if (bill[0].phone_number) { %>
+                    <p class="a5-receipt-subtitle">โทร. <%=helper.ThaiPhoneNumber(bill[0].phone_number)%></p>
+                    <% } %>
                 </div>
-                <div class="col-3 p-2 ms-2">
-                    <p>เวลา: <%=moment(bill[0].created_at).add(543, 'years').format("DD/MM/YYYY HH:mm:ss")%></p>
+                <div class="a5-receipt-meta">
+                    <div>
+                        <p class="a5-receipt-info-label">เลขที่ใบเสร็จ</p>
+                        <p class="a5-receipt-info-value">#<%=billing_id%></p>
+                    </div>
+                    <div>
+                        <p class="a5-receipt-info-label">วันที่ออกเอกสาร</p>
+                        <p class="a5-receipt-info-value"><%=moment(bill[0].created_at).add(543, 'years').format('DD/MM/YYYY')%></p>
+                    </div>
+                    <div>
+                        <p class="a5-receipt-info-label">เวลา</p>
+                        <p class="a5-receipt-info-value"><%=moment(bill[0].created_at).format('HH:mm')%></p>
+                    </div>
+                    <div>
+                        <p class="a5-receipt-info-label">สถานะ</p>
+                        <p class="a5-receipt-info-value">ชำระแล้ว</p>
+                    </div>
                 </div>
-            </div>
-            <table border="1" style="width: 100%;">
-                <div class="watermark"></div>
+            </section>
+            <table class="a5-receipt-table">
+                <colgroup>
+                    <col style="width: 52%">
+                    <col style="width: 16%">
+                    <col style="width: 16%">
+                    <col style="width: 16%">
+                </colgroup>
                 <thead>
-                    <tr style="background: #000; color: #fff; text-align: center;">
-                        <th>รายการ</th>
-                        <th>จำนวน</th>
-                        <th colspan="2">ราคา</th>
-                        <!-- <th>ส่วนลด</th> -->
-                        <th>จำนวนเงิน</th>
+                    <tr>
+                        <th>รายการสินค้า</th>
+                        <th class="a5-receipt-number">จำนวน</th>
+                        <th class="a5-receipt-number">ราคาต่อหน่วย</th>
+                        <th class="a5-receipt-number">จำนวนเงิน</th>
                     </tr>
                 </thead>
-                <% 
-                var sum = 0
-                var count = 1
-                %>
                 <tbody>
-                    <%bill.forEach(row => {%>
-                        <% sum += parseInt(row.total_price) %>
-                        <tr style="text-align: center; line-height: 40px;">
-                            <td style="text-align: left;"><%=count%>. <%=row.name%></td>
-                            <td style="border-left: 1px solid #000; border-bottom: 0;"><%=row.amount%></td>
-                            <td style="text-align: right; border-left: 1px solid #000; border-bottom: 0;" colspan="2"><%=helper.numberWithCommas(row.price)%></td>
-                            <!-- <td style="text-align: right; border-left: 1px solid #000; border-bottom: 0;"></td> -->
-                            <td style="text-align: right; border: 1px solid #000; border-top: 0; border-bottom: 0;"><%=helper.numberWithCommas(row.total_price)%></td>
-                        </tr>
-                        <% count++ %>
-                    <%})%>
-                    <tr style="text-align: right; line-height: 40px; border-top: 1px solid #000;">
-                        <td></td>
-                        <td style="text-align: center; border: 1px solid #000; border-right: 0;">รวม</td>
-                        <td style="border-left: 1px solid #000; border-top: 1px solid #000;" colspan="2"><%=helper.numberWithCommas(sum)%></td>
-                        <!-- <td colspan="1" style="border-left: 1px solid #000; border-top: 1px solid #000;" colspan="1"></td> -->
-                        <td style="border-top: 1px solid #000; border-left: 1px solid #000;"><%=helper.numberWithCommas(sum)%></td>
+                    <% bill.forEach(row => { %>
+                    <tr>
+                        <td class="a5-receipt-item"><%=row.name%></td>
+                        <td class="a5-receipt-number"><%=helper.numberWithCommas(row.amount)%></td>
+                        <td class="a5-receipt-number"><%=helper.numberWithCommas(row.price)%></td>
+                        <td class="a5-receipt-number"><%=helper.numberWithCommas(row.total_price)%></td>
                     </tr>
-                    <tr style="text-align: left; line-height: 40px;">
-                        <td colspan="4">
-                        </td>
-                        <!-- <td colspan="2" style="border: 1px solid #000; border-bottom: 0; border-right: 0;"><b>มัดจำ</b></td>
-                        <td class="text-end" style="border-left: 1px solid #000;">
-                        -
-                        </td> -->
-                    </tr>
-                    <%if(discount != 0) {%>
-                    <tr style="text-align: left; line-height: 40px;">
-                        <td colspan="2">                       
-                        </td>
-                        <td colspan="2" style="border: 1px solid #000; border-bottom: 0; border-right: 0;"><b>ส่วนลด:</b></td>
-                            
-                        <td class="text-end" style="border: 1px solid #000; border-bottom: 0; border-right: 0;"><%=bill[0].discount_amount%> %</td>
-                    </tr>
-                    <%}%>
-                    <tr style="text-align: left; line-height: 40px;">
-                        <td colspan="2">                       
-                        </td>
-                        <td colspan="2" style="border: 0px solid #000; border-top: 0; border-bottom: 0; border-right: 0;" class="bg-dark text-white"><b>ชำระสุทธิ:</b></td>
-                        
-                        <%if(discount == 0) {%>
-                            <td class="text-end bg-dark text-white"><%=helper.numberWithCommas(sum)%>.-</td>
-                        <%} else {%>
-                        <td class="text-end bg-dark text-white"><%=helper.numberWithCommas(sum - (sum*discount)/100)%>.-</td>
-                        <%}%>
-                    </tr>
+                    <% }) %>
                 </tbody>
             </table>
-            <div class="p-4 bg-secondary text-white">
-
-            </div>
-        </div>
-        <div class="container text-end my-4" style="width: 1200px;">
-            <button class="btn btn-primary" onclick="exportToPDF()">ส่งออกเป็น PDF</button>
+            <section class="a5-receipt-bottom">
+                <p class="a5-receipt-thanks"><i class="fa-solid fa-heart me-1"></i> ขอบคุณที่อุดหนุนและไว้วางใจใช้บริการ</p>
+                <div class="a5-receipt-totals">
+                    <div class="a5-receipt-total-line">
+                        <span>รวมสินค้า</span>
+                        <span><%=helper.numberWithCommas(a5Subtotal)%> บาท</span>
+                    </div>
+                    <% if (Number(discount) !== 0) { %>
+                    <div class="a5-receipt-total-line">
+                        <span>ส่วนลด (<%=discount%>%)</span>
+                        <span>-<%=helper.numberWithCommas(a5DiscountAmount)%> บาท</span>
+                    </div>
+                    <% } %>
+                    <div class="a5-receipt-total-line a5-receipt-net">
+                        <span>ยอดชำระสุทธิ</span>
+                        <span><%=helper.numberWithCommas(a5Total)%> บาท</span>
+                    </div>
+                </div>
+            </section>
+            <footer class="a5-receipt-footer">
+                <span>เอกสารนี้ออกโดยระบบ SunnyPOS</span>
+                <span>เลขที่ใบเสร็จ #<%=billing_id%></span>
+            </footer>
+        </main>
+        <div class="a5-receipt-actions">
+            <button class="btn btn-outline-secondary" onclick="window.location='/billingHistories'"><i class="fa-solid fa-arrow-left me-1"></i> กลับ</button>
+            <button class="btn btn-secondary" onclick="exportToPDF()"><i class="fa-solid fa-file-pdf me-1"></i> บันทึก PDF</button>
+            <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> พิมพ์ใบเสร็จ</button>
         </div>
         <% } %>
         <script>

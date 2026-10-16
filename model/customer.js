@@ -13,14 +13,13 @@ function query(sql, values = []) {
 
 const customerFields = {
     fullName: 'CONCAT(c.first_name, " ", c.last_name)',
-    cardId: 'c.card_id',
     phoneNumber: 'c.phone_number',
 };
 
 async function getCustomersPage(field, value, requestedPage) {
     if (!Object.hasOwn(customerFields, field)) throw new Error('Unsupported customer search field');
-    const filter = value && value !== 'all' ? `${customerFields[field]} LIKE ?` : '';
-    const searchValue = field === 'phoneNumber' ? value.replace('-', '') : value;
+    const filter = value ? `${customerFields[field]} LIKE ?` : '';
+    const searchValue = field === 'phoneNumber' ? value.replace(/-/g, '') : value;
     const where = filter ? ` WHERE ${filter}` : '';
     const values = filter ? [`%${searchValue}%`] : [];
     const [{ total }] = await query(`SELECT COUNT(*) AS total FROM customers AS c${where}`, values);

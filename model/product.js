@@ -65,10 +65,18 @@ async function getBillingHistoriesPage(filters, requestedPage) {
     return { bills, pagination };
 }
 
-async function getProductsStockPage(type, requestedPage) {
-    const hasTypeFilter = type !== 'all';
-    const where = hasTypeFilter ? 'WHERE t.type = ?' : '';
-    const values = hasTypeFilter ? [type] : [];
+async function getProductsStockPage(type, name, requestedPage) {
+    const conditions = [];
+    const values = [];
+    if (type !== 'all') {
+        conditions.push('t.type = ?');
+        values.push(type);
+    }
+    if (name) {
+        conditions.push('t.name LIKE ?');
+        values.push(`%${name}%`);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const [{ total }] = await query(`
         SELECT COUNT(*) AS total
         FROM (

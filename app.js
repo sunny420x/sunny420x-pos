@@ -96,7 +96,6 @@ const customerSearchRoute = field => asyncRoute(async (req, res) => {
     });
 });
 
-app.get("/searchCustomerByCardId", customerSearchRoute('cardId'));
 app.get("/searchCustomerByFullName", customerSearchRoute('fullName'));
 app.get("/searchCustomerByPhoneNumber", customerSearchRoute('phoneNumber'));
 
@@ -333,7 +332,8 @@ app.get("/getProductsHistoriesByType", (req, res) => {
 app.get("/getProductStock", asyncRoute(async (req, res) => {
     const type = typeof req.query.type === 'string' ? req.query.type : 'all';
     const option = req.query.option === 'catalog' ? 'catalog' : 'list';
-    const { products, pagination } = await getProductsStockPage(type, req.query.page);
+    const name = typeof req.query.name === 'string' ? req.query.name.trim().slice(0, 100) : '';
+    const { products, pagination } = await getProductsStockPage(type, name, req.query.page);
     const view = option === "catalog" ? 'Components/productStockCatalogView' : 'Components/productStockListView';
     res.render(view, {
         products_stock: products,

@@ -9,8 +9,9 @@
         %>
         <script>
             let customerSearchType = 'fullName';
-            let customerSearchQuery = 'all';
+            let customerSearchQuery = '';
             let customerRequest;
+            let customerSearchTimer;
 
             function loadCustomers(type, query, page = 1) {
                 customerSearchType = type;
@@ -19,7 +20,6 @@
                 customerRequest = new AbortController();
 
                 const endpoints = {
-                    cardId: '/searchCustomerByCardId',
                     fullName: '/searchCustomerByFullName',
                     phoneNumber: '/searchCustomerByPhoneNumber'
                 };
@@ -46,18 +46,6 @@
                     });
             }
 
-            function searchCustomerByCardId(query, page = 1) {
-                loadCustomers('cardId', query, page);
-            }
-
-            function searchCustomerByFullName(query, page = 1) {
-                loadCustomers('fullName', query, page);
-            }
-
-            function searchCustomerByPhoneNumber(query, page = 1) {
-                loadCustomers('phoneNumber', query, page);
-            }
-
             document.addEventListener('click', event => {
                 const control = event.target.closest('#customerHTML [data-page]');
                 if (control) {
@@ -68,7 +56,20 @@
                 }
             });
 
-            searchCustomerByFullName('all');
+            document.addEventListener('DOMContentLoaded', () => {
+                const nameInput = document.getElementById('search_customer_by_fullname');
+                const phoneInput = document.getElementById('search_customer_by_phone_number');
+                const search = (type, input) => {
+                    window.clearTimeout(customerSearchTimer);
+                    customerSearchTimer = window.setTimeout(() => {
+                        loadCustomers(type, input.value.trim());
+                    }, 250);
+                };
+
+                nameInput.addEventListener('input', () => search('fullName', nameInput));
+                phoneInput.addEventListener('input', () => search('phoneNumber', phoneInput));
+                loadCustomers('fullName', '');
+            });
         </script>
         <div class="d-flex app-shell">
             <%-include('include/sidebar')%>
@@ -80,10 +81,21 @@
                 <%-include('include/navigator')%>
                 <div class="container-fluid p-4 app-content">
                     <div class="card p-4">
-                        <div class="row mb-3">
-                            <div class="col-md"><input type="text" class="form-control" onchange="searchCustomerByCardId(this.value)" placeholder="หมายเลขบัตรประจำตัวประชาชน" id="search_customer_by_id" maxlength="13"></div>
-                            <div class="col-md"><input type="text" class="form-control" onchange="searchCustomerByFullName(this.value)" placeholder="ชื่อ-นามสกุล" id="search_customer_by_fullname"></div>
-                            <div class="col-md"><input type="text" class="form-control" onchange="searchCustomerByPhoneNumber(this.value)" placeholder="เบอร์โทรศัพท์" id="search_customer_by_phone_number"></div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="search_customer_by_fullname">ค้นหาจากชื่อ-นามสกุล</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-user" aria-hidden="true"></i></span>
+                                    <input type="search" class="form-control" placeholder="พิมพ์ชื่อหรือนามสกุล" id="search_customer_by_fullname" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="search_customer_by_phone_number">ค้นหาจากเบอร์โทรศัพท์</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
+                                    <input type="search" class="form-control" placeholder="พิมพ์เบอร์โทรศัพท์" id="search_customer_by_phone_number" inputmode="tel" autocomplete="off">
+                                </div>
+                            </div>
                         </div>
                         <h2 class="mt-2 mb-4"><i class="fa-solid fa-users me-1"></i> รายชื่อลูกค้า <button type="button" class="btn btn-primary btn-sm" onclick="openLink('/addCustomer')"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลลูกค้า</button></h2>
                         <div class="row">

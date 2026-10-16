@@ -8,13 +8,15 @@
             let cart = []
             let totals = 0
             let _type = "<%=type%>"
+            let _name = ''
             let productStockRequest;
-            searchByType(_type)
+            let productSearchTimer;
 
             function searchByType(type, page = 1) {
                 if (productStockRequest) productStockRequest.abort();
                 productStockRequest = new AbortController();
-                const params = new URLSearchParams({ type, option: '<%=option%>', page: String(page) });
+                _type = type;
+                const params = new URLSearchParams({ type, option: '<%=option%>', page: String(page), name: _name });
                 fetch(`/getProductStock?${params}`, { signal: productStockRequest.signal })
                 .then(async response => {
                     if (!response.ok) throw new Error('ไม่สามารถโหลดรายการสินค้าได้');
@@ -25,8 +27,9 @@
                     if (window.replaceTableContent) replaceTableContent(container, data);
                     else container.innerHTML = data;
 
-                    _type = type
-                    history.pushState('', '', `?type=${encodeURIComponent(_type)}&option=<%=option%>&page=${page}`);
+                    const query = new URLSearchParams({ type: _type, option: '<%=option%>', page: String(page) });
+                    if (_name) query.set('name', _name);
+                    history.pushState('', '', `?${query}`);
                 })
                 .catch(error => {
                     if (error.name === 'AbortError') return;
@@ -50,8 +53,21 @@
             });
 
             function selectOption(value) {
-                window.location.href=`/products_stock?type=${_type}&option=${value}`
+                const params = new URLSearchParams({ type: _type, option: value });
+                if (_name) params.set('name', _name);
+                window.location.href=`/products_stock?${params}`
             }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const nameSearch = document.getElementById('search_product_name');
+                _name = new URLSearchParams(window.location.search).get('name')?.trim() || '';
+                nameSearch.value = _name;
+                nameSearch.addEventListener('input', () => {
+                    window.clearTimeout(productSearchTimer);
+                    productSearchTimer = window.setTimeout(() => searchByType(_type), 250);
+                });
+                searchByType(_type);
+            });
 
             function deductStockFromButton(button) {
                 const productType = button.dataset.type
@@ -113,7 +129,7 @@
                             <% } %>
                             <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addStock_modal"><i class="fa-solid fa-plus me-1"></i> เพิ่มข้อมูลการนำเข้าสินค้า</button>
                         </h2>
-                        <div class="row mb-4">
+                        <div class="row g-2 mb-3">
                             <div class="col-lg">
                                 <select class="form-select" id="search_by_type" onchange="searchByType(this.value)">
                                     <option value="all">เลือกทุกประเภท</option>
@@ -130,6 +146,12 @@
                                     <option value="list" <%if(option == 'list') {%>selected<%}%>>List View</option>
                                     <option value="catalog" <%if(option == 'catalog') {%>selected<%}%>>Catalog View</option>
                                 </select>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></span>
+                                    <input type="search" class="form-control" id="search_product_name" placeholder="ค้นหาชื่อสินค้า" autocomplete="off" aria-label="ค้นหาชื่อสินค้า">
+                                </div>
                             </div>
                         </div>
                         <div id="productStock"></div>

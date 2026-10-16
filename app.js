@@ -94,6 +94,7 @@ app.use(initAccessToken);
 // Forward async route failures to Express error handlers.
 const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 const isPosMode = req => (req.user.stock_mode || 'pos') === 'pos';
+const optionalText = value => typeof value === 'string' && value.trim() ? value.trim() : null;
 
 //Controller
 app.get("/searchCustomerByCardId", (req, res) => {
@@ -209,18 +210,18 @@ app.post("/customers", (req, res) => {
         const id = req.body.id
         const first_name = req.body.first_name
         const last_name = req.body.last_name
-        const card_id = req.body.card_id
+        const card_id = optionalText(req.body.card_id)
         const phone_number = req.body.phone_number
 
-        const home_id = req.body.home_id
-        const moo = req.body.moo
-        const village = req.body.village
-        const soi = req.body.soi
-        const street = req.body.street
-        const sub_district = req.body.sub_district
-        const district = req.body.district
-        const state = req.body.state
-        const zip = req.body.zip
+        const home_id = optionalText(req.body.home_id)
+        const moo = optionalText(req.body.moo)
+        const village = optionalText(req.body.village)
+        const soi = optionalText(req.body.soi)
+        const street = optionalText(req.body.street)
+        const sub_district = optionalText(req.body.sub_district)
+        const district = optionalText(req.body.district)
+        const state = optionalText(req.body.state)
+        const zip = optionalText(req.body.zip)
 
         const updated_at = moment().format("YYYY-MM-DD HH:mm:ss")
 
@@ -260,17 +261,17 @@ app.post("/addCustomer", (req, res) => {
     if (user_data[0].permission.split(',').includes('customers')) {
         const first_name = req.body.first_name
         const last_name = req.body.last_name
-        const card_id = req.body.card_id
+        const card_id = optionalText(req.body.card_id)
 
-        const home_id = req.body.home_id
-        const moo = req.body.moo
-        const village = req.body.village
-        const soi = req.body.soi
-        const street = req.body.street
-        const sub_district = req.body.sub_district
-        const district = req.body.district
-        const state = req.body.state
-        const zip = req.body.zip
+        const home_id = optionalText(req.body.home_id)
+        const moo = optionalText(req.body.moo)
+        const village = optionalText(req.body.village)
+        const soi = optionalText(req.body.soi)
+        const street = optionalText(req.body.street)
+        const sub_district = optionalText(req.body.sub_district)
+        const district = optionalText(req.body.district)
+        const state = optionalText(req.body.state)
+        const zip = optionalText(req.body.zip)
 
         const phone_number = req.body.phone_number
         const created_at = moment().format("YYYY-MM-DD HH:mm:ss")

@@ -38,8 +38,8 @@
                             </div>
                             <div class="mb-2">
                                 <div class="form-floating">
-                                    <input type="number" class="form-control" placeholder="กรอกเลขบัตรประจำตัวประชาชน" id="card_id" name="card_id" value="<%=customer.card_id%>" required>
-                                    <label for="address">เลขบัตรประจำตัวประชาชน *</label>
+                                    <input type="number" class="form-control" placeholder="กรอกเลขบัตรประจำตัวประชาชน" id="card_id" name="card_id" value="<%=customer.card_id || ''%>">
+                                    <label for="card_id">เลขบัตรประจำตัวประชาชน (ไม่บังคับ)</label>
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -48,46 +48,47 @@
                                     <label for="address">เบอร์โทรศัพท์ *</label>
                                 </div>
                             </div>
+                            <p class="text-secondary mb-2">ที่อยู่เป็นข้อมูลเสริม จะกรอกเฉพาะช่องที่มีข้อมูลก็ได้</p>
                             <div class="mb-2 row">
                                 <div class="col">
-                                    <label for="home_id">บ้านเลขที่ *</label>
-                                    <input type="text" class="form-control" id="home_id" name="home_id" value="<%=customer.home_id%>" required>
+                                    <label for="home_id">บ้านเลขที่</label>
+                                    <input type="text" class="form-control" id="home_id" name="home_id" value="<%=customer.home_id || ''%>">
                                 </div>
                                 <div class="col">
-                                    <label for="moo">หมู่ *</label>
-                                    <input type="text" class="form-control" id="moo" name="moo" value="<%=customer.moo%>" required>
+                                    <label for="moo">หมู่</label>
+                                    <input type="text" class="form-control" id="moo" name="moo" value="<%=customer.moo || ''%>">
                                 </div>
                                 <div class="col">
-                                    <label for="village">หมู่บ้าน *</label>
-                                    <input type="text" class="form-control" id="village" name="village" value="<%=customer.village%>" required>
+                                    <label for="village">หมู่บ้าน</label>
+                                    <input type="text" class="form-control" id="village" name="village" value="<%=customer.village || ''%>">
                                 </div>
                             </div>
                             <div class="mb-2 row">
                                 <div class="col">
-                                    <label for="soi">ซอย *</label>
-                                    <input type="text" class="form-control" id="soi" name="soi" value="<%=customer.soi%>" required>
+                                    <label for="soi">ซอย</label>
+                                    <input type="text" class="form-control" id="soi" name="soi" value="<%=customer.soi || ''%>">
                                 </div>
                                 <div class="col">
-                                    <label for="street">ถนน *</label>
-                                    <input type="text" class="form-control" id="street" name="street" value="<%=customer.street%>" required>
+                                    <label for="street">ถนน</label>
+                                    <input type="text" class="form-control" id="street" name="street" value="<%=customer.street || ''%>">
                                 </div>
                             </div>
                             <div class="mb-2 row">
                                 <div class="col">
-                                    <label for="sub_district">ตำบล *</label>
-                                    <input type="text" class="form-control" id="sub_district" name="sub_district" value="<%=customer.sub_district%>" required>
+                                    <label for="sub_district">ตำบล</label>
+                                    <input type="text" class="form-control" id="sub_district" name="sub_district" value="<%=customer.sub_district || ''%>">
                                 </div>
                                 <div class="col">
-                                    <label for="district">อำเภอ *</label>
-                                    <input type="text" class="form-control" id="district" name="district" value="<%=customer.district%>" required>
+                                    <label for="district">อำเภอ</label>
+                                    <input type="text" class="form-control" id="district" name="district" value="<%=customer.district || ''%>">
                                 </div>
                                 <div class="col">
-                                    <label for="state">จังหวัด *</label>
-                                    <input type="text" class="form-control" id="state" name="state" value="<%=customer.state%>" required>
+                                    <label for="state">จังหวัด</label>
+                                    <input type="text" class="form-control" id="state" name="state" value="<%=customer.state || ''%>">
                                 </div>
                                 <div class="col">
-                                    <label for="zip">รหัสไปรษณีย์ *</label>
-                                    <input type="text" class="form-control" id="zip" name="zip" value="<%=customer.zip%>" required>
+                                    <label for="zip">รหัสไปรษณีย์</label>
+                                    <input type="text" class="form-control" id="zip" name="zip" value="<%=customer.zip || ''%>">
                                 </div>
                             </div>
                             <button class="btn btn-primary" id="save_btn"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกการเปลี่ยนแปลง</button>

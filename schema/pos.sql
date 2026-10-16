@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `customers` (
   `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `first_name` varchar(100) NOT NULL,
   `last_name` varchar(100) NOT NULL,
-  `card_id` varchar(13) NOT NULL,
+  `card_id` varchar(13) DEFAULT NULL,
   `phone_number` varchar(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL,

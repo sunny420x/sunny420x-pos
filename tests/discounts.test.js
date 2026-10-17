@@ -74,10 +74,10 @@ test('unlimited discount claims keep the code available and count each redemptio
 });
 
 test('discount forms offer percentage, fixed amount, minimum purchase, and optional usage limit', async () => {
-    const addHtml = await ejs.renderFile(path.join(viewsPath, 'add_discount.ejs'), {
+    const addHtml = await ejs.renderFile(path.join(viewsPath, 'discounts/add_discount.ejs'), {
         user_data: [{ username: 'tester', type: 'admin', color: '#262626', permission: 'products', stock_mode: 'pos' }],
     });
-    const editHtml = await ejs.renderFile(path.join(viewsPath, 'edit_discount.ejs'), {
+    const editHtml = await ejs.renderFile(path.join(viewsPath, 'discounts/edit_discount.ejs'), {
         user_data: [{ username: 'tester', type: 'admin', color: '#262626', permission: 'products', stock_mode: 'pos' }],
         discount: { id: 1, code: 'FIXED50', amount: 50, discount_type: 'fixed', minimum_purchase: 500 },
     });

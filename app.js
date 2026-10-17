@@ -181,7 +181,7 @@ app.get("/customers/:id", (req, res) => {
         const id = req.params.id
         db.query("SELECT * FROM customers WHERE id = ?", [id], (err, customer) => {
             if (err) throw err;
-            res.render('edit_customer', {
+            res.render('customers/edit_customer', {
                 user_data: user_data,
                 customer: customer[0]
             })
@@ -235,7 +235,7 @@ app.post("/customers", (req, res) => {
 app.get("/addCustomer", (req, res) => {
     const user_data = [req.user];
     if (user_data[0].permission.split(',').includes('customers')) {
-        res.render("add_customer", {
+        res.render("customers/add_customer", {
             user_data: user_data
         })
     } else {
@@ -1066,7 +1066,7 @@ app.get("/editProduct/:transaction", (req, res) => {
             WHERE pd.transaction_id = ? GROUP BY name, type`, [transaction], (err, stock) => {
             if (err) throw err;
             getProductTypes().then((product_types) => {
-                res.render("edit_product", {
+                res.render("products/edit_product", {
                     user_data: user_data,
                     stock: stock[0],
                     product_types: product_types,
@@ -1144,7 +1144,7 @@ app.get("/discounts/:id", (req, res) => {
         const id = req.params.id
         db.query("SELECT * FROM discounts WHERE id = ?", [id], (err, discount) => {
             if (err) throw err;
-            res.render('edit_discount', {
+            res.render('discounts/edit_discount', {
                 user_data: user_data,
                 discount: discount[0]
             })
@@ -1197,7 +1197,7 @@ app.get("/addDiscount", (req, res) => {
     const user_data = [req.user];
     if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('products')) {
-        res.render("add_discount", {
+        res.render("discounts/add_discount", {
             user_data: user_data
         })
     } else {
@@ -1312,7 +1312,7 @@ app.get("/editProductType/:id", (req, res) => {
     if (user_data[0].permission.split(',').includes('products')) {
         db.query("SELECT * FROM product_types WHERE id = ?", [req.params.id], (err, result) => {
             if (err) throw err;
-            res.render('edit_product_type', {
+            res.render('product_types/edit_product_type', {
                 user_data: user_data,
                 row: result[0]
             })
@@ -1394,7 +1394,7 @@ app.get("/editUserType/:id", (req, res) => {
     if (user_data[0].permission.split(',').includes('users')) {
         db.query("SELECT * FROM user_types WHERE id = ?", [req.params.id], (err, result) => {
             if (err) throw err;
-            res.render('edit_user_type', {
+            res.render('user_types/edit_user_type', {
                 user_data: user_data,
                 row: result[0]
             })

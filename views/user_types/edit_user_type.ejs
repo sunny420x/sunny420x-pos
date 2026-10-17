@@ -1,7 +1,7 @@
 <html>
     <head>
         <title>แก้ไขประเภทผู้ใช้ | OpenPOS</title>
-        <%-include('include/head')%>
+        <%-include('../include/head')%>
         <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet">
         <style>
             .select2-container {
@@ -11,13 +11,13 @@
     </head>
     <body>
         <div class="d-flex app-shell">
-            <%-include('include/sidebar')%>
+            <%-include('../include/sidebar')%>
             <div class="container-fluid p-0 overflow-hidden app-main">
                 <nav class="navbar">
                     <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/user_types">
                         <i class="fa-solid fa-chevron-left me-4"></i> แก้ไขประเภทผู้ใช้</a></div>
                 </nav>
-                <%-include('include/navigator')%>
+                <%-include('../include/navigator')%>
                 <div class="container-fluid p-4 app-content">
                     <div class="card p-4">
                         <h2 class="mb-4"><i class="fa-solid fa-users-cog me-1"></i> แก้ไขข้อมูลผู้ใช้</h2>
@@ -56,6 +56,6 @@
             });
         });
     </script>
-    <%-include('include/footer')%>
+    <%-include('../include/footer')%>
     </body>
 </html>

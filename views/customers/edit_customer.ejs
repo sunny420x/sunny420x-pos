@@ -1,16 +1,16 @@
 <html>
     <head>
         <title>แก้ไขข้อมูลลูกค้า | OpenPOS</title>
-        <%-include('include/head')%>
+        <%-include('../include/head')%>
     </head>
     <body>
         <script>
             let editing = false
         </script>
         <div class="d-flex app-shell">
-            <%-include('include/sidebar')%>
+            <%-include('../include/sidebar')%>
             <div class="container-fluid p-0 overflow-hidden app-main">
-                <%-include('include/navigator')%>
+                <%-include('../include/navigator')%>
                 <nav class="navbar">
                     <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/customers">
                         <i class="fa-solid fa-chevron-left me-4"></i> ข้อมูลลูกค้า</a></div>
@@ -100,7 +100,7 @@
                 </div>
             </div>
         </div>
-        <%-include('include/footer')%>
+        <%-include('../include/footer')%>
         <script>
             toggleEdit()
         </script>

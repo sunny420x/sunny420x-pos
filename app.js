@@ -1410,7 +1410,21 @@ app.post("/editUserType", (req, res) => {
     if (user_data[0].permission.split(',').includes('users')) {
         const id = req.body.id
         const name = req.body.name
-        const permission = req.body.permission
+        const allowedPermissions = ['customers', 'products', 'bills', 'users'];
+        const requestedPermissions = Array.isArray(req.body.permission)
+            ? req.body.permission
+            : [req.body.permission];
+
+        if (
+            requestedPermissions.length === 0 ||
+            requestedPermissions.some(permission => !allowedPermissions.includes(permission))
+        ) {
+            return res.status(400).send('สิทธิ์ผู้ใช้ไม่ถูกต้อง');
+        }
+
+        const permission = allowedPermissions
+            .filter(permission => requestedPermissions.includes(permission))
+            .join(',');
 
         db.query("UPDATE user_types SET name = ?, permission = ? WHERE id = ?", [name, permission, id], (err) => {
             if (err) throw err;
@@ -1435,11 +1449,23 @@ app.get("/settings", (req, res) => {
     })
 })
 
-app.post('/settings/stock-mode', (req, res, next) => {
+app.get('/systemSettings', (req, res) => {
     const user = req.user;
     if (!user.permission.split(',').includes('users')) {
         res.cookie('alert', 'permissionDenial');
         return res.redirect('/settings');
+    }
+
+    res.render('system_settings', {
+        user_data: [user]
+    });
+})
+
+app.post('/settings/stock-mode', (req, res, next) => {
+    const user = req.user;
+    if (!user.permission.split(',').includes('users')) {
+        res.cookie('alert', 'permissionDenial');
+        return res.redirect('/systemSettings');
     }
 
     const stock_mode = req.body.stock_mode;
@@ -1449,7 +1475,7 @@ app.post('/settings/stock-mode', (req, res, next) => {
 
     db.auth.query('UPDATE companies SET stock_mode = ? WHERE id = ?', [stock_mode, req.company_id], err => {
         if (err) return next(err);
-        res.redirect('/settings');
+        res.redirect('/systemSettings');
     });
 })
 
@@ -1457,7 +1483,7 @@ app.post('/settings/receipt-size', (req, res, next) => {
     const user = req.user;
     if (!user.permission.split(',').includes('users')) {
         res.cookie('alert', 'permissionDenial');
-        return res.redirect('/settings');
+        return res.redirect('/systemSettings');
     }
 
     const receipt_size = req.body.receipt_size;
@@ -1467,7 +1493,7 @@ app.post('/settings/receipt-size', (req, res, next) => {
 
     db.auth.query('UPDATE companies SET receipt_size = ? WHERE id = ?', [receipt_size, req.company_id], err => {
         if (err) return next(err);
-        res.redirect('/settings');
+        res.redirect('/systemSettings');
     });
 })
 

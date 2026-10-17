@@ -2,6 +2,12 @@
     <head>
         <title>แก้ไขประเภทผู้ใช้ | OpenPOS</title>
         <%-include('include/head')%>
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet">
+        <style>
+            .select2-container {
+                width: 100% !important;
+            }
+        </style>
     </head>
     <body>
         <div class="d-flex app-shell">
@@ -24,18 +30,32 @@
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" placeholder="permission" id="permission" name="permission" value="<%=row.permission%>" required>
-                                    <label for="name">สิทธิ์ผู้ใช้ *</label>
-                                </div>
+                                <label for="permission" class="form-label">สิทธิ์ผู้ใช้ *</label>
+                                <% const selectedPermissions = new Set(String(row.permission || '').split(',').map(permission => permission.trim())); %>
+                                <select class="form-select" id="permission" name="permission" multiple required>
+                                    <option value="customers" <%=selectedPermissions.has('customers') ? 'selected' : ''%>>customers — จัดการลูกค้า</option>
+                                    <option value="products" <%=selectedPermissions.has('products') ? 'selected' : ''%>>products — จัดการสินค้า</option>
+                                    <option value="bills" <%=selectedPermissions.has('bills') ? 'selected' : ''%>>bills — จัดการประวัติการซื้อ</option>
+                                    <option value="users" <%=selectedPermissions.has('users') ? 'selected' : ''%>>users — จัดการผู้ใช้ในระบบ</option>
+                                </select>
+                                <div class="form-text">เลือกสิทธิ์ได้มากกว่าหนึ่งรายการ</div>
                             </div>
-                            <button class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกการเปลี่ยนแปลง</button>
+                            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกการเปลี่ยนแปลง</button>
                         </form>
                     </div>
-                </form>
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <script>
+        $(function () {
+            $('#permission').select2({
+                placeholder: 'เลือกสิทธิ์ผู้ใช้',
+                closeOnSelect: false
+            });
+        });
+    </script>
     <%-include('include/footer')%>
     </body>
 </html>

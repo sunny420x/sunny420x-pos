@@ -1,0 +1,56 @@
+<html>
+    <head>
+        <title>ตั้งค่าระบบ | OpenPOS</title>
+        <%-include('include/head')%>
+    </head>
+    <body>
+        <div class="d-flex app-shell">
+            <%-include('include/sidebar')%>
+            <div class="container-fluid p-0 overflow-hidden app-main">
+                <%-include('include/navigator')%>
+                <nav class="navbar">
+                    <div class="navbar-brand"><a class="px-4 py-2 text-decoration-none text-black" href="/settings">
+                        <i class="fa-solid fa-chevron-left me-4"></i> ตั้งค่า</a></div>
+                </nav>
+                <div class="container-fluid p-4 app-content">
+                    <div class="card p-4">
+                        <h2 class="mb-4"><i class="fa-solid fa-sliders me-2"></i> ตั้งค่าระบบ</h2>
+                        <div class="card p-4 mb-4">
+                            <h3><i class="fa-solid fa-cogs me-2"></i> โหมดการทำงานของระบบ</h3>
+                            <p>การตั้งค่านี้มีผลกับผู้ใช้ทุกคนในบริษัท</p>
+                            <form action="/settings/stock-mode" method="post" class="row g-3 align-items-end">
+                                <div class="col-md-8">
+                                    <label for="stock_mode" class="form-label">เลือกรูปแบบการทำงาน</label>
+                                    <select class="form-select" name="stock_mode" id="stock_mode" required>
+                                        <option value="pos" <%=user_data[0].stock_mode !== 'inventory_only' ? 'selected' : ''%>>ตัดสต๊อก + ขายหน้าร้าน</option>
+                                        <option value="inventory_only" <%=user_data[0].stock_mode === 'inventory_only' ? 'selected' : ''%>>จัดการสต๊อกอย่างเดียว</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-auto">
+                                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save me-1"></i> บันทึกโหมด</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card p-4">
+                            <h3><i class="fa-solid fa-receipt me-2"></i> ขนาดใบเสร็จ</h3>
+                            <p>การตั้งค่านี้มีผลกับใบเสร็จของผู้ใช้ทุกคนในบริษัท</p>
+                            <form action="/settings/receipt-size" method="post" class="row g-3 align-items-end">
+                                <div class="col-md-8">
+                                    <label for="receipt_size" class="form-label">เลือกรูปแบบใบเสร็จ</label>
+                                    <select class="form-select" name="receipt_size" id="receipt_size" required>
+                                        <option value="80x80" <%=user_data[0].receipt_size === '80x80' ? 'selected' : ''%>>80 × 80 มม.</option>
+                                        <option value="a5_landscape" <%=user_data[0].receipt_size !== '80x80' ? 'selected' : ''%>>A5 แนวนอน</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-auto">
+                                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save me-1"></i> บันทึกขนาดใบเสร็จ</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <%-include('include/footer')%>
+    </body>
+</html>

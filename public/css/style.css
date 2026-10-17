@@ -1414,6 +1414,16 @@ input[type=checkbox][readonly] {
     height: 320px;
 }
 
+.select2-selection__rendered {
+    padding: 8px 10px 10px 10px !important;
+}
+
+.select2-selection__choice {
+    background-color: var(--pos-primary-soft) !important;
+    color: var(--pos-primary) !important;
+    border-color: var(--pos-primary-soft) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .app-sidebar {
         transition: none;

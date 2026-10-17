@@ -1,3 +1,235 @@
+(() => {
+    const scrollStateKey = '__sunny420xScrollKey';
+    const storagePrefix = 'sunny420x-scroll:';
+    const filterStoragePrefix = 'sunny420x-filters:';
+    const routeFilterStoragePrefix = 'sunny420x-route-filters:';
+    const pendingFetches = new Set();
+    let scrollKey;
+    let lastFilters = [];
+    let saveScheduled = false;
+    let storageWarningShown = false;
+
+    const createScrollKey = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const stateWithScrollKey = (state, key) => {
+        if (state && typeof state === 'object') return { ...state, [scrollStateKey]: key };
+        return { [scrollStateKey]: key, __sunny420xOriginalHistoryState: state };
+    };
+    const reportStorageError = error => {
+        if (storageWarningShown) return;
+        storageWarningShown = true;
+        console.warn('Page state could not be saved to browser storage:', error);
+    };
+    const currentScrollKey = () => {
+        const key = window.history.state?.[scrollStateKey];
+        return typeof key === 'string' ? key : scrollKey;
+    };
+    const getPersistedFilters = () => [...document.querySelectorAll('select[data-persist-filter][id]')]
+        .filter(select => !select.multiple)
+        .map(select => [select.id, select.value]);
+    const routeFilterStorageKey = () => `${routeFilterStoragePrefix}${window.location.pathname}`;
+    const saveRouteFilterValues = filters => {
+        try {
+            window.localStorage.setItem(routeFilterStorageKey(), JSON.stringify(filters));
+        } catch (error) {
+            reportStorageError(error);
+        }
+    };
+    const updateFilterQuery = filters => {
+        const params = new URLSearchParams(window.location.search);
+        filters.forEach(([id, value]) => {
+            const select = document.getElementById(id);
+            const param = select?.dataset.queryParam;
+            if (param && typeof value === 'string') params.set(param, value);
+        });
+        if (!params.has('page')) params.set('page', '1');
+        const query = params.toString();
+        const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+        window.history.replaceState(window.history.state, document.title, nextUrl);
+    };
+    const restoreRouteFilters = () => {
+        let savedFilters;
+        try {
+            const stored = window.localStorage.getItem(routeFilterStorageKey());
+            if (stored) savedFilters = JSON.parse(stored);
+        } catch (error) {
+            reportStorageError(error);
+            return;
+        }
+        if (!Array.isArray(savedFilters)) {
+            lastFilters = getPersistedFilters();
+            saveRouteFilterValues(lastFilters);
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const controls = new Map(
+            [...document.querySelectorAll('select[data-persist-filter][id]')]
+                .filter(select => !select.multiple)
+                .map(select => [select.id, select])
+        );
+        let restoredAny = false;
+        window.__sunny420xRestoringFilters = true;
+        try {
+            savedFilters.forEach(([id, value]) => {
+                const select = controls.get(id);
+                const param = select?.dataset.queryParam;
+                if (!select || typeof value !== 'string' || (param && params.has(param))) return;
+                if (select.value !== value) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                if (param) params.set(param, value);
+                restoredAny = true;
+            });
+        } finally {
+            window.__sunny420xRestoringFilters = false;
+        }
+
+        lastFilters = getPersistedFilters();
+        if (restoredAny) {
+            if (!params.has('page')) params.set('page', '1');
+            const query = params.toString();
+            const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+            window.history.replaceState(window.history.state, document.title, nextUrl);
+        }
+        saveRouteFilterValues(lastFilters);
+    };
+    const saveFilterValues = (filters = getPersistedFilters(), key = currentScrollKey()) => {
+        if (!key) return;
+
+        try {
+            window.sessionStorage.setItem(`${filterStoragePrefix}${key}`, JSON.stringify(filters));
+        } catch (error) {
+            reportStorageError(error);
+        }
+    };
+    const saveScrollPosition = () => {
+        const key = currentScrollKey();
+        if (!key) return;
+
+        try {
+            window.sessionStorage.setItem(`${storagePrefix}${key}`, JSON.stringify({
+                x: window.scrollX,
+                y: window.scrollY,
+            }));
+        } catch (error) {
+            reportStorageError(error);
+        }
+    };
+    const restorePageState = async key => {
+        if (typeof key !== 'string') return;
+
+        let position;
+        let filters;
+        try {
+            const savedPosition = window.sessionStorage.getItem(`${storagePrefix}${key}`);
+            if (savedPosition) position = JSON.parse(savedPosition);
+            const savedFilters = window.sessionStorage.getItem(`${filterStoragePrefix}${key}`);
+            if (savedFilters) filters = JSON.parse(savedFilters);
+        } catch (error) {
+            reportStorageError(error);
+            return;
+        }
+
+        if (Array.isArray(filters)) {
+            const controls = new Map(
+                [...document.querySelectorAll('select[data-persist-filter][id]')]
+                    .filter(select => !select.multiple)
+                    .map(select => [select.id, select])
+            );
+            lastFilters = filters;
+            window.__sunny420xRestoringFilters = true;
+            try {
+                filters.forEach(([id, value]) => {
+                    const select = controls.get(id);
+                    if (!select || typeof value !== 'string' || select.value === value) return;
+                    select.value = value;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            } finally {
+                window.__sunny420xRestoringFilters = false;
+            }
+        } else {
+            lastFilters = getPersistedFilters();
+        }
+
+        if (pendingFetches.size) {
+            await Promise.race([
+                Promise.allSettled([...pendingFetches]),
+                new Promise(resolve => window.setTimeout(resolve, 1500)),
+            ]);
+        }
+        if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) return;
+        await new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve)));
+        window.scrollTo(position.x, position.y);
+    };
+
+    scrollKey = window.history.state?.[scrollStateKey];
+    if (typeof scrollKey !== 'string') {
+        scrollKey = createScrollKey();
+        window.history.replaceState(stateWithScrollKey(window.history.state, scrollKey), document.title);
+    }
+    lastFilters = getPersistedFilters();
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+
+    const originalPushState = window.history.pushState.bind(window.history);
+    window.history.pushState = (state, title, url) => {
+        saveScrollPosition();
+        saveFilterValues(lastFilters);
+        scrollKey = createScrollKey();
+        const result = originalPushState(stateWithScrollKey(state, scrollKey), title, url);
+        lastFilters = getPersistedFilters();
+        saveFilterValues(lastFilters, scrollKey);
+        return result;
+    };
+
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (...args) => {
+        const request = originalFetch(...args);
+        pendingFetches.add(request);
+        request.then(
+            () => pendingFetches.delete(request),
+            () => pendingFetches.delete(request)
+        );
+        return request;
+    };
+
+    window.addEventListener('scroll', () => {
+        if (saveScheduled) return;
+        saveScheduled = true;
+        window.requestAnimationFrame(() => {
+            saveScheduled = false;
+            saveScrollPosition();
+        });
+    }, { passive: true });
+    window.addEventListener('change', event => {
+        if (!event.target.matches?.('select[data-persist-filter][id]')) return;
+        const currentFilters = getPersistedFilters();
+        if (window.__sunny420xRestoringFilters) {
+            lastFilters = currentFilters;
+            return;
+        }
+        saveFilterValues(lastFilters);
+        saveRouteFilterValues(currentFilters);
+    });
+    window.addEventListener('pagehide', () => {
+        saveScrollPosition();
+        saveFilterValues();
+        saveRouteFilterValues(getPersistedFilters());
+    });
+    document.addEventListener('DOMContentLoaded', restoreRouteFilters);
+    window.addEventListener('popstate', event => {
+        scrollKey = event.state?.[scrollStateKey];
+        restorePageState(scrollKey);
+    });
+    window.addEventListener('pageshow', event => {
+        const navigation = window.performance.getEntriesByType('navigation')[0];
+        if (event.persisted || navigation?.type === 'back_forward') {
+            restorePageState(currentScrollKey());
+        }
+    });
+})();
+
 function openLink(url) {
     window.location.href = url
 }

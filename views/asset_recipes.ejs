@@ -26,7 +26,7 @@
                     <form id="recipe-form" class="row g-2 align-items-end">
                         <div class="col-md-3">
                             <label for="recipe-product-type" class="form-label">หมวดหมู่สินค้า</label>
-                            <select id="recipe-product-type" class="form-select" required>
+                            <select id="recipe-product-type" class="form-select" data-persist-filter required>
                                 <% productTypes.forEach(type => { %><option value="<%=type.id%>"><%=type.name%></option><% }) %>
                             </select>
                         </div>

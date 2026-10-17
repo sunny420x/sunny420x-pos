@@ -14,7 +14,7 @@
             let productStockRequest;
             let productSearchTimer;
 
-            function searchByType(type, page = 1) {
+            function searchByType(type, page = 1, updateHistory = true) {
                 if (productStockRequest) productStockRequest.abort();
                 productStockRequest = new AbortController();
                 _type = type;
@@ -31,7 +31,7 @@
 
                     const query = new URLSearchParams({ type: _type, option: '<%=option%>', page: String(page) });
                     if (_name) query.set('name', _name);
-                    history.pushState('', '', `?${query}`);
+                    if (updateHistory) history.pushState('', '', `?${query}`);
                 })
                 .catch(error => {
                     if (error.name === 'AbortError') return;
@@ -133,7 +133,7 @@
                         </h2>
                         <div class="row g-2 mb-3">
                             <div class="col-lg">
-                                <select class="form-select" id="search_by_type" onchange="searchByType(this.value)">
+                                <select class="form-select" id="search_by_type" data-persist-filter data-query-param="type" onchange="searchByType(this.value, 1, !window.__sunny420xRestoringFilters)">
                                     <option value="all">เลือกทุกประเภท</option>
                                     <% product_types.forEach(row => {
                                     %>
@@ -144,7 +144,7 @@
                                 </select>
                             </div>
                             <div class="col-lg-3">
-                                <select onchange="selectOption(this.value)" class="form-select">
+                                <select id="product_view_mode" data-persist-filter data-query-param="option" onchange="window.__sunny420xRestoringFilters ? null : selectOption(this.value)" class="form-select">
                                     <option value="list" <%if(option == 'list') {%>selected<%}%>>List View</option>
                                     <option value="catalog" <%if(option == 'catalog') {%>selected<%}%>>Catalog View</option>
                                 </select>

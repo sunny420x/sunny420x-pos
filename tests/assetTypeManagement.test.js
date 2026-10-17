@@ -89,3 +89,16 @@ test('asset category list and add/edit forms are separate pages', async () => {
     assert.match(editForm, /action="\/assetTypes\/9\/edit"/);
     assert.match(editForm, /value="บรรจุภัณฑ์"/);
 });
+
+test('asset recipe page persists the selected product category across reloads', async () => {
+    const html = await ejs.renderFile(path.join(viewsPath, 'asset_recipes.ejs'), {
+        user_data: userData,
+        assetGroups: [{ asset_type: 2, asset_name: 'แก้ว', type: 'บรรจุภัณฑ์' }],
+        productGroups: [{ product_type: 4, product_name: 'ชาเขียว' }],
+        productTypes: [{ id: 4, name: 'เครื่องดื่ม' }],
+        recipes: [],
+    });
+
+    assert.match(html, /id="recipe-product-type"[^>]*data-persist-filter/);
+    assert.match(html, /window\.location\.reload\(\)/);
+});

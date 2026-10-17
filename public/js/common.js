@@ -480,7 +480,45 @@ function replaceTableContent(container, html) {
     }
 
     container.innerHTML = html;
+    container.removeAttribute('aria-busy');
     initializeDataTables(container);
+}
+
+function showLoadingSkeleton(container, variant = 'table', count = 5) {
+    if (!container) return;
+
+    const rows = Math.max(1, Math.min(Number(count) || 5, 8));
+    const placeholder = '<span class="loading-skeleton" aria-hidden="true"></span>';
+    const content = {
+        table: `<div class="loading-skeleton-table" aria-hidden="true">${Array.from({ length: rows }, () =>
+            `<div class="loading-skeleton-row">${placeholder}<span class="loading-skeleton loading-skeleton-wide"></span>${placeholder}<span class="loading-skeleton loading-skeleton-actions"></span></div>`
+        ).join('')}</div>`,
+        cards: `<div class="loading-skeleton-cards" aria-hidden="true">${Array.from({ length: Math.min(rows, 4) }, () =>
+            `<div class="loading-skeleton-card"><div class="loading-skeleton loading-skeleton-short"></div><div class="loading-skeleton loading-skeleton-wide"></div><div class="loading-skeleton"></div></div>`
+        ).join('')}</div>`,
+        catalog: `<div class="row row-cols-1 row-cols-sm-2 g-2 loading-skeleton-catalog" aria-hidden="true">${Array.from({ length: rows }, () =>
+            '<div class="col"><div class="loading-skeleton-product"><span class="loading-skeleton loading-skeleton-wide"></span><span class="loading-skeleton"></span><span class="loading-skeleton loading-skeleton-short"></span></div></div>'
+        ).join('')}</div>`,
+        select: `<div class="loading-skeleton-select" aria-hidden="true">${placeholder}<span class="text-secondary">กำลังโหลดรายการ...</span></div>`,
+    }[variant];
+
+    container.setAttribute('aria-busy', 'true');
+    container.innerHTML = content || contentForTable(rows);
+
+    function contentForTable(rowCount) {
+        return `<div class="loading-skeleton-table" aria-hidden="true">${Array.from({ length: rowCount }, () =>
+            `<div class="loading-skeleton-row">${placeholder}<span class="loading-skeleton loading-skeleton-wide"></span>${placeholder}<span class="loading-skeleton loading-skeleton-actions"></span></div>`
+        ).join('')}</div>`;
+    }
+}
+
+function showLoadingError(container, message) {
+    if (!container) return;
+    container.removeAttribute('aria-busy');
+    const error = document.createElement('p');
+    error.className = 'text-danger text-center py-4 mb-0';
+    error.textContent = message;
+    container.replaceChildren(error);
 }
 
 initializeDataTables();

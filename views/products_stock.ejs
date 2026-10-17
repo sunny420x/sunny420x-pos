@@ -19,15 +19,19 @@
                 productStockRequest = new AbortController();
                 _type = type;
                 const params = new URLSearchParams({ type, option: '<%=option%>', page: String(page), name: _name });
+                const container = document.getElementById('productStock');
+                showLoadingSkeleton(container, '<%=option%>' === 'catalog' ? 'catalog' : 'table', 6);
                 fetch(`/getProductStock?${params}`, { signal: productStockRequest.signal })
                 .then(async response => {
                     if (!response.ok) throw new Error('ไม่สามารถโหลดรายการสินค้าได้');
                     return response.text();
                 })
                 .then(data => {
-                    const container = document.getElementById('productStock');
                     if (window.replaceTableContent) replaceTableContent(container, data);
-                    else container.innerHTML = data;
+                    else {
+                        container.innerHTML = data;
+                        container.removeAttribute('aria-busy');
+                    }
 
                     const query = new URLSearchParams({ type: _type, option: '<%=option%>', page: String(page) });
                     if (_name) query.set('name', _name);
@@ -36,6 +40,7 @@
                 .catch(error => {
                     if (error.name === 'AbortError') return;
                     console.error('Error:', error);
+                    showLoadingError(container, 'โหลดรายการสินค้าไม่สำเร็จ กรุณาลองใหม่');
                     Swal.fire({
                         icon: 'error',
                         title: 'เกิดข้อผิดพลาด',
@@ -248,6 +253,8 @@
                     }
                     function getProductsHistoriesByType() {
                         let type = document.getElementById('type').value
+                        const container = document.getElementById('productNameSelectBox');
+                        showLoadingSkeleton(container, 'select', 1);
 
                         fetch('/getProductsHistoriesByType?type='+type)
                         .then(res => {
@@ -257,10 +264,12 @@
                             return res.text();
                         })
                         .then(data => {
-                            document.getElementById('productNameSelectBox').innerHTML = data;
+                            container.innerHTML = data;
+                            container.removeAttribute('aria-busy');
                         })
                         .catch(error => {
                             console.error('Error:', error);
+                            showLoadingError(container, 'โหลดรายการสินค้าไม่สำเร็จ กรุณาลองใหม่');
                             Swal.fire({
                                 icon: 'error',
                                 title: 'เกิดข้อผิดพลาด',
@@ -457,7 +466,7 @@
                             return;
                         }
                         sellCatalogLoaded = false;
-                        catalog.innerHTML = '<div class="sell-empty-state"><span class="spinner-border spinner-border-sm" role="status"></span><p class="mb-0 mt-2">กำลังโหลดสินค้า...</p></div>';
+                        showLoadingSkeleton(catalog, 'catalog', 6);
                         sellCatalogRequest = new AbortController();
                         fetch(`/getSellProducts?type=${encodeURIComponent(type)}`, { signal: sellCatalogRequest.signal })
                             .then(async response => {
@@ -467,12 +476,13 @@
                             .then(html => {
                                 sellCatalogLoaded = true;
                                 catalog.innerHTML = html;
+                                catalog.removeAttribute('aria-busy');
                                 filterSellProducts(search.value);
                             })
                             .catch(error => {
                                 if (error.name === 'AbortError') return;
                                 console.error('Error:', error);
-                                catalog.innerHTML = '<div class="sell-empty-state text-danger"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><p class="mb-0">โหลดสินค้าไม่สำเร็จ กรุณาลองใหม่</p></div>';
+                                showLoadingError(catalog, 'โหลดสินค้าไม่สำเร็จ กรุณาลองใหม่');
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'เกิดข้อผิดพลาด',

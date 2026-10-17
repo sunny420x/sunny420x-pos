@@ -18,7 +18,7 @@
                     page: String(page)
                 });
                 const container = document.getElementById('billingHistoriesHTML');
-                container.setAttribute('aria-busy', 'true');
+                showLoadingSkeleton(container, 'cards', 3);
                 fetch(`/getBillingHistoriesByCustomer?${params}`, { signal: request.signal })
                     .then(async response => {
                         if (!response.ok) throw new Error('ไม่สามารถโหลดประวัติบิลได้');
@@ -31,6 +31,7 @@
                     .catch(error => {
                         if (error.name === 'AbortError') return;
                         console.error('Error:', error);
+                        showLoadingError(container, 'โหลดประวัติการขายไม่สำเร็จ กรุณาลองใหม่');
                         Swal.fire({
                             icon: 'error',
                             title: 'เกิดข้อผิดพลาด',
@@ -120,8 +121,7 @@
                                 <i class="fa-solid fa-rotate-left me-1" aria-hidden="true"></i>ล้างตัวกรอง
                             </button>
                         </div>
-                        <div id="billingHistoriesHTML" aria-live="polite" aria-busy="true">
-                            <div class="billing-history-loading"><span class="spinner-border spinner-border-sm" role="status"></span> กำลังโหลดประวัติการขาย...</div>
+                        <div id="billingHistoriesHTML" aria-live="polite">
                         </div>
                     </div>
                 </div>

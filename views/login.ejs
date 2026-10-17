@@ -1,11 +1,13 @@
 ﻿<!doctype html>
 <html lang="th">
+
 <head>
     <meta charset="utf-8">
     <title>เข้าสู่ระบบ | OpenPOS</title>
     <%- include('include/head') %>
     <link rel="stylesheet" href="/css/auth.css">
 </head>
+
 <body class="auth-page">
     <main class="auth-layout">
         <aside class="auth-showcase">
@@ -13,35 +15,49 @@
             <div class="auth-showcase-copy">
                 <p class="auth-eyebrow">OpenPOS · SMART RETAIL</p>
                 <h2>จัดการร้านค้า<br>ได้ง่ายในที่เดียว</h2>
-                <p class="auth-showcase-description">เครื่องมือช่วยให้คุณดูแลสินค้า รับรายการขาย และติดตามภาพรวมของร้านได้สะดวกขึ้น</p>
-                <ul class="auth-feature-list">
-                    <li><span class="auth-feature-icon"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i></span><span><strong>สินค้าและสต๊อก</strong><small>จัดการรายการสินค้าและจำนวนคงเหลือ</small></span></li>
-                    <li><span class="auth-feature-icon"><i class="fa-solid fa-cash-register" aria-hidden="true"></i></span><span><strong>บันทึกการขาย</strong><small>ดูแลรายการขายและประวัติย้อนหลัง</small></span></li>
-                    <li><span class="auth-feature-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span><span><strong>ติดตามภาพรวม</strong><small>ดูยอดขายและข้อมูลสำคัญของร้าน</small></span></li>
-                </ul>
+                <p class="auth-showcase-description">เครื่องมือช่วยให้คุณดูแลสินค้า รับรายการขาย
+                    และติดตามภาพรวมของร้านได้สะดวกขึ้น</p>
             </div>
-            <p class="auth-showcase-note"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> เริ่มต้นจัดการร้านของคุณได้ในไม่กี่ขั้นตอน</p>
+            <p class="auth-showcase-note"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                เริ่มต้นจัดการร้านของคุณได้ในไม่กี่ขั้นตอน</p>
         </aside>
         <div class="auth-main">
             <section class="card auth-card" aria-labelledby="auth-title">
-                <div class="auth-card-heading"><span class="auth-icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span><div><h1 id="auth-title">เข้าสู่ระบบ</h1><p>เลือกบริษัทและเข้าสู่ระบบเพื่อเริ่มงาน</p></div></div>
+                <div class="auth-card-heading"><span class="auth-icon"><i class="fa-solid fa-right-to-bracket"
+                            aria-hidden="true"></i></span>
+                    <div>
+                        <h1 id="auth-title">เข้าสู่ระบบ</h1>
+                        <p>เลือกบริษัทและเข้าสู่ระบบเพื่อเริ่มงาน</p>
+                    </div>
+                </div>
                 <% if(error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
-                <% if(!companies.length) { %><div class="alert alert-info" role="status">ยังไม่มีบริษัทในระบบ เริ่มต้นด้วยการสมัครบริษัทใหม่</div><% } %>
+                <% if(!companies.length) { %><div class="alert alert-info" role="status">ยังไม่มีบริษัทในระบบ
+                    เริ่มต้นด้วยการสมัครบริษัทใหม่</div><% } %>
                 <form method="post" action="/login">
                     <div class="mb-3">
                         <label for="company_code" class="form-label">บริษัท</label>
-                        <select id="company_code" name="company_code" class="form-select" required <%= !companies.length ? 'disabled' : '' %>>
+                        <select id="company_code" name="company_code" class="form-select" required
+                            <%= !companies.length ? 'disabled' : '' %>>
                             <option value="" disabled <%= !company_code ? 'selected' : '' %>>เลือกบริษัทของคุณ</option>
-                            <% companies.forEach(company => { %><option value="<%= company.code %>" <%= company_code === company.code ? 'selected' : '' %>><%= company.name %></option><% }) %>
+                            <% companies.forEach(company => { %><option value="<%= company.code %>"
+                                <%= company_code === company.code ? 'selected' : '' %>><%= company.name %></option>
+                            <% }) %>
                         </select>
                     </div>
-                    <div class="mb-3"><label for="username" class="form-label">ชื่อผู้ใช้</label><input id="username" name="username" class="form-control" autocomplete="username" value="<%= username %>" placeholder="ชื่อผู้ใช้ของคุณ" required maxlength="100"></div>
-                    <div class="mb-4"><label for="password" class="form-label">รหัสผ่าน</label><input id="password" name="password" type="password" class="form-control" autocomplete="current-password" placeholder="กรอกรหัสผ่าน" required maxlength="128"></div>
-                    <button class="btn btn-primary auth-submit w-100" <%= !companies.length ? 'disabled' : '' %>><i class="fa-solid fa-right-to-bracket me-2" aria-hidden="true"></i>เข้าสู่ระบบ</button>
+                    <div class="mb-3"><label for="username" class="form-label">ชื่อผู้ใช้</label><input id="username"
+                            name="username" class="form-control" autocomplete="username" value="<%= username %>"
+                            placeholder="ชื่อผู้ใช้ของคุณ" required maxlength="100"></div>
+                    <div class="mb-4"><label for="password" class="form-label">รหัสผ่าน</label><input id="password"
+                            name="password" type="password" class="form-control" autocomplete="current-password"
+                            placeholder="กรอกรหัสผ่าน" required maxlength="128"></div>
+                    <button class="btn btn-primary auth-submit w-100" <%= !companies.length ? 'disabled' : '' %>><i
+                            class="fa-solid fa-right-to-bracket me-2" aria-hidden="true"></i>เข้าสู่ระบบ</button>
                 </form>
-                <p class="auth-switch">ยังไม่มีบริษัทในระบบ? <a href="/register">สมัครบริษัทใหม่ <i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a></p>
+                <p class="auth-switch">ยังไม่มีบริษัทในระบบ? <a href="/register">สมัครบริษัทใหม่ <i
+                            class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a></p>
             </section>
         </div>
     </main>
 </body>
+
 </html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <title>สูตรวัสดุต่อสินค้า | OpenPOS</title>
+    <%-include('include/head')%>
+</head>
+<body>
+    <div class="d-flex app-shell">
+        <%-include('include/sidebar')%>
+        <main class="container-fluid p-0 app-main">
+            <%-include('include/navigator')%>
+            <div class="container-fluid p-4 app-content">
+                <section class="card p-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <h1 class="h3 mb-1"><i class="fa-solid fa-list-check me-1" aria-hidden="true"></i> สูตรวัสดุต่อสินค้า</h1>
+                            <p class="text-secondary mb-0">กำหนดวัสดุที่จะตัดเมื่อขายสินค้า สูตรวัสดุไม่แสดงในบิล</p>
+                        </div>
+                        <a class="btn btn-outline-secondary" href="/assets">กลับไปรายการวัสดุ</a>
+                    </div>
+                    <% if (!assetGroups.length) { %>
+                    <div class="alert alert-warning">ยังไม่มีวัสดุในสต๊อก กรุณา<a href="/assets/new" class="alert-link">รับวัสดุเข้า</a>ก่อนกำหนดสูตร</div>
+                    <% } else if (!productGroups.length) { %>
+                    <div class="alert alert-warning">ยังไม่มีสินค้าในระบบ กรุณาเพิ่มสินค้าก่อนกำหนดสูตร</div>
+                    <% } else { %>
+                    <form id="recipe-form" class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label for="recipe-product-type" class="form-label">หมวดหมู่สินค้า</label>
+                            <select id="recipe-product-type" class="form-select" required>
+                                <% productTypes.forEach(type => { %><option value="<%=type.id%>"><%=type.name%></option><% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="recipe-product" class="form-label">สินค้า</label>
+                            <select id="recipe-product" class="form-select" required>
+                                <% productGroups.forEach(product => { %><option value="<%=product.product_name%>" data-type="<%=product.product_type%>"><%=product.product_name%></option><% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="recipe-asset" class="form-label">วัสดุ</label>
+                            <select id="recipe-asset" class="form-select" required>
+                                <% assetGroups.forEach(asset => { %><option value="<%=asset.asset_name%>" data-type="<%=asset.asset_type%>"><%=asset.asset_name%> (<%=asset.type%>)</option><% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="recipe-amount" class="form-label">จำนวนต่อสินค้า</label>
+                            <input id="recipe-amount" type="number" class="form-control" min="1" max="1000" value="1" required>
+                        </div>
+                        <div class="col-md-1 d-grid"><button class="btn btn-primary" type="submit" aria-label="บันทึกสูตรวัสดุ"><i class="fa-solid fa-plus" aria-hidden="true"></i></button></div>
+                    </form>
+                    <% } %>
+                    <div class="table-responsive mt-4">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead><tr><th>สินค้า</th><th>วัสดุ</th><th class="text-end">จำนวนต่อสินค้า</th><th></th></tr></thead>
+                            <tbody>
+                                <% recipes.forEach(recipe => { %>
+                                <tr>
+                                    <td><%=recipe.product_name%> (<%=recipe.product_type_name%>)</td>
+                                    <td><%=recipe.asset_name%> (<%=recipe.asset_type_name%>)</td>
+                                    <td class="text-end"><%=recipe.amount_per_product%></td>
+                                    <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger" data-delete-recipe="<%=recipe.id%>" aria-label="ลบสูตรวัสดุ"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></td>
+                                </tr>
+                                <% }) %>
+                                <% if (!recipes.length) { %><tr><td colspan="4" class="text-center text-secondary py-3">ยังไม่มีสูตรวัสดุ</td></tr><% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script>
+        const productType = document.getElementById('recipe-product-type');
+        const productSelect = document.getElementById('recipe-product');
+        if (productType && productSelect) {
+            function filterRecipeProducts() {
+                let firstVisible = null;
+                [...productSelect.options].forEach(option => {
+                    option.hidden = option.dataset.type !== productType.value;
+                    if (!option.hidden && !firstVisible) firstVisible = option;
+                });
+                if (firstVisible) firstVisible.selected = true;
+            }
+            productType.addEventListener('change', filterRecipeProducts);
+            filterRecipeProducts();
+
+            document.getElementById('recipe-form').addEventListener('submit', async event => {
+                event.preventDefault();
+                const productOption = productSelect.selectedOptions[0];
+                const assetOption = document.getElementById('recipe-asset').selectedOptions[0];
+                try {
+                    const response = await fetch('/productAssetRecipes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            product_type: productOption.dataset.type,
+                            product_name: productOption.value,
+                            asset_type: assetOption.dataset.type,
+                            asset_name: assetOption.value,
+                            amount: document.getElementById('recipe-amount').value,
+                        }),
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'บันทึกสูตรวัสดุไม่สำเร็จ');
+                    window.location.reload();
+                } catch (error) {
+                    window.alert(error.message);
+                }
+            });
+        }
+        document.addEventListener('click', async event => {
+            const button = event.target.closest('[data-delete-recipe]');
+            if (!button) return;
+            try {
+                const response = await fetch(`/productAssetRecipes/${button.dataset.deleteRecipe}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'ลบสูตรวัสดุไม่สำเร็จ');
+                }
+                window.location.reload();
+            } catch (error) {
+                window.alert(error.message);
+            }
+        });
+    </script>
+    <%-include('include/footer')%>
+</body>
+</html>

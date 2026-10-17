@@ -1,6 +1,6 @@
 ﻿const { AsyncLocalStorage } = require('node:async_hooks');
 const context = new AsyncLocalStorage();
-const tables = ['customers', 'discounts', 'login_history', 'products', 'product_types', 'quotation_items', 'quotations', 'transaction', 'users', 'user_types'];
+const tables = ['asset_transactions', 'asset_types', 'assets', 'customers', 'discounts', 'login_history', 'product_asset_recipes', 'product_inventory_settings', 'products', 'product_types', 'quotation_asset_items', 'quotation_items', 'quotations', 'transaction', 'users', 'user_types'];
 const names = tables.join('|');
 
 // Only the application's fixed SQL is accepted here. Values always remain bound parameters.

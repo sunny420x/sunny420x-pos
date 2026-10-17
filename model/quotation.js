@@ -1,5 +1,10 @@
 const db = require('../database');
 const { createPagination } = require('./pagination');
+const {
+    calculateAssetUsage,
+    checkAssetAvailability,
+    deductAssetUsage,
+} = require('./asset');
 
 function query(sql, values = []) {
     return new Promise((resolve, reject) => {
@@ -56,7 +61,7 @@ function discountValue(discount, subtotal) {
     return Math.round(Math.min(subtotal, value) * 100) / 100;
 }
 
-async function createQuotation({ companyId, userId, cart, customerId, discountCode }) {
+async function createQuotation({ companyId, userId, cart, customerId, discountCode, assetAdjustments }) {
     const items = normalizeCart(cart);
     const connection = await db.auth.promise().getConnection();
     try {
@@ -72,18 +77,40 @@ async function createQuotation({ companyId, userId, cart, customerId, discountCo
 
         let subtotal = 0;
         for (const item of items) {
-            const [available] = await connection.query(
-                `SELECT COUNT(*) AS available_count
-                FROM products
-                WHERE company_id = ? AND is_sold = 0 AND type = ? AND name = ? AND price = ?`,
-                [companyId, item.productType, item.productName, item.productPrice]
+            const [settings] = await connection.query(
+                `SELECT tracking_mode, is_available FROM product_inventory_settings
+                WHERE company_id = ? AND product_type = ? AND product_name = ? FOR UPDATE`,
+                [companyId, item.productType, item.productName]
             );
-            if (Number(available[0].available_count) < item.amount) {
-                throw quotationError(409, `สินค้า ${item.productName} มีไม่เพียงพอสำหรับใบเสนอราคานี้`);
+            const trackingMode = settings[0]?.tracking_mode || 'quantity';
+            if (trackingMode === 'availability') {
+                if (!settings[0]?.is_available) {
+                    throw quotationError(409, `สินค้า ${item.productName} หมดชั่วคราว`);
+                }
+                const [products] = await connection.query(
+                    `SELECT id FROM products
+                    WHERE company_id = ? AND type = ? AND name = ? AND price = ?
+                    ORDER BY id LIMIT 1`,
+                    [companyId, item.productType, item.productName, item.productPrice]
+                );
+                if (!products.length) throw quotationError(409, `ไม่พบสินค้า ${item.productName}`);
+            } else {
+                const [available] = await connection.query(
+                    `SELECT COUNT(*) AS available_count
+                    FROM products
+                    WHERE company_id = ? AND is_sold = 0 AND type = ? AND name = ? AND price = ?`,
+                    [companyId, item.productType, item.productName, item.productPrice]
+                );
+                if (Number(available[0].available_count) < item.amount) {
+                    throw quotationError(409, `สินค้า ${item.productName} มีไม่เพียงพอสำหรับใบเสนอราคานี้`);
+                }
             }
             subtotal += item.productPrice * item.amount;
             if (!Number.isSafeInteger(subtotal)) throw quotationError(400, 'ยอดรวมสินค้าเกินขอบเขตที่รองรับ');
         }
+
+        const assetUsage = await calculateAssetUsage(connection, companyId, items, assetAdjustments);
+        await checkAssetAvailability(connection, companyId, assetUsage);
 
         let discount = null;
         if (discountCode) {
@@ -138,6 +165,14 @@ async function createQuotation({ companyId, userId, cart, customerId, discountCo
                 ]
             );
         }
+        for (const item of assetUsage) {
+            await connection.query(
+                `INSERT INTO quotation_asset_items
+                    (quotation_id, asset_type, asset_name, amount, company_id)
+                VALUES (?, ?, ?, ?, ?)`,
+                [inserted.insertId, item.assetType, item.assetName, item.amount, companyId]
+            );
+        }
 
         await connection.commit();
         return { id: inserted.insertId, subtotal, discountAmount: amountOff, total };
@@ -161,7 +196,12 @@ async function getQuotation(companyId, id) {
         FROM quotation_items
         WHERE quotation_id = ? AND company_id = ?
         ORDER BY id`, [id, companyId]);
-    return { quotation: quotations[0], items };
+    const assetItems = await query(`
+        SELECT asset_type, asset_name, amount
+        FROM quotation_asset_items
+        WHERE quotation_id = ? AND company_id = ?
+        ORDER BY id`, [id, companyId]);
+    return { quotation: quotations[0], items, assetItems };
 }
 
 async function getQuotationsPage(requestedPage) {
@@ -200,6 +240,11 @@ async function confirmQuotation({ companyId, id }) {
             [companyId, id]
         );
         if (!items.length) throw quotationError(409, 'ใบเสนอราคานี้ไม่มีรายการสินค้า');
+        const [assetItems] = await connection.query(
+            `SELECT asset_type, asset_name, amount
+            FROM quotation_asset_items WHERE company_id = ? AND quotation_id = ? ORDER BY id`,
+            [companyId, id]
+        );
 
         const [billingRows] = await connection.query(
             'SELECT COALESCE(MAX(billing_id), 0) + 1 AS billing_id FROM `transaction` WHERE company_id = ? AND billing_id IS NOT NULL',
@@ -209,9 +254,18 @@ async function confirmQuotation({ companyId, id }) {
         const createdAt = new Date();
 
         for (const item of items) {
+            const [settings] = await connection.query(
+                `SELECT tracking_mode, is_available FROM product_inventory_settings
+                WHERE company_id = ? AND product_type = ? AND product_name = ? FOR UPDATE`,
+                [companyId, item.product_type, item.product_name]
+            );
+            const isAvailabilityTracked = settings[0]?.tracking_mode === 'availability';
+            if (isAvailabilityTracked && !settings[0].is_available) {
+                throw quotationError(409, `สินค้า ${item.product_name} หมดชั่วคราว กรุณาปรับปรุงใบเสนอราคา`);
+            }
             const [products] = await connection.query(
                 `SELECT id FROM products
-                WHERE company_id = ? AND is_sold = 0 AND type = ? AND name = ? AND price = ?
+                WHERE company_id = ? AND ${isAvailabilityTracked ? '' : 'is_sold = 0 AND'} type = ? AND name = ? AND price = ?
                 ORDER BY id LIMIT ? FOR UPDATE`,
                 [companyId, item.product_type, item.product_name, item.product_price, item.amount]
             );
@@ -219,11 +273,13 @@ async function confirmQuotation({ companyId, id }) {
                 throw quotationError(409, `สินค้า ${item.product_name} มีไม่เพียงพอ กรุณาปรับปรุงใบเสนอราคาก่อนขาย`);
             }
             for (const product of products) {
-                const [updated] = await connection.query(
-                    'UPDATE products SET is_sold = 1 WHERE company_id = ? AND id = ? AND is_sold = 0',
-                    [companyId, product.id]
-                );
-                if (updated.affectedRows !== 1) throw quotationError(409, 'สต๊อกสินค้าเปลี่ยนแปลง กรุณาลองอีกครั้ง');
+                if (!isAvailabilityTracked) {
+                    const [updated] = await connection.query(
+                        'UPDATE products SET is_sold = 1 WHERE company_id = ? AND id = ? AND is_sold = 0',
+                        [companyId, product.id]
+                    );
+                    if (updated.affectedRows !== 1) throw quotationError(409, 'สต๊อกสินค้าเปลี่ยนแปลง กรุณาลองอีกครั้ง');
+                }
                 await connection.query(
                     `INSERT INTO \`transaction\`
                         (type, name, value, stock_id, customer_id, billing_id, created_at, company_id)
@@ -232,6 +288,17 @@ async function confirmQuotation({ companyId, id }) {
                 );
             }
         }
+        await deductAssetUsage(
+            connection,
+            companyId,
+            assetItems.map(item => ({
+                assetType: Number(item.asset_type),
+                assetName: item.asset_name,
+                amount: Number(item.amount),
+            })),
+            billingId,
+            createdAt
+        );
 
         if (quotation.discount_id !== null) {
             const [discounts] = await connection.query(
@@ -272,4 +339,11 @@ async function confirmQuotation({ companyId, id }) {
     }
 }
 
-module.exports = { confirmQuotation, createQuotation, getQuotation, getQuotationsPage };
+module.exports = {
+    confirmQuotation,
+    createQuotation,
+    discountValue,
+    getQuotation,
+    getQuotationsPage,
+    normalizeCart,
+};

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <title>รับวัสดุเข้า | OpenPOS</title>
+    <%-include('include/head')%>
+</head>
+<body>
+    <div class="d-flex app-shell">
+        <%-include('include/sidebar')%>
+        <main class="container-fluid p-0 app-main">
+            <%-include('include/navigator')%>
+            <div class="container-fluid p-4 app-content">
+                <section class="card p-4" style="max-width: 800px">
+                    <div class="mb-3"><a href="/assets" class="text-decoration-none"><i class="fa-solid fa-chevron-left me-1" aria-hidden="true"></i> กลับไปรายการวัสดุ</a></div>
+                    <h1 class="h3 mb-1">รับวัสดุเข้าสต๊อก</h1>
+                    <p class="text-secondary mb-4">ระบุข้อมูลวัสดุที่รับเข้า ระบบจะแยกยอดคงเหลือและประวัติการนำไปใช้</p>
+                    <% if (!assetTypes.length) { %>
+                    <div class="alert alert-warning">
+                        ยังไม่มีหมวดหมู่วัสดุ กรุณา<a href="/assetTypes/new" class="alert-link">เพิ่มหมวดหมู่วัสดุก่อน</a>
+                    </div>
+                    <% } else { %>
+                    <form id="asset-form" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="asset-name" class="form-label">ชื่อวัสดุ</label>
+                            <input id="asset-name" class="form-control" maxlength="200" required autofocus>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="asset-type" class="form-label">หมวดหมู่วัสดุ</label>
+                            <select id="asset-type" class="form-select" required>
+                                <% assetTypes.forEach(type => { %><option value="<%=type.id%>"><%=type.name%></option><% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="asset-amount" class="form-label">จำนวนที่รับเข้า</label>
+                            <input id="asset-amount" type="number" class="form-control" min="1" max="1000" value="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="asset-import-price" class="form-label">ราคาทุนต่อหน่วย (ถ้ามี)</label>
+                            <input id="asset-import-price" type="number" class="form-control" min="0" step="1">
+                        </div>
+                        <div class="col-12 d-flex gap-2">
+                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk me-1" aria-hidden="true"></i> บันทึกรับวัสดุ</button>
+                            <a href="/assets" class="btn btn-outline-secondary">ยกเลิก</a>
+                        </div>
+                    </form>
+                    <% } %>
+                </section>
+            </div>
+        </main>
+    </div>
+    <% if (assetTypes.length) { %>
+    <script>
+        document.getElementById('asset-form').addEventListener('submit', async event => {
+            event.preventDefault();
+            try {
+                const response = await fetch('/assets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('asset-name').value,
+                        type: document.getElementById('asset-type').value,
+                        amount: document.getElementById('asset-amount').value,
+                        import_price: document.getElementById('asset-import-price').value,
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'บันทึกวัสดุไม่สำเร็จ');
+                window.location.assign('/assets');
+            } catch (error) {
+                let message = document.getElementById('asset-form-error');
+                if (!message) {
+                    message = document.createElement('div');
+                    message.id = 'asset-form-error';
+                    message.className = 'alert alert-danger col-12';
+                    message.setAttribute('role', 'alert');
+                    event.currentTarget.prepend(message);
+                }
+                message.textContent = error.message;
+            }
+        });
+    </script>
+    <% } %>
+    <%-include('include/footer')%>
+</body>
+</html>

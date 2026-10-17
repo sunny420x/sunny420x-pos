@@ -25,6 +25,9 @@ const connection = {
     release() {},
     async query(sql, values = []) {
         statements.push({ sql, values });
+        if (sql.includes('FROM product_inventory_settings')) return [[]];
+        if (sql.includes('FROM product_asset_recipes')) return [[]];
+        if (sql.includes('FROM quotation_asset_items')) return [[]];
         if (sql.startsWith('SELECT COUNT(*) AS available_count')) return [[{ available_count: stockAvailable }]];
         if (sql.startsWith('SELECT id, code, amount, discount_type')) {
             return [[{
@@ -249,12 +252,19 @@ test('sidebar exposes quotation list in POS mode', async () => {
     });
     assert.match(html, /href="\/quotations"/);
     assert.match(html, /ใบเสนอราคา/);
+    assert.match(html, /href="\/assets"/);
+    const inventoryHtml = await ejs.renderFile(path.join(viewsPath, 'include/menu.ejs'), {
+        user_data: [{ username: 'tester', type: 'admin', color: '#262626', permission: 'products', stock_mode: 'inventory_only' }],
+    });
+    assert.doesNotMatch(inventoryHtml, /href="\/assets"/);
 });
 
-test('canonical schema stores tenant-scoped quotes and line items', () => {
+test('canonical schema stores tenant-scoped quotes, materials, and separate asset categories', () => {
     const schema = fs.readFileSync(path.join(__dirname, '../schema/pos.sql'), 'utf8');
     assert.match(schema, /CREATE TABLE IF NOT EXISTS `quotations`/);
     assert.match(schema, /CREATE TABLE IF NOT EXISTS `quotation_items`/);
     assert.match(schema, /KEY idx_quotations_company_status \(company_id, status, id\)/);
     assert.match(schema, /KEY idx_quotation_items_company_quote \(company_id, quotation_id, id\)/);
+    assert.match(schema, /CREATE TABLE IF NOT EXISTS `asset_types`/);
+    assert.match(schema, /CREATE TABLE IF NOT EXISTS `quotation_asset_items`/);
 });

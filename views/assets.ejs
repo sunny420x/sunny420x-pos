@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <title>วัสดุและครุภัณฑ์ | OpenPOS</title>
+    <%-include('include/head')%>
+</head>
+<body>
+    <div class="d-flex app-shell">
+        <%-include('include/sidebar')%>
+        <main class="container-fluid p-0 app-main">
+            <%-include('include/navigator')%>
+            <div class="container-fluid p-4 app-content">
+                <section class="card p-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <h1 class="h3 mb-1"><i class="fa-solid fa-box-open me-1" aria-hidden="true"></i> วัสดุและครุภัณฑ์</h1>
+                            <p class="text-secondary mb-0">จัดการรายการวัสดุและตรวจสอบยอดคงเหลือ</p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-outline-secondary" href="/assetTypes">หมวดหมู่วัสดุ</a>
+                            <a class="btn btn-outline-primary" href="/assetRecipes">สูตรวัสดุต่อสินค้า</a>
+                            <a class="btn btn-primary" href="/assets/new"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i> รับวัสดุเข้า</a>
+                        </div>
+                    </div>
+                    <% if (assets.length) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead><tr><th>ชื่อวัสดุ</th><th>หมวดหมู่</th><th class="text-end">คงเหลือ</th><th class="text-end">ถูกใช้แล้ว</th></tr></thead>
+                            <tbody>
+                                <% assets.forEach(asset => { %>
+                                <tr>
+                                    <td><%=asset.name%></td>
+                                    <td><%=asset.type%></td>
+                                    <td class="text-end"><%=asset.available_count%></td>
+                                    <td class="text-end"><%=asset.used_count%></td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } else { %>
+                    <p class="text-center text-secondary py-5 mb-0">ยังไม่มีข้อมูลวัสดุ <a href="/assets/new">รับวัสดุเข้ารายการแรก</a></p>
+                    <% } %>
+                    <%-include('Components/pagination', { pagination: pagination })%>
+                </section>
+            </div>
+        </main>
+    </div>
+    <%-include('include/footer')%>
+</body>
+</html>

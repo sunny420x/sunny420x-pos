@@ -16,6 +16,8 @@ const {
     getProductsStockByTypeAndNamePage,
     deleteProductsByTransaction,
     getProductsHistoriesByType,
+    setProductAvailability,
+    setProductTrackingMode,
 } = require('./model/product')
 
 const {
@@ -24,7 +26,6 @@ const {
 } = require('./model/customer')
 
 const {
-    checkDiscount,
     getAllDiscounts
 } = require('./model/discount')
 const {
@@ -33,6 +34,21 @@ const {
     getQuotation,
     getQuotationsPage,
 } = require('./model/quotation')
+const { createSale } = require('./model/sale')
+const {
+    addAssetStock,
+    createAssetType,
+    deleteProductAssetRecipe,
+    getAvailableAssets,
+    getAllAssetGroups,
+    getAllProductAssetRecipes,
+    getAssetStockPage,
+    getAssetType,
+    getAssetTypes,
+    getProductGroups,
+    getProductAssetRecipes,
+    saveProductAssetRecipe,
+} = require('./model/asset')
 
 const {
     getProductSellingChart,
@@ -280,49 +296,41 @@ app.get("/deleteCustomer/:id", (req, res) => {
     }
 })
 
-app.get("/products_stock", (req, res) => {
-    const user_data = [req.user];
-    if (user_data[0].permission.split(',').includes('products')) {
-        let option = req.query.option ?? "list"
-        let type = req.query.type ?? "all"
-        const stock_mode = user_data[0].stock_mode || 'pos'
-        getProductTypes().then(product_types => {
-            const customersPromise = stock_mode === 'pos' ? getCustomerOptions() : Promise.resolve([])
-            customersPromise.then(customers => {
-                res.render('products_stock', {
-                    user_data: user_data,
-                    product_types: product_types,
-                    customers: customers,
-                    Helper: Helper,
-                    option: option,
-                    type: type,
-                    stock_mode: stock_mode,
-                })
-                res.end()
-            })
-        })
-    } else {
-        res.cookie('alert', 'permissionDenial')
-        res.redirect(req.get("Referrer"))
+app.get('/products_stock', asyncRoute(async (req, res) => {
+    if (!req.user.permission.split(',').includes('products')) {
+        res.cookie('alert', 'permissionDenial');
+        return res.redirect(req.get('Referrer'));
     }
-})
+    const option = req.query.option ?? 'list';
+    const type = req.query.type ?? 'all';
+    const stockMode = req.user.stock_mode || 'pos';
+    const [productTypes, customers, cartAssets] = await Promise.all([
+        getProductTypes(),
+        stockMode === 'pos' ? getCustomerOptions() : Promise.resolve([]),
+        stockMode === 'pos' ? getAvailableAssets() : Promise.resolve([]),
+    ]);
+    return res.render('products_stock', {
+        user_data: [req.user],
+        product_types: productTypes,
+        customers,
+        Helper,
+        option,
+        type,
+        stock_mode: stockMode,
+        cartAssets,
+    });
+}));
 
-app.get("/getSellProducts", (req, res) => {
-    const user_data = [req.user];
-    if (!user_data[0].permission.split(',').includes('products')) {
+app.get('/getSellProducts', asyncRoute(async (req, res) => {
+    if (!req.user.permission.split(',').includes('products')) {
         return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
     }
-    if ((user_data[0].stock_mode || 'pos') !== 'pos') {
+    if ((req.user.stock_mode || 'pos') !== 'pos') {
         return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
     }
-    let type = req.query.type
-    getSellProductsByType(type).then((products_stock) => {
-        res.render('Components/sellProductCatalog', {
-            products_stock: products_stock
-        })
-        res.end()
-    })
-})
+    const products_stock = await getSellProductsByType(req.query.type);
+    return res.render('Components/sellProductCatalog', { products_stock });
+}));
 
 app.get("/getProductsHistoriesByType", (req, res) => {
     const user_data = [req.user];
@@ -428,161 +436,85 @@ function addProductStock(name, type, price, import_price, expired_date, created_
     });
 }
 
-app.post("/addProductStock", (req, res) => {
-    const user_data = [req.user];
-    if (user_data[0].permission.split(',').includes('products')) {
-        const name = req.body.name
-        const type = req.body.type
-        const amount = req.body.amount
-        const stock_mode = user_data[0].stock_mode || 'pos'
-        const price = stock_mode === 'inventory_only' ? 0 : req.body.price
-        const import_price = stock_mode === 'inventory_only' ? null : (req.body.import_price || null)
-        const expired_date = req.body.expired_date || null
-        const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
-
-        addProductStock(name, type, price, import_price, expired_date, created_at, amount).then((result) => {
-            if (result == true) {
-                res.status(200).json({ success: true, message: 'INSERT OR IGNORE products successful!' });
-            } else {
-                res.status(500).json({ error: result.code });
-            }
-        })
-    } else {
-        res.cookie('alert', 'permissionDenial')
-        res.redirect(req.get("Referrer"))
+app.post('/addProductStock', asyncRoute(async (req, res) => {
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
     }
-})
-
-app.post('/sellProduct', (req, res) => {
-    const user_data = [req.user];
-    if (user_data[0].permission.split(',').includes('products')) {
-        if ((user_data[0].stock_mode || 'pos') !== 'pos') {
-            return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
-        }
-        const cart = req.body.cart
-        const customer = req.body.customer === "-" ? null : req.body.customer;
-        const discount_code = req.body.discount_code || null
-        const created_at = moment().format("YYYY-MM-DD HH:mm:ss")
-
-        processCart();
-
-        async function processCart() {
-            try {
-                if (!Array.isArray(cart) || cart.length === 0) {
-                    return res.status(400).json({ error: 'กรุณาเพิ่มสินค้าในตะกร้าก่อนขาย' });
-                }
-
-                // Get the last billing ID
-                const lastBillingResult = await new Promise((resolve, reject) => {
-                    db.query(
-                        "SELECT billing_id FROM transaction WHERE billing_id IS NOT NULL ORDER BY id DESC LIMIT 1",
-                        (err, result) => (err ? reject(err) : resolve(result))
-                    );
-                });
-
-                let billing_id = 1; // Default to 1 if no previous billing ID exists
-                if (lastBillingResult.length > 0) {
-                    billing_id = parseInt(lastBillingResult[0].billing_id) + 1;
-                }
-
-                let subtotal = 0;
-                for (let i = 0; i < cart.length; i++) {
-                    const { product_type, product_name, product_price, amount } = cart[i];
-                    if (!Number.isSafeInteger(Number(product_price)) || Number(product_price) < 0 ||
-                        !Number.isSafeInteger(Number(amount)) || Number(amount) < 1) {
-                        return res.status(400).json({ error: 'ข้อมูลสินค้าในตะกร้าไม่ถูกต้อง' });
-                    }
-
-                    // Check the available quantity of the product
-                    const availableProductResult = await new Promise((resolve, reject) => {
-                        db.query(
-                            "SELECT COUNT(*) AS available_count FROM products WHERE is_sold = 0 AND type = ? AND name = ? AND price = ?",
-                            [product_type, product_name, product_price],
-                            (err, result) => (err ? reject(err) : resolve(result))
-                        );
-                    });
-
-                    const availableCount = availableProductResult[0].available_count;
-
-                    // If there aren't enough products available, throw an error
-                    if (availableCount < amount) {
-                        throw new Error(`สินค้า: ${product_name} มีไม่เพียงพอสำหรับคำสั่งซื้อนี้`);
-                    }
-                    subtotal += Number(product_price) * Number(amount);
-                    if (!Number.isSafeInteger(subtotal)) {
-                        return res.status(400).json({ error: 'ยอดรวมสินค้าเกินขอบเขตที่รองรับ' });
-                    }
-                }
-
-                if (discount_code != null) {
-                    const discountResult = await checkDiscount(discount_code, subtotal);
-                    if (!discountResult.valid) {
-                        if (discountResult.minimumPurchase !== undefined) {
-                            return res.status(400).json({
-                                error: `ยอดซื้อขั้นต่ำสำหรับโค้ดนี้คือ ${discountResult.minimumPurchase} บาท`
-                            });
-                        }
-                        return res.status(400).json({ error: 'โค้ดส่วนลดไม่ถูกต้องหรือถูกใช้งานแล้ว' });
-                    }
-                }
-
-                // Recheck and sell each requested unit after validating the complete cart.
-                for (let i = 0; i < cart.length; i++) {
-                    const { product_type, product_name, product_price, amount } = cart[i];
-                    // If enough stock is available, proceed with the transaction
-                    for (let j = 0; j < amount; j++) {
-                        // Select product ID
-                        const productResult = await new Promise((resolve, reject) => {
-                            db.query(
-                                "SELECT id FROM products WHERE is_sold = 0 AND type = ? AND name = ? AND price = ? LIMIT 1",
-                                [product_type, product_name, product_price],
-                                (err, result) => (err ? reject(err) : resolve(result))
-                            );
-                        });
-
-                        if (productResult.length === 0) {
-                            throw new Error("สินค้าหมด");
-                        }
-
-                        const product_id = productResult[0].id;
-
-                        // Mark product as sold
-                        await new Promise((resolve, reject) => {
-                            db.query(
-                                "UPDATE products SET is_sold = 1 WHERE id = ?",
-                                [product_id],
-                                (err) => (err ? reject(err) : resolve())
-                            );
-                        });
-
-                        // INSERT OR IGNORE transaction
-                        await new Promise((resolve, reject) => {
-                            db.query(
-                                "INSERT INTO transaction(type, name, value, stock_id, customer_id, billing_id, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                                [product_type, product_name, -1, product_id, customer, billing_id, created_at],
-                                (err) => (err ? reject(err) : resolve())
-                            );
-                        });
-                    }
-                }
-                if (discount_code != null) {
-                    db.query("UPDATE discounts SET billing_id = ? WHERE code = ?", [billing_id, discount_code], (err) => {
-                        if (err) res.sendStatus(500).json({ error: err.message })
-                        res.status(200).json({ success: true, bill: `/billing/${billing_id}` });
-                    })
-                } else {
-                    res.status(200).json({ success: true, bill: `/billing/${billing_id}` });
-                }
-            } catch (err) {
-                console.error(err);
-                res.status(500).json({ error: err.message });
-            }
-        }
-    } else {
-        res.cookie('alert', 'permissionDenial')
-        res.redirect(req.get("Referrer"))
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    const type = Number(req.body.type);
+    const stockMode = req.user.stock_mode || 'pos';
+    const trackingMode = stockMode === 'pos' && req.body.tracking_mode === 'availability'
+        ? 'availability'
+        : 'quantity';
+    const amount = trackingMode === 'availability' ? 1 : Number(req.body.amount);
+    const price = stockMode === 'inventory_only' ? 0 : Number(req.body.price);
+    const importPrice = stockMode === 'inventory_only' || req.body.import_price === ''
+        ? null
+        : Number(req.body.import_price || 0);
+    const expiredDate = req.body.expired_date || null;
+    if (!name || name.length > 200 || !Number.isSafeInteger(type) || type < 1 ||
+        !Number.isSafeInteger(amount) || amount < 1 || amount > 1000 ||
+        !Number.isSafeInteger(price) || price < 0 ||
+        (importPrice !== null && (!Number.isSafeInteger(importPrice) || importPrice < 0))) {
+        return res.status(400).json({ error: 'ข้อมูลสินค้าไม่ถูกต้อง' });
     }
-})
+    const [types] = await db.auth.promise().query(
+        'SELECT id FROM product_types WHERE company_id = ? AND id = ?',
+        [req.user.company_id, type]
+    );
+    if (!types.length) return res.status(400).json({ error: 'ไม่พบหมวดหมู่สินค้าที่เลือก' });
+
+    if (trackingMode === 'availability') {
+        const [products] = await db.auth.promise().query(
+            'SELECT id FROM products WHERE company_id = ? AND type = ? AND name = ? LIMIT 1',
+            [req.user.company_id, type, name]
+        );
+        if (!products.length) {
+            await addProductStock(name, type, price, importPrice, expiredDate, moment().format('YYYY-MM-DD HH:mm:ss'), 1);
+        }
+        await setProductTrackingMode(type, name, trackingMode, req.user.company_id);
+        await setProductAvailability(type, name, true);
+    } else {
+        await addProductStock(name, type, price, importPrice, expiredDate, moment().format('YYYY-MM-DD HH:mm:ss'), amount);
+        if (stockMode === 'pos') await setProductTrackingMode(type, name, 'quantity', req.user.company_id);
+    }
+    return res.status(200).json({ success: true });
+}));
+
+app.post('/sellProduct', asyncRoute(async (req, res) => {
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    const customerId = req.body.customer === '-' || req.body.customer === '' || req.body.customer == null
+        ? null
+        : Number(req.body.customer);
+    if (customerId !== null && (!Number.isSafeInteger(customerId) || customerId < 1)) {
+        return res.status(400).json({ error: 'ข้อมูลลูกค้าไม่ถูกต้อง' });
+    }
+    if (req.body.discount_code != null && typeof req.body.discount_code !== 'string') {
+        return res.status(400).json({ error: 'โค้ดส่วนลดไม่ถูกต้อง' });
+    }
+    const discountCode = typeof req.body.discount_code === 'string' ? req.body.discount_code.trim() || null : null;
+    if (discountCode && discountCode.length > 100) {
+        return res.status(400).json({ error: 'โค้ดส่วนลดต้องมีความยาวไม่เกิน 100 ตัวอักษร' });
+    }
+    try {
+        const result = await createSale({
+            companyId: req.user.company_id,
+            cart: req.body.cart,
+            customerId,
+            discountCode,
+            assetAdjustments: req.body.asset_adjustments,
+        });
+        return res.status(200).json({ success: true, bill: `/billing/${result.billingId}` });
+    } catch (error) {
+        if (!error.statusCode) console.error('Sale creation failed:', error);
+        return res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : 'บันทึกการขายไม่สำเร็จ กรุณาลองอีกครั้ง',
+        });
+    }
+}));
 
 app.post('/quotations', asyncRoute(async (req, res) => {
     if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
@@ -615,6 +547,7 @@ app.post('/quotations', asyncRoute(async (req, res) => {
             cart: req.body.cart,
             customerId,
             discountCode,
+            assetAdjustments: req.body.asset_adjustments,
         });
         return res.status(201).json({ success: true, quotation: `/quotations/${quotation.id}` });
     } catch (error) {
@@ -623,6 +556,255 @@ app.post('/quotations', asyncRoute(async (req, res) => {
             error: error.statusCode ? error.message : 'ออกใบเสนอราคาไม่สำเร็จ กรุณาลองอีกครั้ง'
         });
     }
+}));
+
+app.get('/assets', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    }
+    const result = await getAssetStockPage(req.query.page);
+    return res.render('assets', {
+        user_data: [req.user],
+        assets: result.assets,
+        pagination: {
+            ...result.pagination,
+            ajax: false,
+            href: page => `/assets?page=${page}`,
+        },
+    });
+}));
+
+app.get('/assets/new', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    return res.render('asset_form', {
+        user_data: [req.user],
+        assetTypes: await getAssetTypes(),
+    });
+}));
+
+app.get('/assetRecipes', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    const [assetGroups, productGroups, productTypes, assetTypes, recipes] = await Promise.all([
+        getAllAssetGroups(),
+        getProductGroups(),
+        getProductTypes(),
+        getAssetTypes(),
+        getAllProductAssetRecipes(),
+    ]);
+    return res.render('asset_recipes', {
+        user_data: [req.user],
+        assetGroups,
+        productGroups,
+        productTypes,
+        assetTypes,
+        recipes,
+    });
+}));
+
+app.post('/assets', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    const type = Number(req.body.type);
+    const amount = Number(req.body.amount);
+    const importPrice = req.body.import_price === '' || req.body.import_price == null
+        ? null
+        : Number(req.body.import_price);
+    if (!name || name.length > 200 || !Number.isSafeInteger(type) || type < 1 ||
+        !Number.isSafeInteger(amount) || amount < 1 || amount > 1000 ||
+        (importPrice !== null && (!Number.isSafeInteger(importPrice) || importPrice < 0))) {
+        return res.status(400).json({ error: 'ข้อมูลวัสดุไม่ถูกต้อง' });
+    }
+    const [types] = await db.auth.promise().query(
+        'SELECT id FROM asset_types WHERE company_id = ? AND id = ?',
+        [req.user.company_id, type]
+    );
+    if (!types.length) return res.status(400).json({ error: 'ไม่พบหมวดหมู่ที่เลือก' });
+
+    await addAssetStock({
+        name,
+        type,
+        amount,
+        importPrice,
+        companyId: req.user.company_id,
+    });
+    return res.status(201).json({ success: true });
+}));
+
+app.post('/assetTypes', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    if (!name || name.length > 100) return res.status(400).json({ error: 'ชื่อหมวดหมู่วัสดุไม่ถูกต้อง' });
+    try {
+        await createAssetType(name, req.user.company_id);
+    } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: 'มีหมวดหมู่วัสดุชื่อนี้แล้ว' });
+        }
+        throw error;
+    }
+    return res.status(201).json({ success: true });
+}));
+
+app.get('/assetTypes', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    return res.render('asset_types', {
+        user_data: [req.user],
+        assetTypes: await getAssetTypes(),
+    });
+}));
+
+app.get('/assetTypes/new', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    return res.render('asset_type_form', { user_data: [req.user], assetType: null });
+}));
+
+app.get('/assetTypes/:id/edit', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    if (!/^[1-9]\d*$/.test(req.params.id)) return res.sendStatus(404);
+    const assetType = await getAssetType(req.params.id);
+    if (!assetType) return res.sendStatus(404);
+    return res.render('asset_type_form', { user_data: [req.user], assetType });
+}));
+
+app.post('/assetTypes/:id/edit', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).send('บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว');
+    if (!req.user.permission.split(',').includes('products')) return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    if (!/^[1-9]\d*$/.test(req.params.id)) return res.sendStatus(404);
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    if (!name || name.length > 100) {
+        const assetType = await getAssetType(req.params.id);
+        if (!assetType) return res.sendStatus(404);
+        return res.status(400).render('asset_type_form', {
+            user_data: [req.user], assetType, error: 'ชื่อหมวดหมู่วัสดุต้องมี 1–100 ตัวอักษร',
+        });
+    }
+    try {
+        await updateAssetType(req.params.id, name);
+    } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            const assetType = await getAssetType(req.params.id);
+            return res.status(409).render('asset_type_form', {
+                user_data: [req.user], assetType, error: 'มีหมวดหมู่วัสดุชื่อนี้แล้ว',
+            });
+        }
+        throw error;
+    }
+    return res.redirect('/assetTypes');
+}));
+
+app.post('/productAssetRecipes', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    const productType = Number(req.body.product_type);
+    const assetType = Number(req.body.asset_type);
+    const amount = Number(req.body.amount);
+    const productName = typeof req.body.product_name === 'string' ? req.body.product_name.trim() : '';
+    const assetName = typeof req.body.asset_name === 'string' ? req.body.asset_name.trim() : '';
+    if (!Number.isSafeInteger(productType) || productType < 1 ||
+        !Number.isSafeInteger(assetType) || assetType < 1 ||
+        !Number.isSafeInteger(amount) || amount < 1 || amount > 1000 ||
+        !productName || productName.length > 200 || !assetName || assetName.length > 200) {
+        return res.status(400).json({ error: 'ข้อมูลสูตรวัสดุไม่ถูกต้อง' });
+    }
+    const [products, assets] = await Promise.all([
+        db.auth.promise().query(
+            'SELECT id FROM products WHERE company_id = ? AND type = ? AND name = ? LIMIT 1',
+            [req.user.company_id, productType, productName]
+        ),
+        db.auth.promise().query(
+            'SELECT id FROM assets WHERE company_id = ? AND type = ? AND name = ? LIMIT 1',
+            [req.user.company_id, assetType, assetName]
+        ),
+    ]);
+    if (!products[0].length) return res.status(400).json({ error: 'ไม่พบสินค้าที่เลือก' });
+    if (!assets[0].length) return res.status(400).json({ error: 'ไม่พบวัสดุที่เลือก' });
+    await saveProductAssetRecipe({
+        productType,
+        productName,
+        assetType,
+        assetName,
+        amount,
+        companyId: req.user.company_id,
+    });
+    return res.status(201).json({ success: true });
+}));
+
+app.delete('/productAssetRecipes/:id', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    if (!/^[1-9]\d*$/.test(req.params.id)) return res.status(400).json({ error: 'สูตรวัสดุไม่ถูกต้อง' });
+    await deleteProductAssetRecipe(req.params.id);
+    return res.sendStatus(204);
+}));
+
+app.get('/productAssetRecipes', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    const type = Number(req.query.type);
+    const name = typeof req.query.name === 'string' ? req.query.name.trim() : '';
+    if (!Number.isSafeInteger(type) || type < 1 || !name || name.length > 200) {
+        return res.status(400).json({ error: 'ข้อมูลสินค้าไม่ถูกต้อง' });
+    }
+    return res.json(await getProductAssetRecipes(type, name));
+}));
+
+app.post('/productInventorySettings', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    const type = Number(req.body.type);
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    const trackingMode = req.body.tracking_mode;
+    if (!Number.isSafeInteger(type) || type < 1 || !name || name.length > 200 ||
+        !['quantity', 'availability'].includes(trackingMode)) {
+        return res.status(400).json({ error: 'ข้อมูลรูปแบบสต๊อกไม่ถูกต้อง' });
+    }
+    const [products] = await db.auth.promise().query(
+        'SELECT id FROM products WHERE company_id = ? AND type = ? AND name = ? LIMIT 1',
+        [req.user.company_id, type, name]
+    );
+    if (!products.length) return res.status(404).json({ error: 'ไม่พบสินค้า' });
+    await setProductTrackingMode(type, name, trackingMode, req.user.company_id);
+    return res.json({ success: true });
+}));
+
+app.post('/productAvailability', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+    const type = Number(req.body.type);
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    if (!Number.isSafeInteger(type) || type < 1 || !name || name.length > 200 ||
+        typeof req.body.available !== 'boolean') {
+        return res.status(400).json({ error: 'ข้อมูลสถานะสินค้าไม่ถูกต้อง' });
+    }
+    const [products] = await db.auth.promise().query(
+        'SELECT id FROM products WHERE company_id = ? AND type = ? AND name = ? LIMIT 1',
+        [req.user.company_id, type, name]
+    );
+    if (!products.length) return res.status(404).json({ error: 'ไม่พบสินค้า' });
+    await setProductAvailability(type, name, req.body.available, req.user.company_id);
+    return res.json({ success: true });
 }));
 
 app.get('/quotations', asyncRoute(async (req, res) => {
@@ -657,6 +839,7 @@ app.get('/quotations/:id', asyncRoute(async (req, res) => {
         user_data: [req.user],
         quotation: result.quotation,
         items: result.items,
+        assetItems: result.assetItems,
         moment,
         Helper,
     });
@@ -683,6 +866,7 @@ app.post('/quotations/:id/confirm', asyncRoute(async (req, res) => {
             user_data: [req.user],
             quotation: quotation.quotation,
             items: quotation.items,
+            assetItems: quotation.assetItems,
             moment,
             Helper,
             error: error.statusCode ? error.message : 'ยืนยันใบเสนอราคาไม่สำเร็จ กรุณาลองอีกครั้ง',

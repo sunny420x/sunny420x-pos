@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <title><%=assetType ? 'แก้ไข' : 'เพิ่ม'%>หมวดหมู่วัสดุ | OpenPOS</title>
+    <%-include('include/head')%>
+</head>
+<body>
+    <div class="d-flex app-shell">
+        <%-include('include/sidebar')%>
+        <main class="container-fluid p-0 app-main">
+            <%-include('include/navigator')%>
+            <div class="container-fluid p-4 app-content">
+                <section class="card p-4" style="max-width: 760px">
+                    <div class="mb-3">
+                        <a href="/assetTypes" class="text-decoration-none"><i class="fa-solid fa-chevron-left me-1" aria-hidden="true"></i> กลับไปหมวดหมู่วัสดุ</a>
+                    </div>
+                    <h1 class="h3 mb-3"><%=assetType ? 'แก้ไขหมวดหมู่วัสดุ' : 'เพิ่มหมวดหมู่วัสดุ'%></h1>
+                    <% if (typeof error !== 'undefined') { %><div class="alert alert-danger" role="alert"><%=error%></div><% } %>
+                    <% if (assetType) { %>
+                    <form method="post" action="/assetTypes/<%=assetType.id%>/edit">
+                        <div class="mb-3">
+                            <label for="asset-type-name" class="form-label">ชื่อหมวดหมู่</label>
+                            <input id="asset-type-name" name="name" class="form-control" maxlength="100" value="<%=assetType.name%>" required autofocus>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1" aria-hidden="true"></i> บันทึกการแก้ไข</button>
+                        <a href="/assetTypes" class="btn btn-outline-secondary">ยกเลิก</a>
+                    </form>
+                    <% } else { %>
+                    <form id="asset-type-form">
+                        <div class="mb-3">
+                            <label for="asset-type-name" class="form-label">ชื่อหมวดหมู่</label>
+                            <input id="asset-type-name" name="name" class="form-control" maxlength="100" required autofocus>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i> เพิ่มหมวดหมู่</button>
+                        <a href="/assetTypes" class="btn btn-outline-secondary">ยกเลิก</a>
+                    </form>
+                    <script>
+                        document.getElementById('asset-type-form').addEventListener('submit', async event => {
+                            event.preventDefault();
+                            try {
+                                const response = await fetch('/assetTypes', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ name: document.getElementById('asset-type-name').value }),
+                                });
+                                const data = await response.json();
+                                if (!response.ok) throw new Error(data.error || 'เพิ่มหมวดหมู่ไม่สำเร็จ');
+                                window.location.assign('/assetTypes');
+                            } catch (error) {
+                                let message = document.getElementById('asset-type-error');
+                                if (!message) {
+                                    message = document.createElement('div');
+                                    message.id = 'asset-type-error';
+                                    message.className = 'alert alert-danger';
+                                    message.setAttribute('role', 'alert');
+                                    event.currentTarget.prepend(message);
+                                }
+                                message.textContent = error.message;
+                            }
+                        });
+                    </script>
+                    <% } %>
+                </section>
+            </div>
+        </main>
+    </div>
+    <%-include('include/footer')%>
+</body>
+</html>

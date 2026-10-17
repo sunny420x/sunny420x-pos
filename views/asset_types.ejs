@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <title>หมวดหมู่วัสดุ | OpenPOS</title>
+    <%-include('include/head')%>
+</head>
+<body>
+    <div class="d-flex app-shell">
+        <%-include('include/sidebar')%>
+        <main class="container-fluid p-0 app-main">
+            <%-include('include/navigator')%>
+            <div class="container-fluid p-4 app-content">
+                <section class="card p-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <h1 class="h3 mb-1"><i class="fa-solid fa-tags me-1" aria-hidden="true"></i> หมวดหมู่วัสดุ</h1>
+                            <p class="text-secondary mb-0">หมวดหมู่วัสดุแยกจากหมวดหมู่สินค้า</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-outline-secondary" href="/assets">กลับไปรายการวัสดุ</a>
+                            <a class="btn btn-primary" href="/assetTypes/new"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i> เพิ่มหมวดหมู่</a>
+                        </div>
+                    </div>
+                    <% if (assetTypes.length) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead><tr><th style="width: 80px">#</th><th>ชื่อหมวดหมู่</th><th class="text-end">จัดการ</th></tr></thead>
+                            <tbody>
+                                <% assetTypes.forEach((assetType, index) => { %>
+                                <tr>
+                                    <td><%=index + 1%></td>
+                                    <td class="fw-semibold"><%=assetType.name%></td>
+                                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/assetTypes/<%=assetType.id%>/edit"><i class="fa-solid fa-pen-to-square me-1" aria-hidden="true"></i> แก้ไข</a></td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } else { %>
+                    <div class="text-center text-secondary py-5">
+                        <i class="fa-solid fa-tags fs-2 mb-2" aria-hidden="true"></i>
+                        <p>ยังไม่มีหมวดหมู่วัสดุ</p>
+                        <a href="/assetTypes/new" class="btn btn-primary">เพิ่มหมวดหมู่แรก</a>
+                    </div>
+                    <% } %>
+                </section>
+            </div>
+        </main>
+    </div>
+    <%-include('include/footer')%>
+</body>
+</html>

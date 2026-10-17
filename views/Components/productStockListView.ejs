@@ -17,12 +17,20 @@
                     <% if (stock_mode !== 'inventory_only') { %>
                     <td><%=row.price%></td>
                     <% } %>
-                    <td><%if(row.value != 0) {%><%=row.value%><%} else {%><span class="badge bg-danger">สินค้าหมด</span><%}%></td>
+                    <td>
+                        <% if (row.tracking_mode === 'availability') { %>
+                        <span class="badge <%=row.is_available ? 'bg-success' : 'bg-danger'%>"><%=row.is_available ? 'พร้อมขาย' : 'หมดชั่วคราว'%></span>
+                        <% } else if(row.value != 0) { %><%=row.value%><% } else { %><span class="badge bg-danger">สินค้าหมด</span><% } %>
+                    </td>
                     <td>
                         <% if (stock_mode === 'inventory_only') { %>
                         <button class="btn btn-warning" data-type="<%=row.type_id%>" data-name="<%=row.name%>" onclick="deductStockFromButton(this)" aria-label="ตัดสต๊อก <%=row.name%>" title="ตัดสต๊อกสินค้า" <%=row.value <= 0 ? 'disabled' : ''%>><i class="fa-solid fa-minus"></i></button>
                         <% } else { %>
-                        <button class="btn btn-warning" onclick="addToCart('<%=row.type_id%>', '<%=row.name%>', '<%=row.price%>', 1, '<%=row.value%>')" <%=row.value <= 0 ? 'disabled' : ''%>><i class="fa-solid fa-shopping-cart"></i></button>
+                        <button class="btn btn-warning" data-cart-product data-type="<%=row.type_id%>" data-name="<%=row.name%>" data-price="<%=row.price%>" data-available="<%=row.tracking_mode === 'availability' ? 2147483647 : row.value%>" data-tracking-mode="<%=row.tracking_mode%>" data-recipe="<%=JSON.stringify(row.asset_recipe)%>" <%=row.value <= 0 ? 'disabled' : ''%> aria-label="เพิ่ม <%=row.name%> ลงรถเข็น"><i class="fa-solid fa-shopping-cart"></i></button>
+                        <button class="btn btn-outline-secondary" data-set-tracking data-type="<%=row.type_id%>" data-name="<%=row.name%>" data-mode="<%=row.tracking_mode === 'availability' ? 'quantity' : 'availability'%>" title="<%=row.tracking_mode === 'availability' ? 'เปลี่ยนเป็นสต๊อกแบบจำนวน' : 'เปลี่ยนเป็นสถานะมี/หมด'%>"><i class="fa-solid fa-repeat"></i></button>
+                        <% if (row.tracking_mode === 'availability') { %>
+                        <button class="btn btn-outline-<%=row.is_available ? 'danger' : 'success'%>" data-set-availability data-type="<%=row.type_id%>" data-name="<%=row.name%>" data-available="<%=row.is_available ? 'false' : 'true'%>" title="<%=row.is_available ? 'ตั้งเป็นหมดชั่วคราว' : 'ตั้งเป็นพร้อมขาย'%>"><i class="fa-solid fa-toggle-<%=row.is_available ? 'on' : 'off'%>"></i></button>
+                        <% } %>
                         <% } %>
                         <button class="btn btn-primary" onclick="openLink('/products_stock/<%=row.type_id%>/<%=encodeURIComponent(row.name)%>')"><i class="fa-solid fa-up-right-from-square"></i></button>
                     </td>

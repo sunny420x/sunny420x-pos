@@ -6,10 +6,12 @@
             data-type="<%=product.type_id%>"
             data-name="<%=product.name%>"
             data-price="<%=product.price%>"
-            data-available="<%=product.available_count%>">
+            data-available="<%=product.available_count%>"
+            data-tracking-mode="<%=product.tracking_mode || 'quantity'%>"
+            data-recipe="<%=JSON.stringify(product.asset_recipe || [])%>">
             <span class="sell-product-card-name"><%=product.name%></span>
             <span class="sell-product-card-price"><%=Number(product.price).toLocaleString('en-US')%> บาท</span>
-            <span class="sell-product-card-stock">เหลือ <%=product.available_count%> ชิ้น</span>
+            <span class="sell-product-card-stock"><%=product.tracking_mode === 'availability' ? 'สถานะ: พร้อมขาย' : `เหลือ ${product.available_count} ชิ้น`%></span>
             <span class="sell-product-card-action"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i>เพิ่มลงรถเข็น</span>
         </button>
     </div>

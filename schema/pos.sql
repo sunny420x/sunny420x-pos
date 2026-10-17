@@ -85,6 +85,17 @@ CREATE TABLE IF NOT EXISTS `quotation_items` (
   KEY idx_quotation_items_company_quote (company_id, quotation_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE IF NOT EXISTS `quotation_asset_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `quotation_id` bigint(20) UNSIGNED NOT NULL,
+  `asset_type` int(11) UNSIGNED NOT NULL,
+  `asset_name` varchar(200) NOT NULL,
+  `amount` int(10) UNSIGNED NOT NULL,
+  `company_id` int(11) UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY idx_quotation_asset_company_quote (company_id, quotation_id, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE IF NOT EXISTS `login_history` (
   `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
@@ -110,6 +121,69 @@ CREATE TABLE IF NOT EXISTS `products` (
  KEY idx_products_company (company_id, id),
  KEY idx_products_company_name_price (company_id, name, price),
  KEY idx_products_company_transaction (company_id, transaction_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `product_inventory_settings` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_type` int(11) UNSIGNED NOT NULL,
+  `product_name` varchar(200) NOT NULL,
+  `tracking_mode` enum('quantity','availability') NOT NULL DEFAULT 'quantity',
+  `is_available` tinyint(1) NOT NULL DEFAULT 1,
+  `company_id` int(11) UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY uq_product_inventory_company_product (company_id, product_type, product_name),
+  KEY idx_product_inventory_company_mode (company_id, tracking_mode, is_available)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `asset_transactions` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `billing_id` int(11) DEFAULT NULL,
+  `type` int(11) UNSIGNED NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `value` int(11) NOT NULL,
+  `asset_id` int(11) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `company_id` int(11) UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY idx_asset_transactions_company_type_name (company_id, type, name),
+  KEY idx_asset_transactions_company_billing (company_id, billing_id, asset_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `asset_types` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `company_id` int(11) UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY uq_asset_types_company_name (`company_id`, `name`),
+  KEY idx_asset_types_company (company_id, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `assets` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) NOT NULL,
+  `type` int(11) UNSIGNED NOT NULL,
+  `import_price` int(12) UNSIGNED DEFAULT NULL,
+  `is_used` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `asset_transaction_id` int(11) UNSIGNED DEFAULT NULL,
+  `company_id` int(11) UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY idx_assets_company_type_name_used (company_id, type, name, is_used),
+  KEY idx_assets_company_transaction (company_id, asset_transaction_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `product_asset_recipes` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_type` int(11) UNSIGNED NOT NULL,
+  `product_name` varchar(200) NOT NULL,
+  `asset_type` int(11) UNSIGNED NOT NULL,
+  `asset_name` varchar(200) NOT NULL,
+  `amount_per_product` int(10) UNSIGNED NOT NULL,
+  `company_id` int(11) UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY uq_product_asset_recipe (company_id, product_type, product_name, asset_type, asset_name),
+  KEY idx_product_asset_recipe_company_product (company_id, product_type, product_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `product_types` (

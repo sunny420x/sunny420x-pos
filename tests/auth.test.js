@@ -6,6 +6,8 @@ test('tenant reads scope joins and nested queries',()=>{
  const sql=scopeSql('SELECT * FROM products p LEFT JOIN (SELECT * FROM transaction WHERE id=?) t ON t.id=p.transaction_id',7);
  assert.equal((sql.match(/company_id = 7/g)||[]).length,2);
  assert.match(sql,/AS p LEFT JOIN/);
+ const assetSql=scopeSql('SELECT a.id FROM assets a JOIN asset_types t ON t.id=a.type',7);
+ assert.equal((assetSql.match(/company_id = 7/g)||[]).length,2);
 });
 test('tenant writes and deletes cannot escape outer predicate',()=>{
  assert.match(scopeSql('UPDATE users SET full_name=? WHERE id=? OR username=?',7),/WHERE users.company_id = 7 AND \( id=\? OR username=\?\)/);

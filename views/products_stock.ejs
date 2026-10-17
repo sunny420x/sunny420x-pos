@@ -1,11 +1,13 @@
 <html>
     <head>
-        <title><%= stock_mode === 'inventory_only' ? 'รายการสต๊อก' : 'รายการสินค้าในระบบ' %> | SunnyPOS</title>
+        <title><%= stock_mode === 'inventory_only' ? 'รายการสต๊อก' : 'รายการสินค้าในระบบ' %> | OpenPOS</title>
         <%-include('include/head')%>
     </head>
     <body>
+        <% const availableCartAssets = typeof cartAssets === 'undefined' ? [] : cartAssets; %>
         <script>
             let cart = []
+            let assetAdjustments = new Map()
             let totals = 0
             let _type = "<%=type%>"
             let _name = ''
@@ -187,6 +189,17 @@
                     </div>
                     <div id="productNameSelectBox"></div>
                     <div class="mb-3">
+                        <% if (stock_mode === 'pos') { %>
+                        <div class="form-floating">
+                            <select id="tracking_mode" class="form-select" onchange="toggleStockAmount()">
+                                <option value="quantity">สต๊อกตามจำนวน</option>
+                                <option value="availability">สต๊อกแบบมี / หมด</option>
+                            </select>
+                            <label for="tracking_mode">รูปแบบสต๊อกสินค้า</label>
+                        </div>
+                        <% } %>
+                    </div>
+                    <div class="mb-3" id="amount_wrapper">
                         <div class="form-floating">
                             <input type="number" class="form-control" placeholder="กรอกจำนวน" id="amount" name="amount" min="1" value="1" required>
                             <label for="amount">จำนวน *</label>
@@ -226,6 +239,13 @@
                             </div>
                         </div>`
                     }
+                    function toggleStockAmount() {
+                        const availabilityMode = document.getElementById('tracking_mode')?.value === 'availability';
+                        const amount = document.getElementById('amount');
+                        document.getElementById('amount_wrapper').hidden = availabilityMode;
+                        amount.required = !availabilityMode;
+                        if (availabilityMode) amount.value = 1;
+                    }
                     function getProductsHistoriesByType() {
                         let type = document.getElementById('type').value
 
@@ -252,6 +272,7 @@
                         let name = document.getElementById('name').value
                         let type = document.getElementById('type').value
                         let amount = document.getElementById('amount').value
+                        let tracking_mode = stock_mode === 'pos' ? document.getElementById('tracking_mode').value : 'quantity'
                         let price = stock_mode === 'pos' ? document.getElementById('price').value : 0
                         let import_price = stock_mode === 'pos' ? document.getElementById('import_price').value : null
                         let expired_date = document.getElementById('expired_date').value
@@ -265,13 +286,14 @@
                             name: name,
                             type:type,
                             amount: amount,
+                            tracking_mode: tracking_mode,
                             price:price,
                             import_price:import_price,
                             expired_date:expired_date
                         })
                         };
 
-                        if(!name || !type || !amount) {
+                        if(!name || !type || (tracking_mode === 'quantity' && !amount)) {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'โปรดกรอกข้อมูลการการนำเข้าสินค้าให้ครบถ้วน'
@@ -385,6 +407,19 @@
                                 <i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>
                                 <p class="mb-0">ยังไม่มีสินค้าในรถเข็น</p>
                             </div>
+                            <section class="sell-order-fields mb-3" aria-labelledby="cart-assets-heading">
+                                <h3 class="h6 mb-1" id="cart-assets-heading">วัสดุที่ใช้กับรายการนี้</h3>
+                                <p class="small text-secondary mb-2">ระบบตัดวัสดุเมื่อยืนยันการขาย โดยไม่เพิ่มวัสดุลงในบิล</p>
+                                <div id="cart_asset_list" class="small"></div>
+                                <div class="input-group input-group-sm mt-2">
+                                    <select id="cart_asset_select" class="form-select" aria-label="เลือกวัสดุเพิ่มเติม">
+                                        <% availableCartAssets.forEach((asset, index) => { %>
+                                        <option value="<%=index%>" data-type="<%=asset.asset_type%>" data-name="<%=asset.asset_name%>" data-available="<%=asset.available_count%>"><%=asset.asset_name%> (<%=asset.type%>)</option>
+                                        <% }) %>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-primary" id="add_cart_asset" <%=availableCartAssets.length ? '' : 'disabled'%>>เพิ่มวัสดุ</button>
+                                </div>
+                            </section>
                             <div class="sell-order-fields">
                                 <div class="form-floating">
                                     <select name="customer" id="customer" class="form-select" required>
@@ -478,10 +513,19 @@
                         if (selectedType && !sellCatalogLoaded) initProductType(selectedType);
                     });
 
-                    document.getElementById('productSelectBox').addEventListener('click', event => {
+                    document.addEventListener('click', event => {
                         const product = event.target.closest('[data-cart-product]');
                         if (!product) return;
-                        addToCart(product.dataset.type, product.dataset.name, product.dataset.price, 1, product.dataset.available);
+                        const recipe = JSON.parse(product.dataset.recipe || '[]');
+                        addToCart(
+                            product.dataset.type,
+                            product.dataset.name,
+                            product.dataset.price,
+                            1,
+                            product.dataset.available,
+                            recipe,
+                            product.dataset.trackingMode
+                        );
                     });
 
                     document.getElementById('cart').addEventListener('click', event => {
@@ -491,6 +535,26 @@
                         if (control.dataset.cartAction === 'increase') updateCartQuantity(index, 1);
                         if (control.dataset.cartAction === 'decrease') updateCartQuantity(index, -1);
                         if (control.dataset.cartAction === 'remove') removeCartItem(index);
+                    });
+
+                    document.getElementById('cart_asset_list').addEventListener('click', event => {
+                        const control = event.target.closest('[data-cart-asset-action]');
+                        if (!control) return;
+                        updateCartAsset(control.dataset.assetKey, Number(control.dataset.delta));
+                    });
+                    document.getElementById('add_cart_asset').addEventListener('click', () => {
+                        const option = document.getElementById('cart_asset_select').selectedOptions[0];
+                        if (option) updateCartAsset(JSON.stringify([Number(option.dataset.type), option.dataset.name]), 1);
+                    });
+
+                    document.addEventListener('click', event => {
+                        const button = event.target.closest('[data-set-tracking], [data-set-availability]');
+                        if (!button) return;
+                        if (button.matches('[data-set-tracking]')) {
+                            setProductTrackingMode(button.dataset.type, button.dataset.name, button.dataset.mode);
+                        } else {
+                            setProductAvailability(button.dataset.type, button.dataset.name, button.dataset.available === 'true');
+                        }
                     });
 
                     function showCartToast(icon, title) {
@@ -505,7 +569,7 @@
                         });
                     }
 
-                    function addToCart(product_type, product_name, product_price, amount, available_count) {
+                    function addToCart(product_type, product_name, product_price, amount, available_count, asset_recipe = [], tracking_mode = 'quantity') {
                         product_price = Number(product_price);
                         amount = Number(amount);
                         const available = available_count === undefined
@@ -542,7 +606,9 @@
                                 product_name: product_name,
                                 product_price: product_price,
                                 amount: amount,
-                                available_count: available
+                                available_count: available,
+                                tracking_mode,
+                                asset_recipe
                             });
                         }
                         renderCart();
@@ -568,7 +634,132 @@
                         renderCart();
                     }
 
+                    function getCartAssetTotals() {
+                        const totalsByAsset = getBaseCartAssetTotals();
+                        assetAdjustments.forEach((adjustment, key) => {
+                            const current = totalsByAsset.get(key) || {
+                                assetType: adjustment.assetType,
+                                assetName: adjustment.assetName,
+                                amount: 0
+                            };
+                            current.amount += adjustment.delta;
+                            totalsByAsset.set(key, current);
+                        });
+                        return [...totalsByAsset.entries()]
+                            .filter(([, value]) => value.amount > 0)
+                            .map(([key, value]) => ({ ...value, key }));
+                    }
+
+                    function getBaseCartAssetTotals() {
+                        const totalsByAsset = new Map();
+                        cart.forEach(item => item.asset_recipe.forEach(recipe => {
+                            const assetType = Number(recipe.asset_type);
+                            const assetName = recipe.asset_name;
+                            const key = JSON.stringify([assetType, assetName]);
+                            const current = totalsByAsset.get(key) || { assetType, assetName, amount: 0 };
+                            current.amount += Number(recipe.amount_per_product) * item.amount;
+                            totalsByAsset.set(key, current);
+                        }));
+                        return totalsByAsset;
+                    }
+
+                    function normalizeAssetAdjustments() {
+                        const baseTotals = getBaseCartAssetTotals();
+                        assetAdjustments.forEach((adjustment, key) => {
+                            const baseAmount = baseTotals.get(key)?.amount || 0;
+                            if (adjustment.delta < -baseAmount) adjustment.delta = -baseAmount;
+                            if (!baseAmount && adjustment.delta < 0) assetAdjustments.delete(key);
+                            else if (!adjustment.delta) assetAdjustments.delete(key);
+                        });
+                    }
+
+                    function updateCartAsset(key, delta) {
+                        const current = assetAdjustments.get(key);
+                        const [assetType, assetName] = JSON.parse(key);
+                        const currentTotal = getCartAssetTotals().find(asset => asset.key === key)?.amount || 0;
+                        if (currentTotal + delta < 0) return;
+                        if (delta > 0) {
+                            const option = [...document.querySelectorAll('#cart_asset_select option')]
+                                .find(item => Number(item.dataset.type) === assetType && item.dataset.name === assetName);
+                            if (option && currentTotal + delta > Number(option.dataset.available)) {
+                                showCartToast('info', `วัสดุ ${assetName} มีไม่เพียงพอ`);
+                                return;
+                            }
+                        }
+                        const adjustment = current || { assetType, assetName, delta: 0 };
+                        adjustment.delta += delta;
+                        if (!adjustment.delta) assetAdjustments.delete(key);
+                        else assetAdjustments.set(key, adjustment);
+                        renderCartAssets();
+                    }
+
+                    function renderCartAssets() {
+                        const container = document.getElementById('cart_asset_list');
+                        container.replaceChildren();
+                        const rows = getCartAssetTotals();
+                        if (!rows.length) {
+                            container.textContent = 'วัสดุจะปรากฏที่นี่เมื่อกำหนดสูตรสินค้า หรือเลือกวัสดุเพิ่ม';
+                            return;
+                        }
+                        rows.forEach(asset => {
+                            const row = document.createElement('div');
+                            row.className = 'd-flex align-items-center justify-content-between gap-2 border-bottom py-1';
+                            const label = document.createElement('span');
+                            label.textContent = `${asset.assetName} × ${asset.amount}`;
+                            const controls = document.createElement('span');
+                            controls.className = 'd-flex gap-1';
+                            [-1, 1].forEach(delta => {
+                                const button = document.createElement('button');
+                                button.type = 'button';
+                                button.className = 'btn btn-sm btn-outline-secondary';
+                                button.dataset.cartAssetAction = 'adjust';
+                                button.dataset.assetKey = asset.key;
+                                button.dataset.delta = delta;
+                                button.setAttribute('aria-label', delta > 0 ? `เพิ่ม ${asset.assetName}` : `ลด ${asset.assetName}`);
+                                button.textContent = delta > 0 ? '+' : '−';
+                                controls.append(button);
+                            });
+                            row.append(label, controls);
+                            container.append(row);
+                        });
+                    }
+
+                    function setProductTrackingMode(type, name, tracking_mode) {
+                        Swal.fire({
+                            icon: 'question',
+                            title: tracking_mode === 'availability' ? 'เปลี่ยนเป็นสต๊อกแบบมี/หมด?' : 'เปลี่ยนเป็นสต๊อกแบบจำนวน?',
+                            text: name,
+                            showCancelButton: true,
+                            confirmButtonText: 'ยืนยัน',
+                            cancelButtonText: 'ยกเลิก'
+                        }).then(result => {
+                            if (!result.isConfirmed) return;
+                            fetch('/productInventorySettings', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ type, name, tracking_mode })
+                            }).then(async response => {
+                                const data = await response.json();
+                                if (!response.ok) throw new Error(data.error || 'เปลี่ยนรูปแบบสต๊อกไม่สำเร็จ');
+                            }).then(() => searchByType(_type))
+                                .catch(error => Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message }));
+                        });
+                    }
+
+                    function setProductAvailability(type, name, available) {
+                        fetch('/productAvailability', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ type, name, available })
+                        }).then(async response => {
+                            const data = await response.json();
+                            if (!response.ok) throw new Error(data.error || 'เปลี่ยนสถานะสินค้าไม่สำเร็จ');
+                        }).then(() => searchByType(_type))
+                            .catch(error => Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message }));
+                    }
+
                     function renderCart() {
+                        normalizeAssetAdjustments();
                         const table = document.getElementById('cart');
                         const emptyState = document.getElementById('cart_empty');
                         table.replaceChildren();
@@ -599,6 +790,7 @@
                                 removeCell.append(createCartControl('remove', index, 'นำสินค้าออก'));
                             });
                         }
+                        renderCartAssets();
                         totals = cart.reduce((sum, item) => sum + item.product_price * item.amount, 0);
                         document.getElementById('cart_item_count').textContent = cart.reduce((sum, item) => sum + item.amount, 0);
                         initTotal();
@@ -625,6 +817,7 @@
                     }
                     function resetCart() {
                         cart = []
+                        assetAdjustments = new Map()
                         totals = 0
                         initTotal()
                         renderCart()
@@ -649,7 +842,12 @@
                                 amount
                             })),
                             customer:customer,
-                            discount_code:discount_code
+                            discount_code:discount_code,
+                            asset_adjustments: [...assetAdjustments.values()].map(({ assetType, assetName, delta }) => ({
+                                asset_type: assetType,
+                                asset_name: assetName,
+                                delta
+                            }))
                         })
                         };
 
@@ -705,7 +903,12 @@
                                     amount
                                 })),
                                 customer,
-                                discount_code: discountCode
+                                discount_code: discountCode,
+                                asset_adjustments: [...assetAdjustments.values()].map(({ assetType, assetName, delta }) => ({
+                                    asset_type: assetType,
+                                    asset_name: assetName,
+                                    delta
+                                }))
                             })
                         })
                         .then(async response => {

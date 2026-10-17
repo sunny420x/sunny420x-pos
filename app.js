@@ -27,6 +27,12 @@ const {
     checkDiscount,
     getAllDiscounts
 } = require('./model/discount')
+const {
+    confirmQuotation,
+    createQuotation,
+    getQuotation,
+    getQuotationsPage,
+} = require('./model/quotation')
 
 const {
     getProductSellingChart,
@@ -577,6 +583,112 @@ app.post('/sellProduct', (req, res) => {
         res.redirect(req.get("Referrer"))
     }
 })
+
+app.post('/quotations', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.status(409).json({ error: 'บริษัทนี้ใช้โหมดจัดการสต๊อกอย่างเดียว' });
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).json({ error: 'คุณไม่มีสิทธิ์จัดการสินค้า' });
+    }
+
+    const customer = req.body.customer;
+    const customerId = customer === '-' || customer === '' || customer === undefined
+        ? null
+        : Number(customer);
+    if (customerId !== null && (!Number.isSafeInteger(customerId) || customerId < 1)) {
+        return res.status(400).json({ error: 'ข้อมูลลูกค้าไม่ถูกต้อง' });
+    }
+    if (req.body.discount_code !== undefined && req.body.discount_code !== null &&
+        typeof req.body.discount_code !== 'string') {
+        return res.status(400).json({ error: 'โค้ดส่วนลดไม่ถูกต้อง' });
+    }
+    const discountCode = typeof req.body.discount_code === 'string'
+        ? req.body.discount_code.trim() || null
+        : null;
+    if (discountCode && discountCode.length > 100) {
+        return res.status(400).json({ error: 'โค้ดส่วนลดต้องมีความยาวไม่เกิน 100 ตัวอักษร' });
+    }
+
+    try {
+        const quotation = await createQuotation({
+            companyId: req.user.company_id,
+            userId: req.user.id,
+            cart: req.body.cart,
+            customerId,
+            discountCode,
+        });
+        return res.status(201).json({ success: true, quotation: `/quotations/${quotation.id}` });
+    } catch (error) {
+        if (!error.statusCode) console.error('Quotation creation failed:', error);
+        return res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : 'ออกใบเสนอราคาไม่สำเร็จ กรุณาลองอีกครั้ง'
+        });
+    }
+}));
+
+app.get('/quotations', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    }
+    const result = await getQuotationsPage(req.query.page);
+    return res.render('quotations', {
+        user_data: [req.user],
+        quotations: result.quotations,
+        pagination: {
+            ...result.pagination,
+            ajax: false,
+            href: page => `/quotations?page=${page}`,
+        },
+        moment,
+        Helper,
+    });
+}));
+
+app.get('/quotations/:id', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    }
+    if (!/^[1-9]\d*$/.test(req.params.id)) return res.sendStatus(404);
+
+    const result = await getQuotation(req.user.company_id, req.params.id);
+    if (!result) return res.sendStatus(404);
+    return res.render('quotation', {
+        user_data: [req.user],
+        quotation: result.quotation,
+        items: result.items,
+        moment,
+        Helper,
+    });
+}));
+
+app.post('/quotations/:id/confirm', asyncRoute(async (req, res) => {
+    if (!isPosMode(req)) return res.redirect('/products_stock');
+    if (!req.user.permission.split(',').includes('products')) {
+        return res.status(403).send('คุณไม่มีสิทธิ์จัดการสินค้า');
+    }
+    if (!/^[1-9]\d*$/.test(req.params.id)) return res.sendStatus(404);
+
+    try {
+        const result = await confirmQuotation({
+            companyId: req.user.company_id,
+            id: req.params.id,
+        });
+        return res.redirect(`/billing/${result.billingId}`);
+    } catch (error) {
+        const quotation = await getQuotation(req.user.company_id, req.params.id);
+        if (!quotation) return res.sendStatus(404);
+        if (!error.statusCode) console.error('Quotation confirmation failed:', error);
+        return res.status(error.statusCode || 500).render('quotation', {
+            user_data: [req.user],
+            quotation: quotation.quotation,
+            items: quotation.items,
+            moment,
+            Helper,
+            error: error.statusCode ? error.message : 'ยืนยันใบเสนอราคาไม่สำเร็จ กรุณาลองอีกครั้ง',
+        });
+    }
+}));
 
 app.post('/deductStock', asyncRoute(async (req, res) => {
     const user = req.user;

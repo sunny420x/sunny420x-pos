@@ -11,6 +11,8 @@ test('tenant writes and deletes cannot escape outer predicate',()=>{
  assert.match(scopeSql('UPDATE users SET full_name=? WHERE id=? OR username=?',7),/WHERE users.company_id = 7 AND \( id=\? OR username=\?\)/);
  assert.match(scopeSql('DELETE FROM products WHERE id IN (SELECT stock_id FROM transaction WHERE billing_id=?)',7),/DELETE FROM products WHERE products.company_id = 7/);
  assert.equal(scopeSql('INSERT INTO customers(first_name) VALUES(?)',7),'INSERT INTO customers (first_name, company_id) VALUES (?, 7)');
+ assert.match(scopeSql('SELECT q.id FROM quotations q JOIN quotation_items i ON i.quotation_id=q.id',7),/FROM \(SELECT \* FROM quotations WHERE company_id = 7\) AS q JOIN \(SELECT \* FROM quotation_items WHERE company_id = 7\) AS i/);
+ assert.match(scopeSql('SELECT q.id FROM quotations q JOIN quotation_items i ON i.quotation_id=q.id',7),/FROM \(SELECT \* FROM quotations WHERE company_id = 7\) AS q JOIN \(SELECT \* FROM quotation_items WHERE company_id = 7\) AS i/);
  assert.throws(()=>scopeSql('SELECT * FROM users',undefined));
  assert.throws(()=>scopeSql('INSERT INTO users(company_id) VALUES(?)',7));
 });

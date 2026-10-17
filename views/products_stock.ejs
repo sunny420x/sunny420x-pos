@@ -686,6 +686,53 @@
                         });  
                     }
 
+                    function createQuotation() {
+                        const customer = document.getElementById('customer').value;
+                        const discountCode = document.getElementById('discount_code').value || null;
+                        if (!customer || cart.length === 0) {
+                            showCartToast('info', 'เพิ่มสินค้าในรถเข็นก่อนออกใบเสนอราคา');
+                            return;
+                        }
+
+                        fetch('/quotations', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                cart: cart.map(({ product_type, product_name, product_price, amount }) => ({
+                                    product_type,
+                                    product_name,
+                                    product_price,
+                                    amount
+                                })),
+                                customer,
+                                discount_code: discountCode
+                            })
+                        })
+                        .then(async response => {
+                            const data = await response.json();
+                            if (!response.ok) throw new Error(data.error || 'ออกใบเสนอราคาไม่สำเร็จ');
+                            return data;
+                        })
+                        .then(data => {
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: 'ออกใบเสนอราคาแล้ว (ยังไม่ตัดสต๊อก)',
+                                showConfirmButton: false,
+                                timer: 1800
+                            }).then(() => openLink(data.quotation));
+                        })
+                        .catch(error => {
+                            console.error('Quotation creation failed:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'ออกใบเสนอราคาไม่สำเร็จ',
+                                text: error.message || 'โปรดลองอีกครั้งในภายหลัง'
+                            });
+                        });
+                    }
+
                     document.addEventListener('DOMContentLoaded', initTotal, { once: true });
                 </script>
                 <div class="modal-footer sell-modal-footer">
@@ -695,6 +742,7 @@
                   </div>
                   <div class="d-flex gap-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetCart()">ยกเลิก</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="createQuotation()"><i class="fa-solid fa-file-invoice me-1"></i> ออกใบเสนอราคา</button>
                     <button type="button" class="btn btn-primary" onclick="sellProducts()"><i class="fa-solid fa-circle-check me-1"></i> ยืนยันการขาย</button>
                   </div>
                 </div>

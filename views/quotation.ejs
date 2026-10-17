@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <title>ใบเสนอราคา #<%=quotation.id%> | SunnyPOS</title>
+    <%-include('include/head')%>
+    <style>
+        .quotation-page { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+        .quotation-sheet { padding: 32px; border: 1px solid var(--pos-border); border-radius: 16px; background: #fff; }
+        .quotation-header, .quotation-meta, .quotation-total { display: flex; justify-content: space-between; gap: 20px; }
+        .quotation-header { align-items: flex-start; margin-bottom: 24px; }
+        .quotation-title { margin: 0; font-size: 1.6rem; }
+        .quotation-subtitle { color: var(--pos-muted); }
+        .quotation-notice { padding: 12px 16px; border-radius: 10px; background: #fff7e6; color: #8a5a00; }
+        .quotation-total { padding: 8px 0; }
+        .quotation-total-net { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--pos-border); font-size: 1.2rem; font-weight: 600; }
+        .quotation-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+        @media print {
+            body { background: #fff !important; }
+            .app-sidebar, .app-topbar, .quotation-actions, .quotation-notice { display: none !important; }
+            .app-main, .quotation-page { width: 100%; max-width: none; margin: 0; padding: 0; }
+            .quotation-sheet { padding: 0; border: 0; }
+        }
+    </style>
+</head>
+<body>
+    <% const helper = new Helper(); %>
+    <div class="d-flex app-shell">
+        <%-include('include/sidebar')%>
+        <main class="container-fluid p-0 app-main">
+            <%-include('include/navigator')%>
+            <div class="quotation-page">
+                <article class="quotation-sheet">
+                    <header class="quotation-header">
+                        <div>
+                            <h1 class="quotation-title">ใบเสนอราคา</h1>
+                            <div class="quotation-subtitle"><%=quotation.company_name || user_data[0].company_name%></div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-semibold">เลขที่ QT-<%=quotation.id%></div>
+                            <div class="text-secondary"><%=moment(quotation.created_at).add(543, 'years').format('DD/MM/YYYY HH:mm')%></div>
+                            <span class="badge <%=quotation.status === 'confirmed' ? 'text-bg-success' : 'text-bg-warning'%>">
+                                <%=quotation.status === 'confirmed' ? 'ยืนยันการขายแล้ว' : 'รอยืนยันการขาย'%>
+                            </span>
+                        </div>
+                    </header>
+                    <section class="quotation-meta mb-4">
+                        <div>
+                            <div class="text-secondary small">ลูกค้า</div>
+                            <div><%=quotation.first_name && quotation.last_name ? `${quotation.first_name} ${quotation.last_name}` : 'ลูกค้าทั่วไป'%></div>
+                            <% if (quotation.phone_number) { %><div class="text-secondary"><%=helper.ThaiPhoneNumber(quotation.phone_number)%></div><% } %>
+                        </div>
+                    </section>
+                    <% if (quotation.status === 'pending') { %>
+                    <% if (typeof error === 'string') { %>
+                    <div class="alert alert-danger" role="alert"><%=error%></div>
+                    <% } %>
+                    <div class="quotation-notice mb-3">
+                        <i class="fa-solid fa-circle-info me-1" aria-hidden="true"></i>
+                        ใบเสนอราคานี้ยังไม่ตัดสต๊อก สินค้าจะถูกตัดเมื่อกดยืนยันการขาย และอาจมีการเปลี่ยนแปลงของสต๊อกก่อนยืนยัน
+                    </div>
+                    <% } %>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr><th>รายการสินค้า</th><th class="text-end">ราคาต่อหน่วย</th><th class="text-end">จำนวน</th><th class="text-end">รวม</th></tr>
+                            </thead>
+                            <tbody>
+                                <% items.forEach(item => { %>
+                                <tr>
+                                    <td><%=item.product_name%></td>
+                                    <td class="text-end"><%=helper.numberWithCommas(item.product_price)%></td>
+                                    <td class="text-end"><%=helper.numberWithCommas(item.amount)%></td>
+                                    <td class="text-end"><%=helper.numberWithCommas(item.line_total)%></td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <section class="ms-auto mt-3" style="max-width: 360px">
+                        <div class="quotation-total"><span>รวมสินค้า</span><span><%=helper.numberWithCommas(quotation.subtotal)%> บาท</span></div>
+                        <% if (quotation.discount_id) { %>
+                        <div class="quotation-total">
+                            <span>ส่วนลด (<%=quotation.discount_type === 'fixed' ? helper.numberWithCommas(quotation.discount_amount) + ' บาท' : quotation.discount_amount + '%'%>)</span>
+                            <span>-<%=helper.numberWithCommas(Number(quotation.subtotal) - Number(quotation.total))%> บาท</span>
+                        </div>
+                        <% } %>
+                        <div class="quotation-total quotation-total-net"><span>ยอดสุทธิ</span><span><%=helper.numberWithCommas(quotation.total)%> บาท</span></div>
+                    </section>
+                    <footer class="quotation-actions">
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> พิมพ์ใบเสนอราคา</button>
+                        <% if (quotation.status === 'pending') { %>
+                        <form method="post" action="/quotations/<%=quotation.id%>/confirm" onsubmit="return confirm('ยืนยันการขายตามใบเสนอราคานี้? ระบบจะตรวจและตัดสต๊อกสินค้าในขั้นตอนนี้')">
+                            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-circle-check me-1"></i> ยืนยันการขายและตัดสต๊อก</button>
+                        </form>
+                        <% } else { %>
+                        <a class="btn btn-primary" href="/billing/<%=quotation.billing_id%>"><i class="fa-solid fa-receipt me-1"></i> ดูใบเสร็จ</a>
+                        <% } %>
+                    </footer>
+                </article>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

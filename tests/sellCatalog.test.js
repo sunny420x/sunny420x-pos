@@ -54,6 +54,9 @@ test('products stock page renders the split cart modal with valid inline scripts
     assert.match(html, /sell-cart-panel/);
     assert.match(html, /id="cart_table_wrap"/);
     assert.match(html, /ยืนยันการขาย/);
+    assert.match(html, /onclick="createQuotation\(\)"/);
+    assert.match(html, /fetch\('\/quotations'/);
+    assert.match(html, /ยังไม่ตัดสต๊อก/);
     assert.ok(html.indexOf('id="sell_modal"') < html.indexOf("getElementById('sell_modal').addEventListener"));
     assert.match(html, /new Intl\.NumberFormat\('en-US'\)/);
     assert.match(html, /toast: true/);

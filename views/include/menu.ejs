@@ -42,6 +42,13 @@
         </a>
     </li>
     <% } %>
+    <% if (user_data[0].stock_mode !== 'inventory_only') { %>
+    <li class="nav-item">
+        <a href="/quotations" class="list-group-item list-group-item-action border-0 p-2" title="ใบเสนอราคา" aria-label="ใบเสนอราคา">
+            <i class="fa-solid fa-file-invoice me-1" aria-hidden="true"></i><span class="menu-label">ใบเสนอราคา</span>
+        </a>
+    </li>
+    <% } %>
 </ul>
 <% } %>
 <ul class="nav flex-column">

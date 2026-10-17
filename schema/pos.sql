@@ -51,6 +51,40 @@ CREATE TABLE IF NOT EXISTS `discounts` (
  KEY idx_discounts_company (company_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE IF NOT EXISTS `quotations` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `customer_id` int(11) UNSIGNED DEFAULT NULL,
+  `discount_id` int(11) UNSIGNED DEFAULT NULL,
+  `discount_code` varchar(100) DEFAULT NULL,
+  `discount_type` enum('percentage','fixed') DEFAULT NULL,
+  `discount_amount` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `minimum_purchase` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `subtotal` bigint(20) UNSIGNED NOT NULL,
+  `total` decimal(15,2) UNSIGNED NOT NULL,
+  `status` enum('pending','confirmed') NOT NULL DEFAULT 'pending',
+  `billing_id` int(11) DEFAULT NULL,
+  `created_by` int(11) UNSIGNED NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `confirmed_at` timestamp NULL DEFAULT NULL,
+  `company_id` int(11) UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY idx_quotations_company (company_id, id),
+  KEY idx_quotations_company_status (company_id, status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `quotation_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `quotation_id` bigint(20) UNSIGNED NOT NULL,
+  `product_type` int(11) UNSIGNED NOT NULL,
+  `product_name` varchar(200) NOT NULL,
+  `product_price` bigint(20) UNSIGNED NOT NULL,
+  `amount` int(10) UNSIGNED NOT NULL,
+  `line_total` bigint(20) UNSIGNED NOT NULL,
+  `company_id` int(11) UNSIGNED NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY idx_quotation_items_company_quote (company_id, quotation_id, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE IF NOT EXISTS `login_history` (
   `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,

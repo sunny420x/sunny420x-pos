@@ -116,6 +116,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `transaction_id` int(11) DEFAULT NULL,
   `import_price` int(12) DEFAULT NULL,
+  `image` LONGBLOB DEFAULT NULL,
  company_id int(11) UNSIGNED NOT NULL DEFAULT 1,
  PRIMARY KEY (id),
  KEY idx_products_company (company_id, id),

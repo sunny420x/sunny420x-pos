@@ -16,6 +16,7 @@ function getSellProductsByType(type) {
                 pt.name AS type,
                 pd.type AS type_id,
                 pd.price,
+                pd.image,
                 CASE
                     WHEN COALESCE(pis.tracking_mode, 'quantity') = 'availability'
                     THEN IF(pis.is_available = 1, 2147483647, 0)
@@ -28,7 +29,7 @@ function getSellProductsByType(type) {
             LEFT JOIN product_inventory_settings AS pis
                 ON pis.product_type = pd.type AND pis.product_name = pd.name
             WHERE pd.type = ?
-            GROUP BY pd.name, pt.name, pd.type, pd.price, pis.tracking_mode, pis.is_available
+            GROUP BY pd.name, pt.name, pd.type, pd.price, pd.image, pis.tracking_mode, pis.is_available
             HAVING available_count > 0
             ORDER BY pd.name ASC, pd.price ASC`, [type]).then(async products => {
         if (!products.length) return products;
@@ -244,6 +245,11 @@ function getProductsHistoriesByType(type) {
     })
 }
 
+function getProductImageByTypeAndName(type, name) {
+    return query(`SELECT image FROM products WHERE type = ? AND name = ? AND image IS NOT NULL ORDER BY id DESC LIMIT 1`, [type, name])
+        .then(rows => rows[0]?.image || null);
+}
+
 function getExpiredProducts() {
     return new Promise((resolve) => {
         db.query(`SELECT t.id, t.name, pt.name as type, t.type as type_id, SUM(t.value) as value, t.expired_date   
@@ -296,6 +302,7 @@ module.exports = {
     getBillingHistoriesPage,
     getProductTypes, 
     getProductsHistoriesByType, 
+    getProductImageByTypeAndName,
     getExpiredProducts, 
     getProductsStockPage,
     getProductsStockByTypeAndNamePage,

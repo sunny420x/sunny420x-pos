@@ -6,6 +6,8 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser')
 const path = require('path')
 const { createHash } = require('crypto')
+const multer = require('multer')
+const sharp = require('sharp')
 
 const {
     getSellProductsByType,
@@ -16,6 +18,7 @@ const {
     getProductsStockByTypeAndNamePage,
     deleteProductsByTransaction,
     getProductsHistoriesByType,
+    getProductImageByTypeAndName,
     setProductAvailability,
     setProductTrackingMode,
 } = require('./model/product')
@@ -63,6 +66,11 @@ const {
 
 const db = require('./database')
 const app = express()
+const productImageUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+    fileFilter: (req, file, callback) => callback(null, /^image\/(jpeg|png|webp|gif|heic|heif)$/i.test(file.mimetype)),
+});
 
 app.set('trust proxy', true);
 
@@ -397,7 +405,7 @@ app.get("/products_stock/:type/:name", asyncRoute(async (req, res) => {
     }
 }))
 
-function addProductStock(name, type, price, import_price, expired_date, created_at, amount) {
+function addProductStock(name, type, price, import_price, expired_date, created_at, amount, image = null) {
     return new Promise((resolve, reject) => {
         db.query(
             "INSERT INTO transaction(name, type, value, expired_date, created_at) VALUES(?,?,?,?,?)",
@@ -416,8 +424,8 @@ function addProductStock(name, type, price, import_price, expired_date, created_
                         promises.push(
                             new Promise((resolve, reject) => {
                                 db.query(
-                                    "INSERT INTO products(name, type, price, import_price, transaction_id, created_at) VALUES(?,?,?,?,?,?)",
-                                    [name, type, price, import_price, transaction_id, created_at],
+                                    "INSERT INTO products(name, type, price, import_price, transaction_id, created_at, image) VALUES(?,?,?,?,?,?,?)",
+                                    [name, type, price, import_price, transaction_id, created_at, image],
                                     (err) => {
                                         if (err) reject(err);
                                         else resolve();
@@ -464,18 +472,21 @@ app.post('/addProductStock', asyncRoute(async (req, res) => {
     );
     if (!types.length) return res.status(400).json({ error: 'ไม่พบหมวดหมู่สินค้าที่เลือก' });
 
+    const selectedImage = req.body.existing_product === true || req.body.existing_product === 'true'
+        ? await getProductImageByTypeAndName(type, name)
+        : null;
     if (trackingMode === 'availability') {
         const [products] = await db.auth.promise().query(
             'SELECT id FROM products WHERE company_id = ? AND type = ? AND name = ? LIMIT 1',
             [req.user.company_id, type, name]
         );
         if (!products.length) {
-            await addProductStock(name, type, price, importPrice, expiredDate, moment().format('YYYY-MM-DD HH:mm:ss'), 1);
+            await addProductStock(name, type, price, importPrice, expiredDate, moment().format('YYYY-MM-DD HH:mm:ss'), 1, selectedImage);
         }
         await setProductTrackingMode(type, name, trackingMode, req.user.company_id);
         await setProductAvailability(type, name, true);
     } else {
-        await addProductStock(name, type, price, importPrice, expiredDate, moment().format('YYYY-MM-DD HH:mm:ss'), amount);
+        await addProductStock(name, type, price, importPrice, expiredDate, moment().format('YYYY-MM-DD HH:mm:ss'), amount, selectedImage);
         if (stockMode === 'pos') await setProductTrackingMode(type, name, 'quantity', req.user.company_id);
     }
     return res.status(200).json({ success: true });
@@ -943,6 +954,7 @@ app.get('/billing/:id', (req, res) => {
     const user_data = [req.user];
     if (!isPosMode(req)) return res.redirect('/products_stock');
     if (user_data[0].permission.split(',').includes('bills')) {
+        if (!/^[1-9]\d*$/.test(req.params.id)) return res.sendStatus(404);
         const id = req.params.id
 
         db.query(`SELECT 
@@ -988,6 +1000,7 @@ app.get('/billing/:id', (req, res) => {
             t.name, pd.price;
         `, [id, id], (err, bill) => {
             if (err) throw err;
+            if (!bill.length) return res.status(404).send('ไม่พบใบเสร็จรายการนี้');
             res.render('billing', {
                 user_data: user_data,
                 bill: bill,
@@ -1061,7 +1074,7 @@ app.get("/editProduct/:transaction", (req, res) => {
         const transaction = req.params.transaction
         const type = req.query.type ?? "all"
         const option = req.query.option ?? "list"
-        db.query(`SELECT pd.name, pd.type, t.expired_date, pd.price, pd.transaction_id, t.created_at, pd.updated_at, pd.import_price 
+        db.query(`SELECT pd.name, pd.type, t.expired_date, pd.image, pd.price, pd.transaction_id, t.created_at, pd.updated_at, pd.import_price
             FROM products as pd JOIN transaction as t ON t.id = pd.transaction_id 
             WHERE pd.transaction_id = ? GROUP BY name, type`, [transaction], (err, stock) => {
             if (err) throw err;
@@ -1084,7 +1097,7 @@ app.get("/editProduct/:transaction", (req, res) => {
     }
 })
 
-app.post("/editProduct", (req, res) => {
+app.post("/editProduct", productImageUpload.single('image'), asyncRoute(async (req, res) => {
     const user_data = [req.user];
     if (user_data[0].permission.split(',').includes('products')) {
         const type = req.body.type
@@ -1097,26 +1110,31 @@ app.post("/editProduct", (req, res) => {
         const _type = req.query.type ?? "catalog"
         const option = req.query.option ?? "list"
 
+        let image = null;
+        if (req.file) {
+            image = await sharp(req.file.buffer)
+                .rotate()
+                .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+                .jpeg({ quality: 78, mozjpeg: true })
+                .toBuffer();
+        }
         const updateProductsSql = stock_mode === 'inventory_only'
-            ? "UPDATE products SET type = ?, name = ?, updated_at = ? WHERE transaction_id = ?"
-            : "UPDATE products SET type = ?, name = ?, price = ?, import_price = ?, updated_at = ? WHERE transaction_id = ?"
+            ? `UPDATE products SET type = ?, name = ?, updated_at = ?${image ? ', image = ?' : ''} WHERE transaction_id = ?`
+            : `UPDATE products SET type = ?, name = ?, price = ?, import_price = ?, updated_at = ?${image ? ', image = ?' : ''} WHERE transaction_id = ?`;
         const updateProductsValues = stock_mode === 'inventory_only'
-            ? [type, name, updated_at, transaction_id]
-            : [type, name, req.body.price, req.body.import_price, updated_at, transaction_id]
-
-        db.query(updateProductsSql, updateProductsValues, (err) => {
-            if (err) throw err;
-            db.query("UPDATE transaction SET type = ?, name = ?, expired_date = ? WHERE id = ?", [type, name, expired_date, transaction_id], (err) => {
-                if (err) throw err;
-                res.cookie('alert', 'success')
-                res.redirect(`/editProduct/${transaction_id}?type=${_type}&option=${option}`)
-            })
-        })
+            ? [type, name, updated_at, ...(image ? [image] : []), transaction_id]
+            : [type, name, req.body.price, req.body.import_price, updated_at, ...(image ? [image] : []), transaction_id];
+        const [types] = await db.auth.promise().query('SELECT id FROM product_types WHERE company_id = ? AND id = ?', [user_data[0].company_id, type]);
+        if (!types.length) return res.status(400).send('ไม่พบหมวดหมู่สินค้าที่เลือก');
+        await db.auth.promise().query(updateProductsSql, updateProductsValues);
+        await db.auth.promise().query("UPDATE transaction SET type = ?, name = ?, expired_date = ? WHERE id = ?", [type, name, expired_date, transaction_id]);
+        res.cookie('alert', 'success')
+        res.redirect(`/editProduct/${transaction_id}?type=${_type}&option=${option}`)
     } else {
         res.cookie('alert', 'permissionDenial')
         res.redirect(req.get("Referrer"))
     }
-})
+}))
 
 //Discounts
 app.get("/discounts", (req, res) => {

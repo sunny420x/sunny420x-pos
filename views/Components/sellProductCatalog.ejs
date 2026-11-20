@@ -9,6 +9,11 @@
             data-available="<%=product.available_count%>"
             data-tracking-mode="<%=product.tracking_mode || 'quantity'%>"
             data-recipe="<%=JSON.stringify(product.asset_recipe || [])%>">
+            <% if (product.image) { %>
+            <img class="sell-product-card-image" src="data:image/jpeg;base64,<%=Buffer.from(product.image).toString('base64')%>" alt="รูปสินค้า <%=product.name%>" loading="lazy">
+            <% } else { %>
+            <span class="sell-product-card-image sell-product-card-image-placeholder" aria-label="ไม่มีรูปสินค้า"><i class="fa-solid fa-box" aria-hidden="true"></i></span>
+            <% } %>
             <span class="sell-product-card-name"><%=product.name%></span>
             <span class="sell-product-card-price"><%=Number(product.price).toLocaleString('en-US')%> บาท</span>
             <span class="sell-product-card-stock"><%=product.tracking_mode === 'availability' ? 'สถานะ: พร้อมขาย' : `เหลือ ${product.available_count} ชิ้น`%></span>

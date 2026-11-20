@@ -236,6 +236,7 @@
                     resetProductName()
 
                     function resetProductName() {
+                        window.existingProductSelected = false;
                         document.getElementById('productNameSelectBox').innerHTML = `
                         <div class="mb-3">
                             <div class="form-floating">
@@ -252,6 +253,7 @@
                         if (availabilityMode) amount.value = 1;
                     }
                     function getProductsHistoriesByType() {
+                        window.existingProductSelected = false;
                         let type = document.getElementById('type').value
                         const container = document.getElementById('productNameSelectBox');
                         showLoadingSkeleton(container, 'select', 1);
@@ -285,6 +287,7 @@
                         let price = stock_mode === 'pos' ? document.getElementById('price').value : 0
                         let import_price = stock_mode === 'pos' ? document.getElementById('import_price').value : null
                         let expired_date = document.getElementById('expired_date').value
+                        let existing_product = window.existingProductSelected === true
 
                         const options = {
                         method: 'POST',
@@ -298,6 +301,7 @@
                             tracking_mode: tracking_mode,
                             price:price,
                             import_price:import_price,
+                            existing_product: existing_product,
                             expired_date:expired_date
                         })
                         };

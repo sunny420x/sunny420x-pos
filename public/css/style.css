@@ -414,7 +414,6 @@ button:focus-visible {
 .form-select {
     border-color: var(--pos-border);
     border-radius: var(--pos-control-radius);
-    min-height: 44px;
     font-size: .875rem;
     background-color: var(--pos-surface);
 }
@@ -609,6 +608,30 @@ input[type=checkbox][readonly] {
     color: var(--pos-text);
     text-align: left;
     transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.sell-product-card-image {
+    display: flex;
+    width: 100%;
+    height: 120px;
+    flex: 0 0 120px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.sell-product-card-image-placeholder {
+    background: #e5e7eb;
+    color: #8b929c;
+    font-size: 2rem;
+}
+
+.product-image-preview {
+    width: 160px;
+    height: 160px;
+    border-radius: 8px;
+    object-fit: cover;
 }
 
 .sell-product-card:hover,

@@ -29,8 +29,14 @@
                                 </div>
                             </div>
                         </div>
-                        <form action="/editProduct?type=<%=type%>&option=<%=option%>" method="post">
+                        <form action="/editProduct?type=<%=type%>&option=<%=option%>" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="transaction_id" value="<%=stock.transaction_id%>">
+                            <div class="mb-3">
+                                <label for="image" class="form-label">รูปสินค้า</label>
+                                <% if (stock.image) { %><div class="mb-2"><img src="data:image/jpeg;base64,<%=Buffer.from(stock.image).toString('base64')%>" alt="รูปสินค้า <%=stock.name%>" class="product-image-preview"></div><% } %>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif">
+                                <div class="form-text">รูปจะถูกย่อและบีบอัดก่อนบันทึก (สูงสุด 10 MB)</div>
+                            </div>
                             <div class="mb-3">
                                 <div class="form-floating">
                                     <input type="text" class="form-control" placeholder="กรอกชื่อสินค้า" id="name" name="name" value="<%=stock.name%>" required>
